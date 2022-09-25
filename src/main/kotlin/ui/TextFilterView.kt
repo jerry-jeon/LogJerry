@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalComposeUiApi::class)
+
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -35,8 +37,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -81,7 +89,20 @@ private fun AddTextFilterView(
 ) {
     var text by remember { mutableStateOf("") }
     val columnTypeState = remember { mutableStateOf(ColumnType.Log) }
-    Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+    Row(
+        modifier = Modifier.height(IntrinsicSize.Min).onPreviewKeyEvent {
+            when {
+                it.key == Key.Enter && it.type == KeyEventType.KeyDown -> {
+                    if (text.isNotBlank()) {
+                        addFilter(TextFilter(columnTypeState.value, text))
+                        text = ""
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
+    ) {
         TextField(
             modifier = Modifier.height(60.dp),
             value = text,
