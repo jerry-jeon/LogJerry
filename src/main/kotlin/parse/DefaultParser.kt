@@ -31,6 +31,7 @@ class DefaultParser : LogParser {
                 continuedLog.copy(originalLog = continuedLog.originalLog + s)
             }
         }
+        lastLog?.let { logs.add(it) }
         return ParseResult(logs, invalidSentences)
     }
     private fun parseSingleLineLog(raw: String): Log {
