@@ -151,7 +151,7 @@ private fun FilterView(logRefinement: LogRefinement) {
                         .background(Color.LightGray, RoundedCornerShape(25.dp))
                 ) {
                     Row(modifier = Modifier.fillMaxHeight().padding(horizontal = 8.dp)) {
-                        if(filter.columnType.icon != null) {
+                        if (filter.columnType.icon != null) {
                             Icon(
                                 filter.columnType.icon,
                                 contentDescription = "Remove a filter",
@@ -163,11 +163,12 @@ private fun FilterView(logRefinement: LogRefinement) {
                         Spacer(Modifier.width(8.dp))
                         Text(filter.text, modifier = Modifier.align(Alignment.CenterVertically))
                         Spacer(Modifier.width(8.dp))
-                        Box(Modifier
-                            .background(Color.Gray, CircleShape)
-                            .clickable { logRefinement.removeFilter(filter) }
-                            .padding(4.dp)
-                            .align(Alignment.CenterVertically)
+                        Box(
+                            Modifier
+                                .background(Color.Gray, CircleShape)
+                                .clickable { logRefinement.removeFilter(filter) }
+                                .padding(4.dp)
+                                .align(Alignment.CenterVertically)
                         ) {
                             Icon(
                                 Icons.Default.Close,
@@ -190,7 +191,12 @@ private fun LogsView(header: Header, logs: List<Log>) {
         item { HeaderRow(header, divider) }
         item { HeaderDivider() }
         logs.forEach {
-            item { LogRow(it, header, divider = divider) }
+            item {
+                Column {
+                    LogRow(it, header, divider = divider)
+                    Divider(color = Color(0xFFE5E7E9))
+                }
+            }
         }
     }
 }
@@ -204,9 +210,7 @@ fun ColumnDivider() {
 
 @Composable
 fun HeaderDivider() {
-    Spacer(Modifier.height(3.dp))
     Divider()
-    Spacer(Modifier.height(3.dp))
 }
 
 @Composable

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
@@ -92,13 +93,13 @@ data class Header(
 
     companion object {
         val default = Header(
-            number = ColumnInfo(ColumnType.Number, 90, true),
-            date = ColumnInfo(ColumnType.Date, 100, true),
-            time = ColumnInfo(ColumnType.Time, 100, true),
-            pid = ColumnInfo(ColumnType.PID, 40, true),
-            tid = ColumnInfo(ColumnType.TID, 40, true),
-            packageName = ColumnInfo(ColumnType.PackageName, 120, true),
-            priority = ColumnInfo(ColumnType.Priority, 60, true),
+            number = ColumnInfo(ColumnType.Number, 100, true),
+            date = ColumnInfo(ColumnType.Date, 100, false),
+            time = ColumnInfo(ColumnType.Time, 110, true),
+            pid = ColumnInfo(ColumnType.PID, 50, false),
+            tid = ColumnInfo(ColumnType.TID, 50, false),
+            packageName = ColumnInfo(ColumnType.PackageName, 130, true),
+            priority = ColumnInfo(ColumnType.Priority, 70, true),
             tag = ColumnInfo(ColumnType.Tag, 200, true),
             log = ColumnInfo(ColumnType.Log, null, true),
         )
@@ -107,7 +108,7 @@ data class Header(
 
 @Composable
 fun RowScope.HeaderView(columnInfo: ColumnInfo, modifier: Modifier = Modifier) {
-    Row(applyWidth(columnInfo.width, modifier)) {
+    Row(applyWidth(columnInfo.width, modifier).padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
         if (columnInfo.columnType.icon != null) {
             Icon(columnInfo.columnType.icon, "ColumnType icon", Modifier.align(Alignment.CenterVertically))
         }
