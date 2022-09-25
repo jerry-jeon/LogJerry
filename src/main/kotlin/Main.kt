@@ -2,6 +2,7 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -10,10 +11,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Button
+import androidx.compose.material.Checkbox
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,8 +36,11 @@ fun App() {
     val parser = DefaultParser()
     MyTheme {
         var logs by remember { mutableStateOf(emptyList<Log>()) }
+        val headerState = remember { mutableStateOf(Header.default) }
+        val header by headerState
 
         Column {
+            ColumnVisibility(headerState)
             Button(onClick = {
                 val fileDialog = java.awt.FileDialog(ComposeWindow())
                 fileDialog.isVisible = true
@@ -46,18 +52,43 @@ fun App() {
                 Text("File Picker")
             }
 
-            val header = remember { mutableStateOf(Header.default) }
             val divider: @Composable RowScope.() -> Unit = { ColumnDivider() }
 
             LazyColumn(Modifier.padding(10.dp)) {
-                item { HeaderRow(header.value, divider) }
+                item { HeaderRow(header, divider) }
                 item { HeaderDivider() }
                 logs.forEach {
-                    item { LogRow(it, header.value, divider = divider) }
+                    item { LogRow(it, header, divider = divider) }
                 }
             }
         }
 
+    }
+}
+
+@Composable
+fun ColumnVisibility(headerState: MutableState<Header>) {
+    val asColumnList = headerState.value.asColumnList
+
+    Column {
+        asColumnList.chunked(4).forEach { chunked ->
+            Row {
+                chunked.forEach { columnInfo ->
+                    ColumnCheckBox(columnInfo, headerState)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ColumnCheckBox(columnInfo: ColumnInfo, headerState: MutableState<Header>) {
+    var header by headerState
+    Row {
+        Text(columnInfo.columnType.name)
+        Checkbox(columnInfo.visible, onCheckedChange = {
+            header = header.copyOf(columnInfo.columnType, columnInfo.copy(visible = it))
+        })
     }
 }
 

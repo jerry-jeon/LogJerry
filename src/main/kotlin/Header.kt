@@ -40,6 +40,32 @@ data class Header(
 
     val asColumnList: List<ColumnInfo> = listOf(date, time, pid, tid, packageName, priority, tag, log)
 
+    operator fun get(columnType: ColumnType): ColumnInfo {
+        return when(columnType) {
+            ColumnType.Date -> date
+            ColumnType.Time -> time
+            ColumnType.PID -> pid
+            ColumnType.TID -> tid
+            ColumnType.PackageName -> packageName
+            ColumnType.Priority -> priority
+            ColumnType.Tag -> tag
+            ColumnType.Log -> log
+        }
+    }
+
+    fun copyOf(columnType: ColumnType, columnInfo: ColumnInfo): Header {
+        return when(columnType) {
+            ColumnType.Date -> copy(date = columnInfo)
+            ColumnType.Time -> copy(time = columnInfo)
+            ColumnType.PID -> copy(pid = columnInfo)
+            ColumnType.TID -> copy(tid = columnInfo)
+            ColumnType.PackageName -> copy(packageName = columnInfo)
+            ColumnType.Priority -> copy(priority = columnInfo)
+            ColumnType.Tag -> copy(tag = columnInfo)
+            ColumnType.Log -> copy(log = columnInfo)
+        }
+    }
+
     companion object {
         val default = Header(
             date = ColumnInfo(ColumnType.Date, 100, true),
