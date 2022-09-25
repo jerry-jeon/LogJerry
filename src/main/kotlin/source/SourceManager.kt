@@ -35,7 +35,7 @@ class SourceManager {
         this.sourceFlow.value = source
     }
 
-    fun findShortcutPressed() {
+    fun turnOnKeywordDetection() {
         when (val value = parseStatusFlow.value) {
             is ParseStatus.Completed -> {
                 value.logManager.setKeywordDetectionEnabled(true)

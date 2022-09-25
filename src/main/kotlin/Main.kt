@@ -2,8 +2,11 @@
 @file:OptIn(ExperimentalComposeUiApi::class, ExperimentalSerializationApi::class)
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
@@ -63,7 +67,9 @@ import parse.ParseStatus
 import preferences.Preferences
 import preferences.PreferencesView
 import source.Source
-import source.SourceManager
+import tab.Tab
+import tab.TabManager
+import tab.Tabs
 import table.Header
 import ui.ExceptionDetectionView
 import ui.JsonDetectionView
@@ -75,12 +81,15 @@ import java.io.File
 
 @Composable
 @Preview
-fun App(preferences: Preferences, headerState: MutableState<Header>, sourceManager: SourceManager) {
-    val parseStatus = sourceManager.parseStatusFlow.collectAsState(ParseStatus.NotStarted)
+fun ActiveTabView(
+    preferences: Preferences,
+    headerState: MutableState<Header>,
+    activeTab: Tab,
+) {
+    val parseStatus by activeTab.sourceManager.parseStatusFlow.collectAsState(ParseStatus.NotStarted)
     // Flow would be better
-
-    when (val status = parseStatus.value) {
-        is ParseStatus.NotStarted -> GettingStartedView(status, sourceManager)
+    when (val status = parseStatus) {
+        is ParseStatus.NotStarted -> GettingStartedView(status, activeTab.sourceManager::changeSource)
         is ParseStatus.Proceeding -> Text("Proceeding.... ${status.percent}")
         is ParseStatus.Completed -> {
             Column {
@@ -177,7 +186,7 @@ fun ParseCompletedView(
 }
 
 @Composable
-private fun GettingStartedView(notStarted: ParseStatus.NotStarted, sourceManager: SourceManager) {
+private fun GettingStartedView(notStarted: ParseStatus.NotStarted, changeSource: (Source) -> Unit) {
     val requester = remember { FocusRequester() }
     Column(
         modifier = Modifier.fillMaxSize().padding(50.dp)
@@ -188,7 +197,7 @@ private fun GettingStartedView(notStarted: ParseStatus.NotStarted, sourceManager
                             .systemClipboard
                             .getData(DataFlavor.stringFlavor)
                             .takeIf { it is String }
-                            ?.let { sourceManager.changeSource(Source.Text(it.toString())) }
+                            ?.let { changeSource(Source.Text(it.toString())) }
                         true
                     }
                     else -> {
@@ -282,7 +291,6 @@ fun MyTheme(content: @Composable () -> Unit) {
 }
 
 fun main() = application {
-    val sourceManager = SourceManager()
     val headerState = remember { mutableStateOf(Header.default) }
     val preferenceOpen = remember { mutableStateOf(false) }
     val preferences = try {
@@ -291,12 +299,14 @@ fun main() = application {
         Preferences.default
     }
     val preferencesState = remember { mutableStateOf(preferences) }
+    val tabManager = TabManager()
+    val tabsState = tabManager.tabs.collectAsState()
     Window(
         state = WindowState(width = Dp.Unspecified, height = Dp.Unspecified),
         onCloseRequest = ::exitApplication,
         onPreviewKeyEvent = { keyEvent ->
             if (keyEvent.isMetaPressed && keyEvent.key == Key.F && keyEvent.type == KeyEventType.KeyDown) {
-                sourceManager.findShortcutPressed()
+                tabManager.findShortcutPressed()
                 true
             } else {
                 false
@@ -306,8 +316,19 @@ fun main() = application {
         MyTheme {
             MenuBar {
                 Menu("File") {
+                    Item("New Tab", shortcut = KeyShortcut(Key.N, meta = true)) {
+                        tabManager.newTab()
+                    }
                     Item("Open file", shortcut = KeyShortcut(Key.O, meta = true)) {
-                        sourceManager.openFileDialog()
+                        openFileDialog {
+                            tabManager.onNewFileSelected(it)
+                        }
+                    }
+                    Item("Previous Tab", shortcut = KeyShortcut(Key.LeftBracket, meta = true, shift = true)) {
+                        tabManager.moveToPreviousTab()
+                    }
+                    Item("Next Tab", shortcut = KeyShortcut(Key.RightBracket, meta = true, shift = true)) {
+                        tabManager.moveToNextTab()
                     }
                 }
                 Menu("Columns") {
@@ -315,23 +336,46 @@ fun main() = application {
                         columnCheckboxItem(columnInfo, headerState)
                     }
                 }
-                Menu("File") {
+                Menu("Preferences") {
                     Item("preferences.Preferences", shortcut = KeyShortcut(Key.Comma, meta = true)) {
                         preferenceOpen.value = true
                     }
                 }
             }
-            App(preferencesState.value, headerState, sourceManager)
-            PreferencesView(preferenceOpen, preferencesState)
+            Column {
+                TabView(tabsState.value, tabManager::activate)
+                Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
+                ActiveTabView(preferencesState.value, headerState, tabsState.value.activated)
+                PreferencesView(preferenceOpen, preferencesState)
+            }
         }
     }
 }
 
-private fun SourceManager.openFileDialog() {
+@Composable
+private fun TabView(tabs: Tabs, activate: (Tab) -> Unit) {
+    val (tabList, activated) = tabs
+    val scrollState = rememberScrollState()
+    Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).horizontalScroll(scrollState)) {
+        tabList.forEach { tab ->
+            Box(
+                modifier = Modifier
+                    .background(if (tab === activated) Color.LightGray else Color.Transparent)
+                    .clickable { activate(tab) }
+                    .padding(8.dp)
+            ) {
+                Text(tab.name, style = MaterialTheme.typography.body2)
+                Spacer(Modifier.width(8.dp))
+            }
+            Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
+        }
+    }
+}
+
+private fun openFileDialog(onFileSelected: (File) -> Unit) {
     val fileDialog = FileDialog(ComposeWindow())
     fileDialog.isVisible = true
     fileDialog.file?.let {
-        val file = File(File(fileDialog.directory), it)
-        changeSource(Source.File(file))
+        onFileSelected(File(File(fileDialog.directory), it))
     }
 }
