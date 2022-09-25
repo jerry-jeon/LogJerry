@@ -36,7 +36,7 @@ tasks.test {
 
 compose.desktop {
     application {
-        mainClass = "MainKt"
+        mainClass = "com.jerryjeon.logjerry.MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "LogJerry"

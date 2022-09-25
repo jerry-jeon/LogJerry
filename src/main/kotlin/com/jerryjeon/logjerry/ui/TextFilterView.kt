@@ -1,5 +1,7 @@
 @file:OptIn(ExperimentalComposeUiApi::class)
 
+package com.jerryjeon.logjerry.ui
+
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box

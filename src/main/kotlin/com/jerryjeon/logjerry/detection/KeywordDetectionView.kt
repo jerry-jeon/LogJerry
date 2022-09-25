@@ -2,7 +2,6 @@
 
 package com.jerryjeon.logjerry.detection
 
-import DetectionFocus
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row

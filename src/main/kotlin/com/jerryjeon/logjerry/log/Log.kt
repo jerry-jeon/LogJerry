@@ -1,3 +1,4 @@
+package com.jerryjeon.logjerry.log
 data class Log(
     val number: Int,
     val date: String,

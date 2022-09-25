@@ -1,7 +1,7 @@
 package com.jerryjeon.logjerry.log.refine
 
-import Log
-import Priority
+import com.jerryjeon.logjerry.log.Log
+import com.jerryjeon.logjerry.log.Priority
 
 data class PriorityFilter(val priority: Priority) : LogFilter {
     override fun filter(log: Log): Boolean {

@@ -2,10 +2,10 @@
 
 package com.jerryjeon.logjerry.preferences
 
-import Priority
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import com.jerryjeon.logjerry.log.Priority
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

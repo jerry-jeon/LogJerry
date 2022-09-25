@@ -1,9 +1,9 @@
 package com.jerryjeon.logjerry.log.refine
 
-import DetectionKey
-import DetectionResult
-import Log
 import androidx.compose.ui.text.AnnotatedString
+import com.jerryjeon.logjerry.detection.DetectionKey
+import com.jerryjeon.logjerry.detection.DetectionResult
+import com.jerryjeon.logjerry.log.Log
 
 data class RefineResult(
     val originalLogs: List<Log>,

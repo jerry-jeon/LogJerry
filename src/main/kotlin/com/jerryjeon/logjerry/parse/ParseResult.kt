@@ -1,6 +1,6 @@
 package com.jerryjeon.logjerry.parse
 
-import Log
+import com.jerryjeon.logjerry.log.Log
 
 data class ParseResult(
     val logs: List<Log>,

@@ -1,3 +1,5 @@
+package com.jerryjeon.logjerry.ui
+
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +14,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.jerryjeon.logjerry.ColumnDivider
+import com.jerryjeon.logjerry.HeaderDivider
+import com.jerryjeon.logjerry.detection.DetectionFocus
 import com.jerryjeon.logjerry.log.refine.RefinedLog
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header

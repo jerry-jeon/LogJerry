@@ -1,6 +1,6 @@
 package com.jerryjeon.logjerry.parse
 
-import Log
+import com.jerryjeon.logjerry.log.Log
 import java.util.concurrent.atomic.AtomicInteger
 
 class DefaultParser : LogParser {

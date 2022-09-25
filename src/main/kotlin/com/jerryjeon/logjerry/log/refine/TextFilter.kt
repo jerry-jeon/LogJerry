@@ -1,6 +1,6 @@
 package com.jerryjeon.logjerry.log.refine
 
-import Log
+import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.table.ColumnType
 
 data class TextFilter(

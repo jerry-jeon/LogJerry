@@ -2,7 +2,6 @@
 
 package com.jerryjeon.logjerry.preferences
 
-import Priority
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +26,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
+import com.jerryjeon.logjerry.log.Priority
 
 @Composable
 fun PreferencesView(isOpen: MutableState<Boolean>, preferencesState: MutableState<Preferences>) {

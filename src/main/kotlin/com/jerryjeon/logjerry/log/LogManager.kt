@@ -1,12 +1,10 @@
 package com.jerryjeon.logjerry.log
 
-import Detection
-import DetectionFocus
-import DetectionKey
-import DetectionResult
-import Log
-import Priority
 import androidx.compose.ui.text.AnnotatedString
+import com.jerryjeon.logjerry.detection.Detection
+import com.jerryjeon.logjerry.detection.DetectionFocus
+import com.jerryjeon.logjerry.detection.DetectionKey
+import com.jerryjeon.logjerry.detection.DetectionResult
 import com.jerryjeon.logjerry.detection.ExceptionDetection
 import com.jerryjeon.logjerry.detection.JsonDetection
 import com.jerryjeon.logjerry.detection.KeywordDetection

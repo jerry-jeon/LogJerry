@@ -1,3 +1,5 @@
+package com.jerryjeon.logjerry.detection
+
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 

@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this com.jerryjeon.logjerry.source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:OptIn(ExperimentalComposeUiApi::class, ExperimentalSerializationApi::class)
 
+package com.jerryjeon.logjerry
+
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -61,8 +63,11 @@ import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
+import com.jerryjeon.logjerry.detection.DetectionFocus
+import com.jerryjeon.logjerry.detection.DetectionKey
 import com.jerryjeon.logjerry.detection.KeywordDetectionRequest
 import com.jerryjeon.logjerry.detection.KeywordDetectionView
+import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogManager
 import com.jerryjeon.logjerry.log.refine.RefinedLog
 import com.jerryjeon.logjerry.parse.ParseResult
@@ -76,7 +81,10 @@ import com.jerryjeon.logjerry.tab.Tabs
 import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.ui.ExceptionDetectionView
 import com.jerryjeon.logjerry.ui.JsonDetectionView
+import com.jerryjeon.logjerry.ui.LogsView
 import com.jerryjeon.logjerry.ui.PriorityFilterView
+import com.jerryjeon.logjerry.ui.TextFilterView
+import com.jerryjeon.logjerry.ui.columnCheckboxItem
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream

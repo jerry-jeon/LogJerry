@@ -1,5 +1,7 @@
 @file:OptIn(ExperimentalComposeUiApi::class)
 
+package com.jerryjeon.logjerry.ui
+
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -15,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.jerryjeon.logjerry.MyTheme
 import com.jerryjeon.logjerry.table.ColumnInfo
 import com.jerryjeon.logjerry.table.Header
 

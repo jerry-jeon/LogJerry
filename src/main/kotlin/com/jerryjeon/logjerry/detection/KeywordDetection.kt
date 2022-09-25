@@ -1,8 +1,5 @@
 package com.jerryjeon.logjerry.detection
 
-import Detection
-import DetectionKey
-import DetectionResult
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 

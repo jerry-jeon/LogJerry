@@ -2,11 +2,11 @@
 
 package com.jerryjeon.logjerry.preferences
 
-import Priority
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
+import com.jerryjeon.logjerry.log.Priority
 import com.jerryjeon.logjerry.serialization.ColorAsLongSerializer
 import com.jerryjeon.logjerry.serialization.TextUnitAsFloatSerializer
 import kotlinx.serialization.Serializable

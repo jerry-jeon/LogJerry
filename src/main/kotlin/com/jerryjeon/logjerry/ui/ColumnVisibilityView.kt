@@ -1,3 +1,5 @@
+package com.jerryjeon.logjerry.ui
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.width

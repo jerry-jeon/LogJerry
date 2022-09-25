@@ -1,6 +1,5 @@
 package com.jerryjeon.logjerry.ui
 
-import Priority
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.jerryjeon.logjerry.log.Priority
 import com.jerryjeon.logjerry.log.refine.PriorityFilter
 
 @Composable
