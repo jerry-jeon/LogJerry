@@ -19,7 +19,7 @@ open class DetectionResult(
     val logIndex: Int
 )
 
-data class DetectionResultFocus(
+data class DetectionFocus(
     val key: DetectionKey,
     val currentIndex: Int,
     val focusing: DetectionResult?,

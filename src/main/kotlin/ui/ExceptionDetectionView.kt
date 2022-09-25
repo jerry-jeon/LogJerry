@@ -1,6 +1,6 @@
 package ui
 
-import DetectionResultFocus
+import DetectionFocus
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -29,9 +29,9 @@ import detection.ExceptionDetection
 @Composable
 fun ExceptionDetectionView(
     modifier: Modifier,
-    detectionResultFocus: DetectionResultFocus?,
-    moveToPreviousOccurrence: (DetectionResultFocus) -> Unit,
-    moveToNextOccurrence: (DetectionResultFocus) -> Unit,
+    detectionFocus: DetectionFocus?,
+    moveToPreviousOccurrence: (DetectionFocus) -> Unit,
+    moveToNextOccurrence: (DetectionFocus) -> Unit,
 ) {
     CompositionLocalProvider(
         LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp),
@@ -39,11 +39,11 @@ fun ExceptionDetectionView(
         Box(modifier = modifier) {
             Column(Modifier.height(IntrinsicSize.Min).padding(8.dp)) {
                 Text(AnnotatedString("Exception", spanStyle = ExceptionDetection().detectedStyle))
-                if(detectionResultFocus == null) {
+                if(detectionFocus == null) {
                     Spacer(Modifier.height(16.dp))
                     Text("No results", textAlign = TextAlign.Center)
                 } else {
-                    ExceptionDetectionFocusExist(detectionResultFocus, moveToPreviousOccurrence, moveToNextOccurrence)
+                    ExceptionDetectionFocusExist(detectionFocus, moveToPreviousOccurrence, moveToNextOccurrence)
                 }
             }
         }
@@ -52,9 +52,9 @@ fun ExceptionDetectionView(
 
 @Composable
 fun ExceptionDetectionFocusExist(
-    focus: DetectionResultFocus,
-    moveToPreviousOccurrence: (DetectionResultFocus) -> Unit,
-    moveToNextOccurrence: (DetectionResultFocus) -> Unit
+    focus: DetectionFocus,
+    moveToPreviousOccurrence: (DetectionFocus) -> Unit,
+    moveToNextOccurrence: (DetectionFocus) -> Unit
 ) {
     Row {
 /* TODO not sure it's helpful... remove it because it looks bad

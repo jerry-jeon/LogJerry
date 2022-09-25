@@ -75,9 +75,9 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
                 val logManager = status.logManager
                 val refinedLogs by logManager.refineResult.collectAsState()
                 val findStatus = logManager.keywordDetectionRequestFlow.collectAsState()
-                val keywordDetectionResultFocus = logManager.keywordDetectionResultFocus.collectAsState()
-                val exceptionDetectionResultFocus = logManager.exceptionDetectionResultFocus.collectAsState()
-                val jsonDetectionResultFocus = logManager.jsonDetectionResultFocus.collectAsState()
+                val keywordDetectionResultFocus = logManager.keywordDetectionFocus.collectAsState()
+                val exceptionDetectionResultFocus = logManager.exceptionDetectionFocus.collectAsState()
+                val jsonDetectionResultFocus = logManager.jsonDetectionFocus.collectAsState()
                 val findResult = logManager.activeDetectionResultFocusFlowState.collectAsState()
                 val refinedLogsList = refinedLogs.refined
                 val logs = logManager.originalLogs
@@ -102,10 +102,10 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
 fun ParseCompletedView(
     logManager: LogManager,
     keywordDetectionRequest: KeywordDetectionRequest,
-    detectionResultFocus: DetectionResultFocus?,
-    keywordDetectionResultFocus: DetectionResultFocus?,
-    exceptionDetectionResultFocus: DetectionResultFocus?,
-    jsonDetectionResultFocus: DetectionResultFocus?,
+    detectionFocus: DetectionFocus?,
+    keywordDetectionFocus: DetectionFocus?,
+    exceptionDetectionFocus: DetectionFocus?,
+    jsonDetectionFocus: DetectionFocus?,
     refinedLogsList: List<RefinedLog>,
     logs: List<Log>,
     headerState: MutableState<Header>,
@@ -124,7 +124,7 @@ fun ParseCompletedView(
                 Row {
                     ExceptionDetectionView(
                         Modifier.width(200.dp).wrapContentHeight(),
-                        exceptionDetectionResultFocus,
+                        exceptionDetectionFocus,
                         { logManager.previousFindResult(DetectionKey.Exception, it) },
                         { logManager.nextFindResult(DetectionKey.Exception, it) },
                     )
@@ -133,7 +133,7 @@ fun ParseCompletedView(
                     Spacer(Modifier.width(8.dp))
                     JsonDetectionView(
                         Modifier.width(200.dp).wrapContentHeight(),
-                        jsonDetectionResultFocus,
+                        jsonDetectionFocus,
                         { logManager.previousFindResult(DetectionKey.Json, it) },
                         { logManager.nextFindResult(DetectionKey.Json, it) },
                     )
@@ -151,7 +151,7 @@ fun ParseCompletedView(
         KeywordDetectionView(
             Modifier.align(Alignment.BottomEnd),
             keywordDetectionRequest,
-            keywordDetectionResultFocus,
+            keywordDetectionFocus,
             logManager::find,
             logManager::setKeywordDetectionEnabled,
             { logManager.previousFindResult(DetectionKey.Keyword, it) },
@@ -159,7 +159,7 @@ fun ParseCompletedView(
         )
     }
     Divider(color = Color.Black)
-    LogsView(headerState.value, refinedLogsList, detectionResultFocus)
+    LogsView(headerState.value, refinedLogsList, detectionFocus)
 }
 
 @Composable

@@ -1,6 +1,6 @@
 package ui
 
-import DetectionResultFocus
+import DetectionFocus
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -30,9 +30,9 @@ import detection.JsonDetection
 @Composable
 fun JsonDetectionView(
     modifier: Modifier,
-    detectionResultFocus: DetectionResultFocus?,
-    moveToPreviousOccurrence: (DetectionResultFocus) -> Unit,
-    moveToNextOccurrence: (DetectionResultFocus) -> Unit,
+    detectionFocus: DetectionFocus?,
+    moveToPreviousOccurrence: (DetectionFocus) -> Unit,
+    moveToNextOccurrence: (DetectionFocus) -> Unit,
 ) {
     CompositionLocalProvider(
         LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp),
@@ -46,11 +46,11 @@ fun JsonDetectionView(
                     }
                 }
                 Text(title)
-                if(detectionResultFocus == null) {
+                if(detectionFocus == null) {
                     Spacer(Modifier.height(16.dp))
                     Text("No results", textAlign = TextAlign.Center)
                 } else {
-                    JsonDetectionFocusExist(detectionResultFocus, moveToPreviousOccurrence, moveToNextOccurrence)
+                    JsonDetectionFocusExist(detectionFocus, moveToPreviousOccurrence, moveToNextOccurrence)
                 }
             }
         }
@@ -59,9 +59,9 @@ fun JsonDetectionView(
 
 @Composable
 fun JsonDetectionFocusExist(
-    focus: DetectionResultFocus,
-    moveToPreviousOccurrence: (DetectionResultFocus) -> Unit,
-    moveToNextOccurrence: (DetectionResultFocus) -> Unit
+    focus: DetectionFocus,
+    moveToPreviousOccurrence: (DetectionFocus) -> Unit,
+    moveToNextOccurrence: (DetectionFocus) -> Unit
 ) {
     Column {
         Row {

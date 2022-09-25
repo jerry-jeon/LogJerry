@@ -10,11 +10,11 @@ import log.refine.RefinedLog
 import table.Header
 
 @Composable
-fun LogsView(header: Header, logs: List<RefinedLog>, detectionResultFocus: DetectionResultFocus?) {
+fun LogsView(header: Header, logs: List<RefinedLog>, detectionFocus: DetectionFocus?) {
     val listState = rememberLazyListState()
 
-    LaunchedEffect(detectionResultFocus) {
-        detectionResultFocus?.focusing?.let {
+    LaunchedEffect(detectionFocus) {
+        detectionFocus?.focusing?.let {
             listState.scrollToItem(it.logIndex)
         }
     }

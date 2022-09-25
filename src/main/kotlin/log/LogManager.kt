@@ -1,9 +1,9 @@
 package log
 
 import Detection
+import DetectionFocus
 import DetectionKey
 import DetectionResult
-import DetectionResultFocus
 import Log
 import Priority
 import androidx.compose.ui.text.AnnotatedString
@@ -97,39 +97,39 @@ class LogManager(
         RefineResult(originalLogs, refined, allDetectionResults)
     }.stateIn(logScope, SharingStarted.Lazily, RefineResult(emptyList(), emptyList(), emptyMap()))
 
-    val keywordDetectionResultFocus = MutableStateFlow<DetectionResultFocus?>(null)
-    val exceptionDetectionResultFocus = MutableStateFlow<DetectionResultFocus?>(null)
-    val jsonDetectionResultFocus = MutableStateFlow<DetectionResultFocus?>(null)
+    val keywordDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
+    val exceptionDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
+    val jsonDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
 
     private val focuses = mapOf(
-        DetectionKey.Keyword to keywordDetectionResultFocus,
-        DetectionKey.Exception to exceptionDetectionResultFocus,
-        DetectionKey.Json to jsonDetectionResultFocus,
+        DetectionKey.Keyword to keywordDetectionFocus,
+        DetectionKey.Exception to exceptionDetectionFocus,
+        DetectionKey.Json to jsonDetectionFocus,
     )
 
     init {
         logScope.launch {
             refineResult.collect { refinedLogs ->
                 val results = refinedLogs.allDetectionResults[DetectionKey.Keyword] ?: emptyList()
-                keywordDetectionResultFocus.value = results.firstOrNull()?.let {
-                    DetectionResultFocus(DetectionKey.Keyword, 0, null, results)
+                keywordDetectionFocus.value = results.firstOrNull()?.let {
+                    DetectionFocus(DetectionKey.Keyword, 0, null, results)
                 }
 
                 val results2 = refinedLogs.allDetectionResults[DetectionKey.Exception] ?: emptyList()
-                exceptionDetectionResultFocus.value = results2.firstOrNull()?.let {
-                    DetectionResultFocus(DetectionKey.Exception, 0, null, results2)
+                exceptionDetectionFocus.value = results2.firstOrNull()?.let {
+                    DetectionFocus(DetectionKey.Exception, 0, null, results2)
                 }
 
                 val results3 = refinedLogs.allDetectionResults[DetectionKey.Json] ?: emptyList()
-                jsonDetectionResultFocus.value = results3.firstOrNull()?.let {
-                    DetectionResultFocus(DetectionKey.Exception, 0, null, results3)
+                jsonDetectionFocus.value = results3.firstOrNull()?.let {
+                    DetectionFocus(DetectionKey.Exception, 0, null, results3)
                 }
             }
         }
     }
 
     val activeDetectionResultFocusFlowState =
-        merge(keywordDetectionResultFocus, exceptionDetectionResultFocus, jsonDetectionResultFocus)
+        merge(keywordDetectionFocus, exceptionDetectionFocus, jsonDetectionFocus)
             .filter { it?.focusing != null }
             .stateIn(logScope, SharingStarted.Lazily, null)
 
@@ -154,7 +154,7 @@ class LogManager(
         keywordDetectionEnabledStateFlow.value = enabled
     }
 
-    fun previousFindResult(key: DetectionKey, focus: DetectionResultFocus) {
+    fun previousFindResult(key: DetectionKey, focus: DetectionFocus) {
         val previousIndex = if (focus.currentIndex <= 0) {
             focus.results.size - 1
         } else {
@@ -164,7 +164,7 @@ class LogManager(
         focuses[key]?.value = focus.copy(currentIndex = previousIndex, focusing = focus.results[previousIndex])
     }
 
-    fun nextFindResult(key: DetectionKey, focus: DetectionResultFocus) {
+    fun nextFindResult(key: DetectionKey, focus: DetectionFocus) {
         val nextIndex = if (focus.currentIndex >= focus.results.size - 1) {
             0
         } else {

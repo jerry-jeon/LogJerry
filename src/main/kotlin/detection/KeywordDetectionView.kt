@@ -1,8 +1,8 @@
 package detection
 
+import DetectionFocus
 import DetectionKey
 import DetectionResult
-import DetectionResultFocus
 import MyTheme
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Box
@@ -31,11 +31,11 @@ import log.SampleData
 fun KeywordDetectionView(
     modifier: Modifier = Modifier,
     keywordDetectionRequest: KeywordDetectionRequest,
-    detectionResultFocus: DetectionResultFocus?,
+    detectionFocus: DetectionFocus?,
     find: (String) -> Unit,
     setFindEnabled: (Boolean) -> Unit,
-    moveToPreviousOccurrence: (DetectionResultFocus) -> Unit,
-    moveToNextOccurrence: (DetectionResultFocus) -> Unit,
+    moveToPreviousOccurrence: (DetectionFocus) -> Unit,
+    moveToNextOccurrence: (DetectionFocus) -> Unit,
 ) {
     CompositionLocalProvider(
         LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp),
@@ -47,7 +47,7 @@ fun KeywordDetectionView(
                     keywordDetectionRequest,
                     find,
                     setFindEnabled,
-                    detectionResultFocus,
+                    detectionFocus,
                     moveToPreviousOccurrence,
                     moveToNextOccurrence
                 )
@@ -63,9 +63,9 @@ private fun KeywordDetectionRequestViewTurnedOn(
     keywordDetectionRequest: KeywordDetectionRequest.TurnedOn,
     find: (String) -> Unit,
     setFindEnabled: (Boolean) -> Unit,
-    detectionResultFocus: DetectionResultFocus?,
-    moveToPreviousOccurrence: (DetectionResultFocus) -> Unit,
-    moveToNextOccurrence: (DetectionResultFocus) -> Unit
+    detectionFocus: DetectionFocus?,
+    moveToPreviousOccurrence: (DetectionFocus) -> Unit,
+    moveToNextOccurrence: (DetectionFocus) -> Unit
 ) {
     Box(modifier.padding(8.dp)) {
         OutlinedTextField(
@@ -74,7 +74,7 @@ private fun KeywordDetectionRequestViewTurnedOn(
             leadingIcon = { Icon(Icons.Default.Search, "Search") },
             trailingIcon = {
                 Row {
-                    detectionResultFocus?.let {
+                    detectionFocus?.let {
                         if (it.focusing == null) {
                             Text(
                                 "${it.results.size} results",
@@ -82,7 +82,7 @@ private fun KeywordDetectionRequestViewTurnedOn(
                             )
                         } else {
                             Text(
-                                "${it.currentIndexInView} / ${detectionResultFocus.totalCount}",
+                                "${it.currentIndexInView} / ${detectionFocus.totalCount}",
                                 modifier = Modifier.align(Alignment.CenterVertically)
                             )
                         }
@@ -111,7 +111,7 @@ private fun KeywordDetectionViewPreview() {
         KeywordDetectionView(
             Modifier,
             KeywordDetectionRequest.TurnedOn("Searching keyword"),
-            DetectionResultFocus(DetectionKey.Keyword, 0, results[0], results),
+            DetectionFocus(DetectionKey.Keyword, 0, results[0], results),
             {},
             {},
             {},
