@@ -2,25 +2,19 @@
 @file:OptIn(ExperimentalComposeUiApi::class)
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Divider
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -40,6 +34,8 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogState
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
@@ -168,27 +164,35 @@ private fun GettingStartedView() {
 
 @Composable
 private fun InvalidSentences(parseResult: ParseResult) {
-    var showInvalidSentence by remember { mutableStateOf(true) }
     val invalidSentences = parseResult.invalidSentences
+    var showInvalidSentence by remember { mutableStateOf(invalidSentences.isNotEmpty()) }
     if (showInvalidSentence) {
-        Column(Modifier.fillMaxWidth().background(Color.LightGray).padding(8.dp)) {
-            Row {
-                IconButton(
-                    onClick = { showInvalidSentence = false },
-                    modifier = Modifier.size(16.dp).align(Alignment.CenterVertically)
-                ) {
-                    Icon(Icons.Default.Close, "Close showing invalid sentences")
-                }
-                Spacer(Modifier.width(8.dp))
+        Dialog(
+            onCloseRequest = { showInvalidSentence = false },
+            title = "Invalid sentences",
+            state = DialogState(width = 800.dp, height = 600.dp)
+        ) {
+            Column(Modifier.padding(16.dp)) {
                 Text(
                     "There were ${invalidSentences.size} invalid sentences",
                     color = Color.Red,
-                    modifier = Modifier.align(Alignment.CenterVertically)
                 )
-            }
-            Spacer(Modifier.height(8.dp))
-            invalidSentences.forEach { (index, s) ->
-                Text("L#${index + 1} : $s")
+                Text(
+                    "Supported format : \"date time pid-tid/packageName priority/tag: log\"",
+                    color = Color.Black,
+                )
+                Spacer(Modifier.height(16.dp))
+                Divider()
+                Spacer(Modifier.height(16.dp))
+                invalidSentences.forEach { (index, s) ->
+                    Row(Modifier.height(IntrinsicSize.Min)) {
+                        Text("Line ${index + 1}")
+                        Spacer(Modifier.width(4.dp))
+                        Divider(Modifier.width(1.dp).fillMaxHeight())
+                        Spacer(Modifier.width(4.dp))
+                        Text(s, color = Color.Red)
+                    }
+                }
             }
         }
     }
