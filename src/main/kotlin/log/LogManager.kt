@@ -36,13 +36,14 @@ class LogManager(
 
     private val keywordDetectionEnabledStateFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     private val detectingKeywordFlow = MutableStateFlow("")
-    val keywordDetectionRequestFlow = combine(keywordDetectionEnabledStateFlow, detectingKeywordFlow) { enabled, keyword ->
-        if (enabled) {
-            KeywordDetectionRequest.TurnedOn(keyword)
-        } else {
-            KeywordDetectionRequest.TurnedOff
-        }
-    }.stateIn(logScope, SharingStarted.Lazily, KeywordDetectionRequest.TurnedOff)
+    val keywordDetectionRequestFlow =
+        combine(keywordDetectionEnabledStateFlow, detectingKeywordFlow) { enabled, keyword ->
+            if (enabled) {
+                KeywordDetectionRequest.TurnedOn(keyword)
+            } else {
+                KeywordDetectionRequest.TurnedOff
+            }
+        }.stateIn(logScope, SharingStarted.Lazily, KeywordDetectionRequest.TurnedOff)
 
     val textFiltersFlow: MutableStateFlow<List<TextFilter>> = MutableStateFlow(emptyList())
     val priorityFilter: MutableStateFlow<PriorityFilter> = MutableStateFlow(PriorityFilter(Priority.Verbose))
@@ -68,24 +69,30 @@ class LogManager(
         }
             .mapIndexed { logIndex, log ->
                 val detectionResults = mutableMapOf<DetectionKey, MutableList<DetectionResult>>()
-                val refined = transformers.detections.fold(log) { acc, detection ->
-                    val (detectionResult, changedLog) = doDetection(detection, acc, logIndex)
-                    if (detectionResult != null) {
-                        val resultList = detectionResults.getOrPut(detection.key) { mutableListOf() }
-                        resultList.add(detectionResult)
+                transformers.detections.mapNotNull { it.detect(log, logIndex) }
+                    .forEach {
+                        val resultList = detectionResults.getOrPut(it.key) { mutableListOf() }
+                        resultList.add(it)
                     }
-                    changedLog
-                }
+                val annotatedLog = detectionResults.values.flatten()
+                    .fold(AnnotatedString.Builder(log.originalLog)) { builder, result ->
+                        builder.apply {
+                            result.ranges.forEach { range ->
+                                addStyle(result.style, range.first, range.last)
+                            }
+                        }
+                    }.toAnnotatedString()
+
                 // TODO cleanup codes
                 detectionResults.forEach { (k, v) ->
                     val exist = allDetectionResults[k]
-                    if(exist != null) {
+                    if (exist != null) {
                         allDetectionResults[k] = exist + v
                     } else {
                         allDetectionResults[k] = v
                     }
                 }
-                RefinedLog(log, refined, detectionResults)
+                RefinedLog(log, annotatedLog, detectionResults)
             }
         RefineResult(originalLogs, refined, allDetectionResults)
     }.stateIn(logScope, SharingStarted.Lazily, RefineResult(emptyList(), emptyList(), emptyMap()))
@@ -130,17 +137,6 @@ class LogManager(
         val filters: List<LogFilter>,
         val detections: List<Detection>
     )
-
-    private fun doDetection(detection: Detection, log: Log, logIndex: Int): Pair<DetectionResult?, Log> {
-        val detectionResult = detection.detect(log, logIndex) ?: return (null to log)
-        return detectionResult to log.copy(
-            log = detectionResult.ranges.fold(AnnotatedString.Builder(log.originalLog)) { builder, range ->
-                builder.apply {
-                    addStyle(detection.detectedStyle, range.first, range.last)
-                }
-            }.toAnnotatedString()
-        )
-    }
 
     fun addFilter(textFilter: TextFilter) {
         textFiltersFlow.value = textFiltersFlow.value + textFilter

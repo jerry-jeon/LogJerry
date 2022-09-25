@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import log.SampleData
@@ -103,7 +104,7 @@ private fun KeywordDetectionRequestViewTurnedOn(
 @Composable
 private fun KeywordDetectionViewPreview() {
     MyTheme {
-        val results = listOf(DetectionResult((listOf(0..3)), SampleData.log, 0))
+        val results = listOf(DetectionResult(DetectionKey.Keyword, SpanStyle(), listOf(0..3), SampleData.log, 0))
         KeywordDetectionView(
             KeywordDetectionRequest.TurnedOn("Searching keyword"),
             DetectionResultFocus(DetectionKey.Keyword, 0, results[0], results),

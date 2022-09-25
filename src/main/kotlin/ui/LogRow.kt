@@ -41,8 +41,9 @@ fun LogRow(
     }
 }
 
-@Composable fun RowScope.CellByColumnType(columnInfo: ColumnInfo, refinedLog: RefinedLog) {
-    val log = refinedLog.originalLog
+@Composable
+fun RowScope.CellByColumnType(columnInfo: ColumnInfo, refinedLog: RefinedLog) {
+    val log = refinedLog.log
     when (columnInfo.columnType) {
         ColumnType.Number -> NumberCell(columnInfo, log)
         ColumnType.Date -> DateCell(columnInfo, log)
@@ -53,13 +54,15 @@ fun LogRow(
         ColumnType.Priority -> PriorityCell(columnInfo, log)
         ColumnType.Tag -> TagCell(columnInfo, log)
         ColumnType.B -> ButtonCell(columnInfo, refinedLog)
-        ColumnType.Log -> LogCell(columnInfo, log)
+        ColumnType.Log -> LogCell(columnInfo, refinedLog)
     }
 }
+
 @Composable
 private fun RowScope.NumberCell(number: ColumnInfo, log: Log) {
     Text(text = log.number.toString(), modifier = this.cellDefaultModifier(number.width))
 }
+
 @Composable
 private fun RowScope.DateCell(date: ColumnInfo, log: Log) {
     Text(text = log.date, modifier = this.cellDefaultModifier(date.width))
@@ -99,30 +102,36 @@ private fun RowScope.TagCell(tag: ColumnInfo, log: Log) {
 private fun RowScope.ButtonCell(logHeader: ColumnInfo, refinedLog: RefinedLog) {
     var showDialog by remember { mutableStateOf(false) }
 
-    if(refinedLog.detectionResults[DetectionKey.Json] != null) {
+    if (refinedLog.detectionResults[DetectionKey.Json] != null) {
         TextButton(onClick = { showDialog = true }) {
             Text("{ }")
         }
     }
 
-    if(showDialog) {
+    if (showDialog) {
         Dialog(
             onCloseRequest = { showDialog = false },
             title = "Pretty Json",
             state = DialogState(width = 800.dp, height = 600.dp)
         ) {
             val json = Json { prettyPrint = true }
-            Text(json.encodeToString(JsonObject.serializer(), (refinedLog.detectionResults.get(DetectionKey.Json)!!.get(0) as JsonDetectionResult).jsonList.get(0)))
+            Text(
+                json.encodeToString(
+                    JsonObject.serializer(),
+                    (refinedLog.detectionResults.get(DetectionKey.Json)!!.get(0) as JsonDetectionResult).jsonList.get(0)
+                )
+            )
         }
     }
 }
 
 @Composable
-private fun RowScope.LogCell(logHeader: ColumnInfo, log: Log) {
+private fun RowScope.LogCell(logHeader: ColumnInfo, refinedLog: RefinedLog) {
+    val log = refinedLog.log
     SelectionContainer {
         // TODO make if configurable
         val style = if (log.priority == Priority.Error) TextStyle.Default.copy(color = Color.Red) else TextStyle.Default
-        Text(log.log, modifier = this.cellDefaultModifier(logHeader.width), style = style)
+        Text(refinedLog.annotatedLog, modifier = this.cellDefaultModifier(logHeader.width), style = style)
     }
 }
 

@@ -23,7 +23,7 @@ class KeywordDetection(private val keyword: String) : Detection {
         }
 
         return if (indexRanges.isNotEmpty()) {
-            DetectionResult(indexRanges, log, logIndex)
+            DetectionResult(key, detectedStyle, indexRanges, log, logIndex)
         } else {
             null
         }

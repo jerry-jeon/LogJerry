@@ -3,6 +3,7 @@ package log.refine
 import DetectionKey
 import DetectionResult
 import Log
+import androidx.compose.ui.text.AnnotatedString
 
 data class RefineResult(
     val originalLogs: List<Log>,
@@ -11,7 +12,7 @@ data class RefineResult(
 )
 
 data class RefinedLog(
-    val originalLog: Log,
-    val refined: Log, // TODO I think that just taking the annotatedString looks simpler
+    val log: Log,
+    val annotatedLog: AnnotatedString,
     val detectionResults: Map<DetectionKey, List<DetectionResult>>
 )

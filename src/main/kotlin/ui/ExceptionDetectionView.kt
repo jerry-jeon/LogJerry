@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import detection.ExceptionDetectionResult
@@ -86,7 +87,7 @@ private fun ExceptionDetectionRequestViewTurnedOn(
 private fun ExceptionDetectionViewPreview() {
     MyTheme {
         val results = listOf(
-            ExceptionDetectionResult(0..1, SampleData.log, 0, "")
+            ExceptionDetectionResult(DetectionKey.Exception, SpanStyle(), 0..1, SampleData.log, 0, "")
         )
         ExceptionDetectionView(
             DetectionResultFocus(DetectionKey.Exception, 1, results[2], results),

@@ -46,13 +46,15 @@ class JsonDetection : Detection {
 
         if (jsonList.isEmpty()) return null
 
-        return JsonDetectionResult(bracketRanges, log, logIndex, jsonList)
+        return JsonDetectionResult(key, detectedStyle, bracketRanges, log, logIndex, jsonList)
     }
 }
 
 class JsonDetectionResult(
+    key: DetectionKey,
+    style: SpanStyle,
     ranges: List<IntRange>,
     log: Log,
     logIndex: Int,
     val jsonList: List<JsonObject>
-) : DetectionResult(ranges, log, logIndex)
+) : DetectionResult(key, style, ranges, log, logIndex)

@@ -12,6 +12,8 @@ interface Detection {
 }
 
 open class DetectionResult(
+    val key: DetectionKey,
+    val style: SpanStyle, // TODO It would be better to move it to other place
     val ranges: List<IntRange>, // Detected ranges
     val log: Log,
     val logIndex: Int

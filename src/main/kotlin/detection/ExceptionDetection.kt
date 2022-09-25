@@ -22,6 +22,8 @@ class ExceptionDetection : Detection {
         val exception = words.firstOrNull { it.contains("exception", ignoreCase = true) || it.contains("error", ignoreCase = true) }
 
         return ExceptionDetectionResult(
+            key,
+            detectedStyle,
             0 until log.originalLog.length,
             log,
             logIndex,
@@ -55,8 +57,10 @@ class ExceptionDetection : Detection {
 }
 
 class ExceptionDetectionResult(
+    key: DetectionKey,
+    style: SpanStyle,
     range: IntRange,
     log: Log,
     logIndex: Int,
     val exception: String,
-) : DetectionResult(listOf(range), log, logIndex)
+) : DetectionResult(key, style, listOf(range), log, logIndex)
