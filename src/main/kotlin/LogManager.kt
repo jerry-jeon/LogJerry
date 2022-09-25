@@ -4,6 +4,7 @@ import androidx.compose.ui.text.SpanStyle
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -32,31 +33,52 @@ class LogManager(
                 }
             },
             when (findStatus) {
-                is FindStatus.TurnedOn -> listOfNotNull(annotateWithSearchKeyword(findStatus.keyword))
+                is FindStatus.TurnedOn -> listOf(KeywordDetection(findStatus.keyword))
                 FindStatus.TurnedOff -> emptyList()
             }
         )
     }
-    val refinedLogs = transformerFlow.map { transformers ->
-        if (transformers.filters.isEmpty()) {
+    val refinedLogs: StateFlow<RefinedLogs> = transformerFlow.map { transformers ->
+        val detectionResults = mutableMapOf<String, MutableList<DetectionResult>>()
+        val refined = if (transformers.filters.isEmpty()) {
             originalLogs
         } else {
             originalLogs
                 .filter { log -> transformers.filters.any { it(log) } }
         }
-            .map { log ->
-                transformers.formatters.fold(log) { acc, formatter -> formatter(acc) }
+            .mapIndexed { index, log ->
+                transformers.detections.fold(log) { acc, detection ->
+                    val changedLog = doDetection(detection, acc)
+                    (detectionResults.getOrPut(detection.key) { mutableListOf() })
+                        .add(DetectionResult(detection.key, index))
+                    changedLog
+                }
             }
-    }
+        RefinedLogs(originalLogs, refined, detectionResults)
+    }.stateIn(logScope, SharingStarted.Lazily, RefinedLogs(emptyList(), emptyList(), emptyMap()))
 
     data class Transformers(
         val filters: List<(Log) -> Boolean>,
-        val formatters: List<(Log) -> Log>
+        val detections: List<Detection>
     )
 
-    private fun annotateWithSearchKeyword(keyword: String): (Log) -> Log {
-        return if (keyword.isBlank()) { log: Log -> log }
-        else { log: Log ->
+    private fun doDetection(detection: Detection, log: Log): Log {
+        val indexRanges = detection.detect(log)
+
+        return log.copy(
+            log = indexRanges.fold(AnnotatedString.Builder(log.originalLog)) { builder, range ->
+                builder.apply {
+                    addStyle(detection.detectedStyle, range.first, range.last)
+                }
+            }.toAnnotatedString()
+        )
+    }
+
+    class KeywordDetection(private val keyword: String) : Detection {
+        override val key: String = "keyword"
+        override val detectedStyle: SpanStyle = SpanStyle(background = Color.Yellow)
+        override fun detect(log: Log): List<IntRange> {
+            if (keyword.isBlank()) return emptyList()
             var startIndex = 0
             val indexRanges = mutableListOf<IntRange>()
             while (startIndex != -1) {
@@ -67,13 +89,7 @@ class LogManager(
                 }
             }
 
-            log.copy(
-                log = indexRanges.fold(AnnotatedString.Builder(log.originalLog)) { builder, range ->
-                    builder.apply {
-                        addStyle(SpanStyle(background = Color.Red), range.first, range.last)
-                    }
-                }.toAnnotatedString()
-            )
+            return indexRanges
         }
     }
 

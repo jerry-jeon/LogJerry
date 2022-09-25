@@ -88,15 +88,16 @@ private fun GettingStartedView() {
 
 @Composable
 private fun FilterAndLogs(headerState: MutableState<Header>, logManager: LogManager) {
-    val refinedLogs by logManager.refinedLogs.collectAsState(emptyList())
+    val refinedLogs by logManager.refinedLogs.collectAsState()
+    val refinedLogsList = refinedLogs.refined
     val logs = logManager.originalLogs
     val fsState = logManager.findStatusFlow.collectAsState()
     Column {
         FindView(logManager, fsState.value)
         FilterView(logManager)
-        val filteredSize = (if (refinedLogs.size != logs.size) "Filtered size : ${refinedLogs.size}, " else "")
+        val filteredSize = (if (refinedLogsList.size != logs.size) "Filtered size : ${refinedLogsList.size}, " else "")
         Text(filteredSize + "Total : ${logs.size}")
-        LogsView(headerState.value, refinedLogs)
+        LogsView(headerState.value, refinedLogsList)
     }
 }
 
