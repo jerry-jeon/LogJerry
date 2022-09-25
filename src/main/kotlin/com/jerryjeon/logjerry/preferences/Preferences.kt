@@ -15,7 +15,8 @@ import java.io.File
 @Serializable
 data class Preferences(
     @Serializable(with = TextUnitAsFloatSerializer::class) val fontSize: TextUnit,
-    val colorByPriority: Map<Priority, @Serializable(with = ColorAsLongSerializer::class) Color>
+    val colorByPriority: Map<Priority, @Serializable(with = ColorAsLongSerializer::class) Color>,
+    val expandJsonWhenLoad: Boolean
 ) {
     companion object {
         val default = Preferences(
@@ -26,7 +27,8 @@ data class Preferences(
                 Priority.Info to Color(0xFF3EDE66),
                 Priority.Warning to Color(0xFFFF6B68),
                 Priority.Error to Color(0xFFFF6B68),
-            )
+            ),
+            true
         )
         val file = File(System.getProperty("java.io.tmpdir"), "LogJerryPreferences.json")
     }

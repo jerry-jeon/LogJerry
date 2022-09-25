@@ -76,6 +76,7 @@ import com.jerryjeon.logjerry.parse.ParseResult
 import com.jerryjeon.logjerry.parse.ParseStatus
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.preferences.PreferencesView
+import com.jerryjeon.logjerry.preferences.PreferencesViewModel
 import com.jerryjeon.logjerry.source.Source
 import com.jerryjeon.logjerry.tab.Tab
 import com.jerryjeon.logjerry.tab.TabManager
@@ -88,8 +89,6 @@ import com.jerryjeon.logjerry.ui.PriorityFilterView
 import com.jerryjeon.logjerry.ui.TextFilterView
 import com.jerryjeon.logjerry.ui.columnCheckboxItem
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromStream
 import java.awt.FileDialog
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -341,15 +340,11 @@ fun MyTheme(content: @Composable () -> Unit) {
 }
 
 fun main() = application {
+    val preferencesViewModel = PreferencesViewModel()
+    val preferences by preferencesViewModel.preferencesFlow.collectAsState()
     val headerState = remember { mutableStateOf(Header.default) }
     val preferenceOpen = remember { mutableStateOf(false) }
-    val preferences = try {
-        Preferences.file.inputStream().use { Json.decodeFromStream(it) }
-    } catch (e: Exception) {
-        Preferences.default
-    }
-    val preferencesState = remember { mutableStateOf(preferences) }
-    val tabManager = TabManager()
+    val tabManager = TabManager(preferences)
     val tabsState = tabManager.tabs.collectAsState()
     Window(
         title = "LogJerry",
@@ -400,8 +395,8 @@ fun main() = application {
             Column {
                 TabView(tabsState.value, tabManager::activate, tabManager::close)
                 Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
-                ActiveTabView(preferencesState.value, headerState.value, tabsState.value.active)
-                PreferencesView(preferenceOpen, preferencesState)
+                ActiveTabView(preferences, headerState.value, tabsState.value.active)
+                PreferencesView(preferenceOpen, preferencesViewModel)
             }
         }
     }

@@ -11,6 +11,7 @@ import com.jerryjeon.logjerry.detector.JsonDetector
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogContent
 import com.jerryjeon.logjerry.log.LogContentView
+import com.jerryjeon.logjerry.preferences.Preferences
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +25,8 @@ import kotlinx.serialization.json.JsonObject
 
 // It's related how logs are going to shown
 class LogViewManager(
-    detectionFinishedFlow: Flow<DetectionFinished>
+    detectionFinishedFlow: Flow<DetectionFinished>,
+    preferences: Preferences
 ) {
     private val logViewScope = MainScope()
     val json = Json { prettyPrint = true }
@@ -49,7 +51,7 @@ class LogViewManager(
         logViewScope.launch {
             detectionFinishedFlow.collect { detectionFinished ->
                 detectionExpandedFlow.value = detectionFinished.allDetections.values.flatten().associate {
-                    it.id to (it is JsonDetection)
+                    it.id to (preferences.expandJsonWhenLoad && (it is JsonDetection))
                 }
             }
         }

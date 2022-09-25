@@ -1,11 +1,15 @@
 package com.jerryjeon.logjerry.tab
 
+import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.source.Source
 import com.jerryjeon.logjerry.source.SourceManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.File
 
-class TabManager(initialTab: Tab = Tab(name = "Getting Started", sourceManager = SourceManager())) {
+class TabManager(
+    private val preferences: Preferences,
+    initialTab: Tab = Tab(name = "Getting Started", sourceManager = SourceManager(preferences))
+) {
 
     val tabs = MutableStateFlow(Tabs(listOf(initialTab), initialTab))
 
@@ -14,7 +18,7 @@ class TabManager(initialTab: Tab = Tab(name = "Getting Started", sourceManager =
     }
 
     fun onNewFileSelected(file: File) {
-        val newActiveTab = Tab(file.name, SourceManager())
+        val newActiveTab = Tab(file.name, SourceManager(preferences))
         newActiveTab.sourceManager.changeSource(Source.File(file))
 
         val (tabList, active) = tabs.value
@@ -39,7 +43,7 @@ class TabManager(initialTab: Tab = Tab(name = "Getting Started", sourceManager =
     }
 
     fun newTab() {
-        val newActiveTab = Tab.gettingStarted()
+        val newActiveTab = Tab.gettingStarted(preferences)
         val (tabList, _) = tabs.value
         tabs.value = tabs.value.copy(
             tabList = tabList + newActiveTab,
@@ -80,7 +84,7 @@ class TabManager(initialTab: Tab = Tab(name = "Getting Started", sourceManager =
             tabs.value.active -> {
                 when {
                     tabList.size <= 1 -> {
-                        val newActiveTab = Tab.gettingStarted()
+                        val newActiveTab = Tab.gettingStarted(preferences)
                         tabs.value = Tabs(
                             tabList = listOf(newActiveTab),
                             active = newActiveTab

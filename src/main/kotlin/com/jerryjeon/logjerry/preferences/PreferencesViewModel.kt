@@ -1,8 +1,7 @@
-@file:OptIn(ExperimentalSerializationApi::class)
+@file:OptIn(ExperimentalSerializationApi::class, ExperimentalSerializationApi::class)
 
 package com.jerryjeon.logjerry.preferences
 
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.jerryjeon.logjerry.log.Priority
@@ -13,14 +12,22 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 
-class PreferencesViewModel(
-    private val preferencesState: MutableState<Preferences>
-) {
+class PreferencesViewModel {
     private val preferenceScope = MainScope()
-    var colorStrings = MutableStateFlow(preferencesState.value.colorByPriority.toColorStrings())
 
+    // TODO not to read on the main thread
+    val preferencesFlow = MutableStateFlow(
+        try {
+            Preferences.file.inputStream().use { Json.decodeFromStream(it) }
+        } catch (e: Exception) {
+            Preferences.default
+        }
+    )
+
+    var colorStrings = MutableStateFlow(preferencesFlow.value.colorByPriority.toColorStrings())
     var validColorsByPriority = colorStrings.map {
         it.mapValues { (_, color) ->
             try {
@@ -31,11 +38,18 @@ class PreferencesViewModel(
         }
     }
         .stateIn(preferenceScope, SharingStarted.Lazily, Priority.values().associateWith { Color.Black })
+
+    val expandJsonWhenLoadFlow = MutableStateFlow(preferencesFlow.value.expandJsonWhenLoad)
+
     var saveEnabled = validColorsByPriority.map { map -> map.values.all { it != null } }
         .stateIn(preferenceScope, SharingStarted.Lazily, false)
 
     fun changeColorString(priority: Priority, colorString: String) {
         colorStrings.value = colorStrings.value + (priority to colorString)
+    }
+    
+    fun changeExpandJsonWhenLoad(expandJsonWhenLoad: Boolean) {
+        expandJsonWhenLoadFlow.value = expandJsonWhenLoad
     }
 
     fun save() {
@@ -43,17 +57,19 @@ class PreferencesViewModel(
         if (saving.any { (_, color) -> color == null }) {
             return
         }
-        preferencesState.value = preferencesState.value.copy(
-            colorByPriority = saving.mapValues { (_, color) -> color!! }
+        preferencesFlow.value = preferencesFlow.value.copy(
+            colorByPriority = saving.mapValues { (_, color) -> color!! },
+            expandJsonWhenLoad = expandJsonWhenLoadFlow.value
         )
 
         Preferences.file.outputStream().use {
-            Json.encodeToStream(preferencesState.value, it)
+            Json.encodeToStream(preferencesFlow.value, it)
         }
     }
 
     fun restoreToDefault() {
         colorStrings.value = Preferences.default.colorByPriority.toColorStrings()
+        expandJsonWhenLoadFlow.value = Preferences.default.expandJsonWhenLoad
     }
 
     private fun Map<Priority, Color>.toColorStrings() = mapValues { (_, c) -> String.format("#%x", c.toArgb()) }
