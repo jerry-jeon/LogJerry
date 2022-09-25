@@ -13,10 +13,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import log.refine.RefinedLog
+import preferences.Preferences
 import table.Header
 
 @Composable
-fun LogsView(header: Header, logs: List<RefinedLog>, detectionFocus: DetectionFocus?) {
+fun LogsView(preferences: Preferences, header: Header, logs: List<RefinedLog>, detectionFocus: DetectionFocus?) {
     val listState = rememberLazyListState()
 
     LaunchedEffect(detectionFocus) {
@@ -33,7 +34,7 @@ fun LogsView(header: Header, logs: List<RefinedLog>, detectionFocus: DetectionFo
             logs.forEach {
                 item {
                     Column {
-                        LogRow(it, header, divider = divider)
+                        LogRow(it, preferences, header, divider = divider)
                         Divider(color = Color(0xFFE5E7E9))
                     }
                 }

@@ -50,6 +50,8 @@ import log.LogManager
 import log.refine.RefinedLog
 import parse.ParseResult
 import parse.ParseStatus
+import preferences.Preferences
+import preferences.PreferencesView
 import source.Source
 import source.SourceManager
 import table.Header
@@ -63,7 +65,7 @@ import java.io.File
 
 @Composable
 @Preview
-fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
+fun App(preferences: Preferences, headerState: MutableState<Header>, sourceManager: SourceManager) {
     val parseStatus = sourceManager.parseStatusFlow.collectAsState(ParseStatus.NotStarted)
     // Flow would be better
 
@@ -90,6 +92,7 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
                     jsonDetectionResultFocus.value,
                     refinedLogsList,
                     logs,
+                    preferences,
                     headerState,
                     status.parseResult,
                 )
@@ -108,6 +111,7 @@ fun ParseCompletedView(
     jsonDetectionFocus: DetectionFocus?,
     refinedLogsList: List<RefinedLog>,
     logs: List<Log>,
+    preferences: Preferences,
     headerState: MutableState<Header>,
     parseResult: ParseResult
 ) {
@@ -159,7 +163,7 @@ fun ParseCompletedView(
         )
     }
     Divider(color = Color.Black)
-    LogsView(headerState.value, refinedLogsList, detectionFocus)
+    LogsView(preferences, headerState.value, refinedLogsList, detectionFocus)
 }
 
 @Composable
@@ -249,6 +253,8 @@ fun MyTheme(content: @Composable () -> Unit) {
 fun main() = application {
     val sourceManager = SourceManager()
     val headerState = remember { mutableStateOf(Header.default) }
+    val preferenceOpen = remember { mutableStateOf(false) }
+    val preferencesState = remember { mutableStateOf(Preferences.default) }
     Window(
         state = WindowState(width = 1600.dp, height = 800.dp),
         onCloseRequest = ::exitApplication,
@@ -278,8 +284,14 @@ fun main() = application {
                         columnCheckboxItem(columnInfo, headerState)
                     }
                 }
+                Menu("File") {
+                    Item("preferences.Preferences", shortcut = KeyShortcut(Key.Comma, meta = true)) {
+                        preferenceOpen.value = true
+                    }
+                }
             }
-            App(headerState, sourceManager)
+            App(preferencesState.value, headerState, sourceManager)
+            PreferencesView(preferenceOpen, preferencesState)
         }
     }
 }
