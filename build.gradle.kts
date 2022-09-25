@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.6.10"
-    id("org.jetbrains.compose") version "1.0.1-rc2"
+    id("org.jetbrains.compose") version "1.1.0"
     id("org.jlleitschuh.gradle.ktlint-idea") version "10.2.0"
 }
 
@@ -18,9 +18,9 @@ repositories {
 }
 
 dependencies {
-    implementation(compose.desktop.currentOs)
-    testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
-    testImplementation("io.kotest:kotest-assertions-core:5.0.3")
+    implementation(compose.desktop.macos_arm64)
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
+    testImplementation("io.kotest:kotest-assertions-core:5.4.1")
 }
 
 tasks.withType<KotlinCompile> {
