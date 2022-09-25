@@ -191,7 +191,13 @@ private fun InvalidSentences(parseResult: ParseResult) {
         Dialog(
             onCloseRequest = { showInvalidSentence = false },
             title = "Invalid sentences",
-            state = DialogState(width = 800.dp, height = 600.dp)
+            state = DialogState(width = 800.dp, height = 600.dp),
+            onPreviewKeyEvent = { keyEvent ->
+                if (keyEvent.isMetaPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown) {
+                    showInvalidSentence = false
+                }
+                false
+            }
         ) {
             Column(Modifier.padding(16.dp)) {
                 Text(

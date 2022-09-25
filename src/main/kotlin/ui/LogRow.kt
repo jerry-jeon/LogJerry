@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalComposeUiApi::class)
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -13,8 +15,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -130,7 +138,13 @@ private fun RowScope.DetectionCell(button: ColumnInfo, refinedLog: RefinedLog) {
         Dialog(
             onCloseRequest = { showPrettyJsonDialog = null },
             title = "Pretty Json",
-            state = DialogState(width = 800.dp, height = 600.dp)
+            state = DialogState(width = 800.dp, height = 600.dp),
+            onPreviewKeyEvent = { keyEvent ->
+                if (keyEvent.isMetaPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown) {
+                    showPrettyJsonDialog = null
+                }
+                false
+            }
         ) {
             SelectionContainer {
                 Text(json.encodeToString(JsonObject.serializer(), jsonObject), modifier = Modifier.padding(16.dp))
