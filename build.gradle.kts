@@ -19,10 +19,16 @@ repositories {
 
 dependencies {
     implementation(compose.desktop.currentOs)
+    testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
+    testImplementation("io.kotest:kotest-assertions-core:5.0.3")
 }
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "11"
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 compose.desktop {
