@@ -6,6 +6,7 @@ import DetectionResult
 import DetectionResultFocus
 import IndexedDetectionResult
 import Log
+import Priority
 import androidx.compose.ui.text.AnnotatedString
 import detection.ExceptionDetection
 import detection.KeywordDetection
@@ -20,7 +21,9 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import log.refine.LogFilter
+import log.refine.PriorityFilter
 import log.refine.RefinedLogs
+import log.refine.TextFilter
 
 class LogManager(
     val originalLogs: List<Log>
@@ -39,7 +42,11 @@ class LogManager(
         }
     }.stateIn(logScope, SharingStarted.Lazily, KeywordDetectionRequest.TurnedOff)
 
-    val filtersFlow: MutableStateFlow<List<LogFilter>> = MutableStateFlow(emptyList())
+    val textFiltersFlow: MutableStateFlow<List<TextFilter>> = MutableStateFlow(emptyList())
+    val priorityFilter: MutableStateFlow<PriorityFilter> = MutableStateFlow(PriorityFilter(Priority.Verbose))
+    private val filtersFlow = combine(textFiltersFlow, priorityFilter) { textFilters, priorityFilter ->
+        textFilters + listOf(priorityFilter)
+    }
     private val transformerFlow = combine(filtersFlow, keywordDetectionRequestFlow) { filters, findStatus ->
         Transformers(
             filters,
@@ -109,12 +116,12 @@ class LogManager(
         )
     }
 
-    fun addFilter(logFilter: LogFilter) {
-        filtersFlow.value = filtersFlow.value + logFilter
+    fun addFilter(textFilter: TextFilter) {
+        textFiltersFlow.value = textFiltersFlow.value + textFilter
     }
 
-    fun removeFilter(logFilter: LogFilter) {
-        filtersFlow.value = filtersFlow.value - logFilter
+    fun removeFilter(textFilter: TextFilter) {
+        textFiltersFlow.value = textFiltersFlow.value - textFilter
     }
 
     fun find(keyword: String) {
@@ -153,5 +160,9 @@ class LogManager(
         } else {
             exceptionDetectionResultFocus.value = DetectionResultFocus(results[nextIndex], results)
         }
+    }
+
+    fun setPriority(priorityFilter: PriorityFilter) {
+        this.priorityFilter.value = priorityFilter
     }
 }

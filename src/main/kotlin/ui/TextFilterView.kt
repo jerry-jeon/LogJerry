@@ -37,25 +37,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import log.refine.LogFilter
 import log.refine.TextFilter
 import table.ColumnType
 
 @Composable
-fun FilterView(
-    logFilters: List<LogFilter>,
-    addFilter: (LogFilter) -> Unit,
-    removeFilter: (LogFilter) -> Unit
+fun TextFilterView(
+    textFilters: List<TextFilter>,
+    addFilter: (TextFilter) -> Unit,
+    removeFilter: (TextFilter) -> Unit
 ) {
     CompositionLocalProvider(
         LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp)
     ) {
         Column(Modifier.padding(8.dp)) {
-            AddFilterView(addFilter)
+            AddTextFilterView(addFilter)
 
             Spacer(Modifier.height(8.dp))
             Row {
-                logFilters.filterIsInstance<TextFilter>().forEach { filter ->
+                textFilters.filterIsInstance<TextFilter>().forEach { filter ->
                     AppliedTextFilter(filter, removeFilter)
                     Spacer(Modifier.width(8.dp))
                 }
@@ -65,8 +64,8 @@ fun FilterView(
 }
 
 @Composable
-private fun AddFilterView(
-    addFilter: (LogFilter) -> Unit
+private fun AddTextFilterView(
+    addFilter: (TextFilter) -> Unit
 ) {
     var text by remember { mutableStateOf("") }
     val columnTypeState = remember { mutableStateOf(ColumnType.Log) }
@@ -127,7 +126,7 @@ private fun SelectColumnTypeView(
 }
 
 @Composable
-private fun AppliedTextFilter(textFilter: TextFilter, removeFilter: (LogFilter) -> Unit) {
+private fun AppliedTextFilter(textFilter: TextFilter, removeFilter: (TextFilter) -> Unit) {
     Box(
         Modifier
             .padding(horizontal = 4.dp, vertical = 8.dp)

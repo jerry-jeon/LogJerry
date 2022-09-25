@@ -53,6 +53,7 @@ import source.Source
 import source.SourceManager
 import table.Header
 import ui.ExceptionDetectionView
+import ui.PriorityFilterView
 import java.awt.FileDialog
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -107,7 +108,8 @@ fun ParseCompletedView(
 ) {
     InvalidSentences(parseResult)
     Row {
-        FilterView(logManager.filtersFlow.value, logManager::addFilter, logManager::removeFilter)
+        TextFilterView(logManager.textFiltersFlow.value, logManager::addFilter, logManager::removeFilter)
+        PriorityFilterView(logManager.priorityFilter.value, logManager::setPriority)
         Spacer(Modifier.width(16.dp))
         KeywordDetectionView(
             keywordDetectionRequest,
