@@ -30,8 +30,12 @@ class LogManager(
         Transformers(
             filters.map { filter ->
                 { log ->
-                    // TODO use filter.columnType
-                    filter.text in log.log
+                    when (filter.columnType) {
+                        ColumnType.PackageName -> filter.text in (log.packageName ?: "")
+                        ColumnType.Tag -> filter.text in log.tag
+                        ColumnType.Log -> filter.text in log.log
+                        else -> throw NotImplementedError("Not implemented filter : ${filter.columnType}")
+                    }
                 }
             },
             when (findStatus) {

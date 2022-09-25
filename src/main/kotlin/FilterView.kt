@@ -42,7 +42,7 @@ fun FilterView(
 ) {
     // Provide only useful column types
     var columnType by remember { mutableStateOf(ColumnType.Log) }
-    val items = listOf(ColumnType.Log, ColumnType.PackageName)
+    val items = listOf(ColumnType.Log, ColumnType.Tag, ColumnType.PackageName)
     var text by remember { mutableStateOf("Text") }
     var expanded by remember { mutableStateOf(false) }
 
