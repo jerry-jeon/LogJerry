@@ -13,6 +13,7 @@ interface Detection<T : DetectionResult> {
 }
 
 interface DetectionResult {
+    val id: String
     val key: DetectionKey
     val range: IntRange
     val logIndex: Int

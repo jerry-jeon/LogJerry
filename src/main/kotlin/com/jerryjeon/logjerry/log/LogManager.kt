@@ -88,7 +88,7 @@ class LogManager(
         InvestigationResult(originalLogs, refined, allDetectionResults, transformers.detections)
     }.stateIn(logScope, SharingStarted.Lazily, InvestigationResult(emptyList(), emptyList(), emptyMap(), emptyList()))
 
-    private val detectionExpanded = MutableStateFlow<Map<DetectionResult, Boolean>>(emptyMap())
+    private val detectionExpanded = MutableStateFlow<Map<String, Boolean>>(emptyMap())
 
     val investigationResultView: StateFlow<InvestigationResultView> = combine(investigationResult, detectionExpanded) { result, expanded ->
         // Why should it be separated : make possible to change data of detectionResult
@@ -98,7 +98,7 @@ class LogManager(
                 separateAnnotationStrings(
                     it.log,
                     it.detectionResults.values.flatten().map { detectionResult ->
-                        DetectionResultView(detectionResult, expanded[detectionResult] ?: false)
+                        DetectionResultView(detectionResult, expanded[detectionResult.id] ?: false)
                     }
                 )
             RefinedLog(it, annotate(it.log, logContents, result.detections))
@@ -137,8 +137,8 @@ class LogManager(
                     DetectionFocus(DetectionKey.Exception, 0, null, jsonDetections)
                 }
 
-                detectionExpanded.value = result.allDetectionResults.values.flatten().associateWith {
-                    it is JsonDetectionResult
+                detectionExpanded.value = result.allDetectionResults.values.flatten().associate {
+                    it.id to (it is JsonDetectionResult)
                 }
             }
         }
@@ -254,6 +254,9 @@ class LogManager(
                                 next.range.first,
                                 next.range.last + 1
                             )
+                            if (next is JsonDetectionResult) {
+                                addStringAnnotation("Json", next.id, next.range.first, next.range.last + 1)
+                            }
                         }
                     }
                     LogContentView.Simple(builder.toAnnotatedString())
@@ -266,6 +269,12 @@ class LogManager(
     }
 
     fun collapse(detectionResult: DetectionResult) {
-        detectionExpanded.value = detectionExpanded.value + (detectionResult to false)
+        println("collapse: ${detectionResult.id}")
+        detectionExpanded.value = detectionExpanded.value + (detectionResult.id to false)
+    }
+
+    fun expand(annotation: String) {
+        println("expand: $annotation")
+        detectionExpanded.value = detectionExpanded.value + (annotation to true)
     }
 }

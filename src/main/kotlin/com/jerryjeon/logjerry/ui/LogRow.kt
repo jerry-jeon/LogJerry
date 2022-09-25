@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Button
 import androidx.compose.material.Icon
@@ -64,13 +65,14 @@ fun LogRow(
     preferences: Preferences,
     header: Header,
     collapse: (DetectionResult) -> Unit,
+    expand: (annotation: String) -> Unit,
     divider: @Composable RowScope.() -> Unit
 ) {
     Row(Modifier.height(IntrinsicSize.Min)) {
         Spacer(Modifier.width(8.dp))
         header.asColumnList.forEach { columnInfo ->
             if (columnInfo.visible) {
-                CellByColumnType(preferences, columnInfo, refinedLog, collapse)
+                CellByColumnType(preferences, columnInfo, refinedLog, collapse, expand)
                 if (columnInfo.columnType.showDivider) {
                     divider()
                 }
@@ -85,7 +87,8 @@ fun RowScope.CellByColumnType(
     preferences: Preferences,
     columnInfo: ColumnInfo,
     refinedLog: RefinedLog,
-    collapse: (DetectionResult) -> Unit
+    collapse: (DetectionResult) -> Unit,
+    expand: (annotation: String) -> Unit,
 ) {
     val log = refinedLog.detectionFinishedLog.log
     when (columnInfo.columnType) {
@@ -98,7 +101,7 @@ fun RowScope.CellByColumnType(
         ColumnType.Priority -> PriorityCell(preferences, columnInfo, log)
         ColumnType.Tag -> TagCell(preferences, columnInfo, log)
         ColumnType.Detection -> DetectionCell(columnInfo, refinedLog.detectionFinishedLog)
-        ColumnType.Log -> LogCell(preferences, columnInfo, refinedLog, collapse)
+        ColumnType.Log -> LogCell(preferences, columnInfo, refinedLog, collapse, expand)
     }
 }
 
@@ -203,14 +206,13 @@ private fun RowScope.LogCell(
     preferences: Preferences,
     logHeader: ColumnInfo,
     refinedLog: RefinedLog,
-    collapse: (DetectionResult) -> Unit
+    collapse: (DetectionResult) -> Unit,
+    expand: (annotation: String) -> Unit,
 ) {
     Box(modifier = this.cellDefaultModifier(logHeader.width)) {
-        SelectionContainer {
-            Column {
-                refinedLog.logContentViews.forEach { logContent ->
-                    AnnotatedLogView(preferences, logContent, refinedLog, collapse)
-                }
+        Column {
+            refinedLog.logContentViews.forEach { logContent ->
+                AnnotatedLogView(preferences, logContent, refinedLog, collapse, expand)
             }
         }
     }
@@ -220,16 +222,24 @@ private fun RowScope.LogCell(
     preferences: Preferences,
     logContentView: LogContentView,
     refinedLog: RefinedLog,
-    collapse: (DetectionResult) -> Unit
+    collapse: (DetectionResult) -> Unit,
+    expand: (annotation: String) -> Unit,
 ) {
     when (logContentView) {
         is LogContentView.Simple -> {
-            Text(
+            ClickableText(
                 text = logContentView.str,
                 style = MaterialTheme.typography.body2.copy(
                     fontSize = preferences.fontSize,
                     color = preferences.colorByPriority.getValue(refinedLog.detectionFinishedLog.log.priority)
                 ),
+                onClick = { offset ->
+                    logContentView.str.getStringAnnotations(tag = "Json", start = offset, end = offset)
+                        .firstOrNull()?.let {
+                            println("click :${it.item}")
+                            expand(it.item)
+                        }
+                }
             )
         }
         is LogContentView.Json -> {

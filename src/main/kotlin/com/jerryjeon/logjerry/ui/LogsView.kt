@@ -28,7 +28,8 @@ fun LogsView(
     header: Header,
     logs: List<RefinedLog>,
     detectionFocus: DetectionFocus?,
-    collapse: (DetectionResult) -> Unit
+    collapse: (DetectionResult) -> Unit,
+    expand: (annotation: String) -> Unit,
 ) {
     val listState = rememberLazyListState()
 
@@ -46,7 +47,7 @@ fun LogsView(
             logs.forEach {
                 item {
                     Column {
-                        LogRow(it, preferences, header, divider = divider, collapse = collapse)
+                        LogRow(it, preferences, header, divider = divider, collapse = collapse, expand = expand)
                         Divider(color = Color(0xFFE5E7E9))
                     }
                 }

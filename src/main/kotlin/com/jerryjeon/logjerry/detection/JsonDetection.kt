@@ -5,6 +5,7 @@ import androidx.compose.ui.text.SpanStyle
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
+import java.util.UUID
 
 class JsonDetection() : Detection<JsonDetectionResult> {
     override val key: DetectionKey = DetectionKey.Json
@@ -49,6 +50,7 @@ class JsonDetectionResult(
     override val logIndex: Int,
     val json: JsonObject
 ) : DetectionResult {
+    override val id: String = UUID.randomUUID().toString()
     override val key: DetectionKey = DetectionKey.Json
     override val style: SpanStyle
         get() = detectedStyle

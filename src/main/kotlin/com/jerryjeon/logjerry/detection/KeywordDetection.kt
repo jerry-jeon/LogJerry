@@ -2,6 +2,7 @@ package com.jerryjeon.logjerry.detection
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
+import java.util.UUID
 
 class KeywordDetection(private val keyword: String) : Detection<DetectionResult> {
     override val key: DetectionKey = DetectionKey.Keyword
@@ -26,6 +27,7 @@ class KeywordDetection(private val keyword: String) : Detection<DetectionResult>
 }
 
 class KeywordDetectionResult(override val range: IntRange, override val logIndex: Int) : DetectionResult {
+    override val id: String = UUID.randomUUID().toString()
     override val key: DetectionKey = DetectionKey.Keyword
     override val style: SpanStyle
         get() = detectedStyle
