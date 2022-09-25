@@ -32,10 +32,10 @@ fun PriorityFilterView(
     priorityFilter: PriorityFilter,
     changePriorityFilter: (PriorityFilter) -> Unit
 ) {
+    var value by remember(priorityFilter) { mutableStateOf(priorityFilter.priority.ordinal.toFloat()) }
     Column(Modifier.width(IntrinsicSize.Min).border(1.dp, Color.LightGray, RoundedCornerShape(4.dp)).padding(8.dp)) {
         Text("Log level")
         Spacer(Modifier.height(8.dp))
-        var value by remember { mutableStateOf(priorityFilter.priority.ordinal.toFloat()) }
         val priorities = Priority.values()
 
         Slider(
