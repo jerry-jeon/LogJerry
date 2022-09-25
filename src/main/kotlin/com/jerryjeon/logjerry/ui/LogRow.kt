@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -243,13 +242,14 @@ private fun RowScope.LogCell(
         }
         is LogContentView.Json -> {
             val modifier = logContentView.background?.let { Modifier.background(color = it) } ?: Modifier
-            Box(modifier = modifier.fillMaxWidth().padding(4.dp)) {
+            Box(modifier = modifier.padding(4.dp)) {
                 Text(
                     text = logContentView.str,
                     style = MaterialTheme.typography.body2.copy(
                         fontSize = preferences.fontSize,
                         color = preferences.colorByPriority.getValue(refinedLog.detectionFinishedLog.log.priority)
-                    )
+                    ),
+                    modifier = Modifier.padding(end = 32.dp)
                 )
                 Row(modifier = Modifier.align(Alignment.TopEnd)) {
                     IconButton(

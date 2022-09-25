@@ -107,7 +107,7 @@ class LogViewManager(
                             )
                         }
                     }
-                    LogContentView.Json(builder.toAnnotatedString(), Color.LightGray, logContent.jsonDetection)
+                    LogContentView.Json(builder.toAnnotatedString(), Color(0x40D3D3D3), logContent.jsonDetection)
                 }
                 is LogContent.Text -> {
                     val initial = AnnotatedString.Builder(logContent.text)
