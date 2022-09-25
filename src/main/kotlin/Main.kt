@@ -43,10 +43,12 @@ import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.KeyShortcut
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
@@ -85,7 +87,6 @@ fun App(sourceState: MutableState<Source>) {
 
     Column {
         ColumnVisibility(headerState)
-        ChooseFileButton(sourceState)
         FilterView(logRefinement)
         val filteredSize = (if (refinedLogs.size != logs.size) "Filtered size : ${refinedLogs.size}, " else "")
         Text(filteredSize + "Total : ${logs.size}")
@@ -164,20 +165,6 @@ private fun LogsView(header: Header, logs: List<Log>) {
 }
 
 @Composable
-fun ChooseFileButton(sourceState: MutableState<Source>) {
-    Button(onClick = {
-        val fileDialog = FileDialog(ComposeWindow())
-        fileDialog.isVisible = true
-        fileDialog.file?.let {
-            val file = File(File(fileDialog.directory), it)
-            sourceState.value = Source.File(file)
-        }
-    }) {
-        Text("File Picker")
-    }
-}
-
-@Composable
 fun ColumnVisibility(headerState: MutableState<Header>) {
     val asColumnList = headerState.value.asColumnList
 
@@ -239,7 +226,23 @@ fun main() = application {
         }
     ) {
         MyTheme {
+            MenuBar {
+                Menu("File") {
+                    Item("Open file", shortcut = KeyShortcut(Key.L, ctrl = true)) {
+                        openFileDialog(sourceState)
+                    }
+                }
+            }
             App(sourceState)
         }
+    }
+}
+
+private fun openFileDialog(sourceState: MutableState<Source>) {
+    val fileDialog = FileDialog(ComposeWindow())
+    fileDialog.isVisible = true
+    fileDialog.file?.let {
+        val file = File(File(fileDialog.directory), it)
+        sourceState.value = Source.File(file)
     }
 }
