@@ -6,18 +6,21 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
@@ -37,6 +40,8 @@ import preferences.Preferences
 import table.ColumnInfo
 import table.ColumnType
 import table.Header
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 
 val json = Json { prettyPrint = true }
 
@@ -192,14 +197,14 @@ private fun RowScope.LogCell(preferences: Preferences, logHeader: ColumnInfo, re
 
 @Composable
 private fun RowScope.DetectionCell(button: ColumnInfo, refinedLog: RefinedLog) {
-    var showPrettyJsonDialog: Pair<Boolean, JsonObject>? by remember { mutableStateOf(null) }
+    val showPrettyJsonDialog: MutableState<JsonObject?> = remember { mutableStateOf(null) }
 
     Column(modifier = this.cellDefaultModifier(button.width)) {
         refinedLog.detectionResults.values.flatten().forEach { result ->
             when (result) {
                 is JsonDetectionResult -> {
                     result.jsonList.forEachIndexed { index, jsonObject ->
-                        TextButton(onClick = { showPrettyJsonDialog = true to jsonObject }) {
+                        TextButton(onClick = { showPrettyJsonDialog.value = jsonObject }) {
                             Row {
                                 Text("{ }")
                                 Text("${index + 1}", fontSize = 9.sp)
@@ -211,23 +216,57 @@ private fun RowScope.DetectionCell(button: ColumnInfo, refinedLog: RefinedLog) {
         }
     }
 
-    showPrettyJsonDialog?.let { (_, jsonObject) ->
+    JsonPrettyDialog(showPrettyJsonDialog)
+}
+
+@Composable
+private fun JsonPrettyDialog(
+    showPrettyJsonDialogState: MutableState<JsonObject?>,
+) {
+    showPrettyJsonDialogState.value?.let { jsonObject ->
+        val prettyJson = json.encodeToString(JsonObject.serializer(), jsonObject)
         Dialog(
-            onCloseRequest = { showPrettyJsonDialog = null },
+            onCloseRequest = { showPrettyJsonDialogState.value = null },
             title = "Pretty Json",
             state = DialogState(width = 800.dp, height = 600.dp),
             onPreviewKeyEvent = { keyEvent ->
-                if (keyEvent.isMetaPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown) {
-                    showPrettyJsonDialog = null
+                when {
+                    keyEvent.isMetaPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown -> {
+                        showPrettyJsonDialogState.value = null
+                        true
+                    }
+                    keyEvent.isMetaPressed && keyEvent.key == Key.C && keyEvent.type == KeyEventType.KeyDown -> {
+                        copyToClipboard(prettyJson)
+                        true
+                    }
+                    else -> {
+                        false
+                    }
                 }
-                false
             }
         ) {
-            SelectionContainer {
-                Text(json.encodeToString(JsonObject.serializer(), jsonObject), modifier = Modifier.padding(16.dp))
+            Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                SelectionContainer(Modifier.fillMaxSize()) {
+                    BasicTextField(
+                        value = prettyJson,
+                        onValueChange = {},
+                        modifier = Modifier.fillMaxSize(),
+                        readOnly = true,
+                    )
+                }
+                Button(onClick = { copyToClipboard(prettyJson) }, modifier = Modifier.align(Alignment.TopEnd)) {
+                    Text("Copy all (Cmd + C)")
+                }
             }
         }
     }
+}
+
+private fun copyToClipboard(prettyJson: String) {
+    val selection = StringSelection(prettyJson)
+    Toolkit.getDefaultToolkit()
+        .systemClipboard
+        .setContents(selection, selection)
 }
 
 /*
