@@ -34,7 +34,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,13 +63,15 @@ import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
+import com.jerryjeon.logjerry.detection.Detection
 import com.jerryjeon.logjerry.detection.DetectionFocus
 import com.jerryjeon.logjerry.detection.DetectionKey
 import com.jerryjeon.logjerry.detection.KeywordDetectionRequest
 import com.jerryjeon.logjerry.detection.KeywordDetectionView
 import com.jerryjeon.logjerry.log.Log
-import com.jerryjeon.logjerry.log.LogManager
 import com.jerryjeon.logjerry.log.refine.InvestigationView
+import com.jerryjeon.logjerry.log.refine.PriorityFilter
+import com.jerryjeon.logjerry.log.refine.TextFilter
 import com.jerryjeon.logjerry.parse.ParseResult
 import com.jerryjeon.logjerry.parse.ParseStatus
 import com.jerryjeon.logjerry.preferences.Preferences
@@ -98,7 +99,7 @@ import java.io.File
 @Preview
 fun ActiveTabView(
     preferences: Preferences,
-    headerState: MutableState<Header>,
+    header: Header,
     activeTab: Tab,
 ) {
     val parseStatus by activeTab.sourceManager.parseStatusFlow.collectAsState(ParseStatus.NotStarted)
@@ -109,25 +110,37 @@ fun ActiveTabView(
         is ParseStatus.Completed -> {
             Column {
                 val logManager = status.logManager
+                val transformationManager = status.transformationManager
                 val investigationView by logManager.investigationViewFlow.collectAsState()
-                val findStatus = logManager.keywordDetectionRequestFlow.collectAsState()
-                val keywordDetectionFocus = logManager.keywordDetectionFocus.collectAsState()
-                val exceptionDetectionFocus = logManager.exceptionDetectionFocus.collectAsState()
-                val jsonDetectionFocus = logManager.jsonDetectionFocus.collectAsState()
-                val activeDetectionFocus = logManager.activeDetectionFocusFlowState.collectAsState()
-                val logs = logManager.originalLogs
+                val keywordDetectionRequest by transformationManager.keywordDetectionRequestFlow.collectAsState()
+                val keywordDetectionFocus by logManager.keywordDetectionFocus.collectAsState()
+                val exceptionDetectionFocus by logManager.exceptionDetectionFocus.collectAsState()
+                val jsonDetectionFocus by logManager.jsonDetectionFocus.collectAsState()
+                val activeDetectionFocus by logManager.activeDetectionFocusFlowState.collectAsState()
+                val textFilters by transformationManager.textFiltersFlow.collectAsState()
+                val priorityFilters by transformationManager.priorityFilterFlow.collectAsState()
                 ParseCompletedView(
-                    logManager,
-                    findStatus.value,
-                    activeDetectionFocus.value,
-                    keywordDetectionFocus.value,
-                    exceptionDetectionFocus.value,
-                    jsonDetectionFocus.value,
+                    keywordDetectionRequest,
+                    activeDetectionFocus,
+                    keywordDetectionFocus,
+                    exceptionDetectionFocus,
+                    jsonDetectionFocus,
                     investigationView,
-                    logs,
+                    logManager.originalLogs,
                     preferences,
-                    headerState,
+                    header,
                     status.parseResult,
+                    logManager::focusPreviousDetection,
+                    logManager::focusNextDetection,
+                    textFilters,
+                    transformationManager::addTextFilter,
+                    transformationManager::removeTextFilter,
+                    priorityFilters,
+                    transformationManager::setPriorityFilter,
+                    transformationManager::findKeyword,
+                    transformationManager::setKeywordDetectionEnabled,
+                    logManager::collapseJsonDetection,
+                    logManager::expandJsonDetection
                 )
             }
         }
@@ -136,7 +149,6 @@ fun ActiveTabView(
 
 @Composable
 fun ParseCompletedView(
-    logManager: LogManager,
     keywordDetectionRequest: KeywordDetectionRequest,
     detectionFocus: DetectionFocus?,
     keywordDetectionFocus: DetectionFocus?,
@@ -145,14 +157,25 @@ fun ParseCompletedView(
     investigationView: InvestigationView,
     logs: List<Log>,
     preferences: Preferences,
-    headerState: MutableState<Header>,
-    parseResult: ParseResult
+    header: Header,
+    parseResult: ParseResult,
+    focusPreviousDetection: (DetectionKey, DetectionFocus) -> Unit,
+    focusNextDetection: (DetectionKey, DetectionFocus) -> Unit,
+    textFilters: List<TextFilter>,
+    addTextFilter: (TextFilter) -> Unit,
+    removeTextFilter: (TextFilter) -> Unit,
+    priorityFilter: PriorityFilter,
+    setPriorityFilter: (PriorityFilter) -> Unit,
+    findKeyword: (String) -> Unit,
+    setKeywordDetectionEnabled: (Boolean) -> Unit,
+    collapseJsonDetection: (Detection) -> Unit,
+    expandJsonDetection: (String) -> Unit
 ) {
     InvalidSentences(parseResult)
     Row(modifier = Modifier.padding(16.dp)) {
-        TextFilterView(logManager.textFiltersFlow.value, logManager::addFilter, logManager::removeFilter)
+        TextFilterView(textFilters, addTextFilter, removeTextFilter)
         Spacer(Modifier.width(16.dp))
-        PriorityFilterView(logManager.priorityFilterFlow.value, logManager::setPriority)
+        PriorityFilterView(priorityFilter, setPriorityFilter)
         Spacer(Modifier.width(16.dp))
         Box(modifier = Modifier.weight(0.5f).border(1.dp, Color.LightGray, RoundedCornerShape(4.dp))) {
             Column {
@@ -162,8 +185,8 @@ fun ParseCompletedView(
                     ExceptionDetectionView(
                         Modifier.width(200.dp).wrapContentHeight(),
                         exceptionDetectionFocus,
-                        { logManager.focusPreviousDetection(DetectionKey.Exception, it) },
-                        { logManager.focusNextDetection(DetectionKey.Exception, it) },
+                        { focusPreviousDetection(DetectionKey.Exception, it) },
+                        { focusNextDetection(DetectionKey.Exception, it) },
                     )
                     Spacer(Modifier.width(8.dp))
                     Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
@@ -171,8 +194,8 @@ fun ParseCompletedView(
                     JsonDetectionView(
                         Modifier.width(200.dp).wrapContentHeight(),
                         jsonDetectionFocus,
-                        { logManager.focusPreviousDetection(DetectionKey.Json, it) },
-                        { logManager.focusNextDetection(DetectionKey.Json, it) },
+                        { focusPreviousDetection(DetectionKey.Json, it) },
+                        { focusNextDetection(DetectionKey.Json, it) },
                     )
                     Spacer(Modifier.width(8.dp))
                     Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
@@ -193,14 +216,14 @@ fun ParseCompletedView(
             Modifier.align(Alignment.BottomEnd),
             keywordDetectionRequest,
             keywordDetectionFocus,
-            logManager::find,
-            logManager::setKeywordDetectionEnabled,
-            { logManager.focusPreviousDetection(DetectionKey.Keyword, it) },
-            { logManager.focusNextDetection(DetectionKey.Keyword, it) },
+            findKeyword,
+            setKeywordDetectionEnabled,
+            { focusPreviousDetection(DetectionKey.Keyword, it) },
+            { focusNextDetection(DetectionKey.Keyword, it) },
         )
     }
     Divider(color = Color.Black)
-    LogsView(preferences, headerState.value, investigationView.refinedLogs, detectionFocus, logManager::collapse, logManager::expand)
+    LogsView(preferences, header, investigationView.refinedLogs, detectionFocus, collapseJsonDetection, expandJsonDetection)
 }
 
 @Composable
@@ -374,7 +397,7 @@ fun main() = application {
             Column {
                 TabView(tabsState.value, tabManager::activate, tabManager::close)
                 Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
-                ActiveTabView(preferencesState.value, headerState, tabsState.value.active)
+                ActiveTabView(preferencesState.value, headerState.value, tabsState.value.active)
                 PreferencesView(preferenceOpen, preferencesState)
             }
         }

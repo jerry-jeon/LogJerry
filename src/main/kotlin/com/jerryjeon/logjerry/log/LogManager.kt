@@ -7,19 +7,13 @@ import com.jerryjeon.logjerry.detection.Detection
 import com.jerryjeon.logjerry.detection.DetectionFocus
 import com.jerryjeon.logjerry.detection.DetectionKey
 import com.jerryjeon.logjerry.detection.Detector
-import com.jerryjeon.logjerry.detection.ExceptionDetector
 import com.jerryjeon.logjerry.detection.JsonDetection
-import com.jerryjeon.logjerry.detection.JsonDetector
-import com.jerryjeon.logjerry.detection.KeywordDetectionRequest
-import com.jerryjeon.logjerry.detection.KeywordDetector
 import com.jerryjeon.logjerry.log.refine.DetectionFinishedLog
 import com.jerryjeon.logjerry.log.refine.DetectionView
 import com.jerryjeon.logjerry.log.refine.Investigation
 import com.jerryjeon.logjerry.log.refine.InvestigationView
-import com.jerryjeon.logjerry.log.refine.LogFilter
-import com.jerryjeon.logjerry.log.refine.PriorityFilter
 import com.jerryjeon.logjerry.log.refine.RefinedLog
-import com.jerryjeon.logjerry.log.refine.TextFilter
+import com.jerryjeon.logjerry.transformation.TransformationManager
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -34,39 +28,12 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 
 class LogManager(
-    val originalLogs: List<Log>
+    val originalLogs: List<Log>,
+    transformationManager: TransformationManager
 ) {
     private val logScope = MainScope()
 
-    private val defaultDetectors = listOf(ExceptionDetector(), JsonDetector())
-
-    private val keywordDetectionEnabledStateFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    private val detectingKeywordFlow = MutableStateFlow("")
-    val keywordDetectionRequestFlow =
-        combine(keywordDetectionEnabledStateFlow, detectingKeywordFlow) { enabled, keyword ->
-            if (enabled) {
-                KeywordDetectionRequest.TurnedOn(keyword)
-            } else {
-                KeywordDetectionRequest.TurnedOff
-            }
-        }.stateIn(logScope, SharingStarted.Lazily, KeywordDetectionRequest.TurnedOff)
-
-    val textFiltersFlow: MutableStateFlow<List<TextFilter>> = MutableStateFlow(emptyList())
-    val priorityFilterFlow: MutableStateFlow<PriorityFilter> = MutableStateFlow(PriorityFilter(Priority.Verbose))
-    private val filtersFlow = combine(textFiltersFlow, priorityFilterFlow) { textFilters, priorityFilter ->
-        textFilters + listOf(priorityFilter)
-    }
-    private val transformerFlow = combine(filtersFlow, keywordDetectionRequestFlow) { filters, findStatus ->
-        Transformers(
-            filters,
-            when (findStatus) {
-                is KeywordDetectionRequest.TurnedOn -> defaultDetectors + listOf(KeywordDetector(findStatus.keyword))
-                KeywordDetectionRequest.TurnedOff -> defaultDetectors
-            }
-        )
-    }
-
-    private val investigationFlow: StateFlow<Investigation> = transformerFlow.map { transformers ->
+    private val investigationFlow: StateFlow<Investigation> = transformationManager.transformerFlow.map { transformers ->
         val refined = if (transformers.filters.isEmpty()) {
             originalLogs
         } else {
@@ -149,27 +116,6 @@ class LogManager(
             .filter { it?.focusing != null }
             .stateIn(logScope, SharingStarted.Lazily, null)
 
-    data class Transformers(
-        val filters: List<LogFilter>,
-        val detectors: List<Detector<*>>
-    )
-
-    fun addFilter(textFilter: TextFilter) {
-        textFiltersFlow.value = textFiltersFlow.value + textFilter
-    }
-
-    fun removeFilter(textFilter: TextFilter) {
-        textFiltersFlow.value = textFiltersFlow.value - textFilter
-    }
-
-    fun find(keyword: String) {
-        detectingKeywordFlow.value = keyword
-    }
-
-    fun setKeywordDetectionEnabled(enabled: Boolean) {
-        keywordDetectionEnabledStateFlow.value = enabled
-    }
-
     fun focusPreviousDetection(key: DetectionKey, focus: DetectionFocus) {
         val previousIndex = if (focus.currentIndex <= 0) {
             focus.allDetections.size - 1
@@ -188,10 +134,6 @@ class LogManager(
         }
 
         focuses[key]?.value = focus.copy(currentIndex = nextIndex, focusing = focus.allDetections[nextIndex])
-    }
-
-    fun setPriority(priorityFilter: PriorityFilter) {
-        this.priorityFilterFlow.value = priorityFilter
     }
 
     val json = Json { prettyPrint = true }
@@ -267,12 +209,12 @@ class LogManager(
         return result
     }
 
-    fun collapse(detection: Detection) {
+    fun collapseJsonDetection(detection: Detection) {
         println("collapse: ${detection.id}")
         detectionExpanded.value = detectionExpanded.value + (detection.id to false)
     }
 
-    fun expand(annotation: String) {
+    fun expandJsonDetection(annotation: String) {
         println("expand: $annotation")
         detectionExpanded.value = detectionExpanded.value + (annotation to true)
     }
