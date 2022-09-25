@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -244,7 +243,7 @@ private fun RowScope.LogCell(
         }
         is LogContentView.Json -> {
             val modifier = logContentView.background?.let { Modifier.background(color = it) } ?: Modifier
-            Box(modifier = modifier.fillMaxWidth().wrapContentHeight().padding(4.dp)) {
+            Box(modifier = modifier.fillMaxWidth().padding(4.dp)) {
                 Text(
                     text = logContentView.str,
                     style = MaterialTheme.typography.body2.copy(

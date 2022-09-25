@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -28,6 +27,7 @@ class LogViewManager(
     detectionFinishedFlow: Flow<DetectionFinished>
 ) {
     private val logViewScope = MainScope()
+    val json = Json { prettyPrint = true }
 
     private val detectionExpandedFlow = MutableStateFlow<Map<String, Boolean>>(emptyMap())
 
@@ -45,11 +45,9 @@ class LogViewManager(
         InvestigationView(refinedLogs, allDetectionLogs)
     }.stateIn(logViewScope, SharingStarted.Lazily, InvestigationView(emptyList(), emptyMap()))
 
-    val json = Json { prettyPrint = true }
-
     init {
         logViewScope.launch {
-            detectionFinishedFlow.map { detectionFinished ->
+            detectionFinishedFlow.collect { detectionFinished ->
                 detectionExpandedFlow.value = detectionFinished.allDetections.values.flatten().associate {
                     it.id to (it is JsonDetection)
                 }
