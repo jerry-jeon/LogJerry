@@ -4,27 +4,37 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.List
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyShortcut
 import androidx.compose.ui.unit.dp
 
-enum class ColumnType(val shortcut: KeyShortcut) {
-    Number(KeyShortcut(Key.Zero, meta = true)),
-    Date(KeyShortcut(Key.One, meta = true)),
-    Time(KeyShortcut(Key.Two, meta = true)),
-    PID(KeyShortcut(Key.Three, meta = true)),
-    TID(KeyShortcut(Key.Four, meta = true)),
-    PackageName(KeyShortcut(Key.Five, meta = true)),
-    Priority(KeyShortcut(Key.Six, meta = true)),
-    Tag(KeyShortcut(Key.Seven, meta = true)),
-    Log(KeyShortcut(Key.Eight, meta = true));
+enum class ColumnType(val shortcut: KeyShortcut, val icon: ImageVector?) {
+    Number(KeyShortcut(Key.Zero, meta = true), Icons.Default.AccountBox),
+    Date(KeyShortcut(Key.One, meta = true), Icons.Default.DateRange),
+    Time(KeyShortcut(Key.Two, meta = true), Icons.Default.Check),
+    PID(KeyShortcut(Key.Three, meta = true), null),
+    TID(KeyShortcut(Key.Four, meta = true), null),
+    PackageName(KeyShortcut(Key.Five, meta = true), null),
+    Priority(KeyShortcut(Key.Six, meta = true), null),
+    Tag(KeyShortcut(Key.Seven, meta = true), Icons.Default.Info),
+    Log(KeyShortcut(Key.Eight, meta = true), Icons.Default.List);
 }
 
 data class ColumnInfo(
@@ -82,7 +92,7 @@ data class Header(
 
     companion object {
         val default = Header(
-            number = ColumnInfo(ColumnType.Number, 40, true),
+            number = ColumnInfo(ColumnType.Number, 80, true),
             date = ColumnInfo(ColumnType.Date, 100, true),
             time = ColumnInfo(ColumnType.Time, 100, true),
             pid = ColumnInfo(ColumnType.PID, 40, true),
@@ -98,7 +108,11 @@ data class Header(
 @Composable
 fun RowScope.HeaderView(columnInfo: ColumnInfo, modifier: Modifier = Modifier) {
     if (columnInfo.visible) {
-        Text(text = columnInfo.columnType.name, modifier = applyWidth(columnInfo.width, modifier))
+        if(columnInfo.columnType.icon != null) {
+            Icon(columnInfo.columnType.icon, "ColumnType icon", Modifier.align(Alignment.CenterVertically))
+        }
+        Spacer(Modifier.width(4.dp))
+        Text(text = columnInfo.columnType.name, modifier = applyWidth(columnInfo.width, modifier).align(Alignment.CenterVertically))
     }
 }
 
