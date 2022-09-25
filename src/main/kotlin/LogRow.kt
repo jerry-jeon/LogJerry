@@ -1,8 +1,13 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -11,23 +16,24 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun LogRow(
     log: Log,
-    header: Header
+    header: Header,
+    divider: @Composable RowScope.() -> Unit
 ) {
-    Row {
+    Row(Modifier.height(IntrinsicSize.Min)) {
         DateCell(header.date, log)
-        Spacer(Modifier.padding(5.dp))
+        divider()
         TimeCell(header.time, log)
-        Spacer(Modifier.padding(5.dp))
+        divider()
         PidCell(header.pid, log)
-        Spacer(Modifier.padding(5.dp))
+        divider()
         TidCell(header.tid, log)
-        Spacer(Modifier.padding(5.dp))
+        divider()
         PackagerNameCell(header.packageName, log)
-        Spacer(Modifier.padding(5.dp))
+        divider()
         PriorityCell(header.priority, log)
-        Spacer(Modifier.padding(5.dp))
+        divider()
         TagCell(header.tag, log)
-        Spacer(Modifier.padding(5.dp))
+        divider()
         LogCell(header.log, log)
     }
 }
@@ -92,6 +98,6 @@ private fun RowScope.LogCell(logHeader: ColumnInfo, log: Log) {
 @Composable
 fun LogRowPreview() {
     MyTheme {
-        LogRow(SampleData.log, Header.default)
+        LogRow(SampleData.log, Header.default) { Divider() }
     }
 }

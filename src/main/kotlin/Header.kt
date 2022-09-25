@@ -1,9 +1,12 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -59,11 +62,11 @@ fun RowScope.HeaderView(columnInfo: ColumnInfo, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun HeaderRow(header: Header) {
-    Row {
+fun HeaderRow(header: Header, divider: @Composable RowScope.() -> Unit) {
+    Row(Modifier.height(IntrinsicSize.Min)) {
         header.asColumnList.forEach {
             HeaderView(it)
-            Spacer(Modifier.padding(5.dp))
+            divider()
         }
     }
 }
@@ -72,6 +75,6 @@ fun HeaderRow(header: Header) {
 @Composable
 fun HeaderPreview() {
     MyTheme {
-        HeaderRow(Header.default)
+        HeaderRow(Header.default) { Divider() }
     }
 }
