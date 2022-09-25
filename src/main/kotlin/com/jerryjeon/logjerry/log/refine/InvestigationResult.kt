@@ -1,12 +1,10 @@
 package com.jerryjeon.logjerry.log.refine
 
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.AnnotatedString
 import com.jerryjeon.logjerry.detection.Detection
 import com.jerryjeon.logjerry.detection.DetectionKey
 import com.jerryjeon.logjerry.detection.DetectionResult
-import com.jerryjeon.logjerry.detection.JsonDetectionResult
 import com.jerryjeon.logjerry.log.Log
+import com.jerryjeon.logjerry.log.LogContentView
 
 data class InvestigationResult(
     val originalLogs: List<Log>,
@@ -37,15 +35,3 @@ class RefinedLog(
 )
 
 // AnnotatedLog
-
-// TODO move to other place
-sealed class LogContentView {
-
-    class Simple(val str: AnnotatedString) : LogContentView()
-
-    class Json(
-        val str: AnnotatedString,
-        val background: Color?,
-        val jsonDetectionResult: JsonDetectionResult
-    ) : LogContentView()
-}

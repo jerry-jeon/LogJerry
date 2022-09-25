@@ -37,8 +37,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogState
 import com.jerryjeon.logjerry.detection.JsonDetectionResult
 import com.jerryjeon.logjerry.log.Log
+import com.jerryjeon.logjerry.log.LogContentView
 import com.jerryjeon.logjerry.log.refine.DetectionFinishedLog
-import com.jerryjeon.logjerry.log.refine.LogContentView
 import com.jerryjeon.logjerry.log.refine.RefinedLog
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.ColumnInfo

@@ -16,7 +16,6 @@ import com.jerryjeon.logjerry.log.refine.DetectionFinishedLog
 import com.jerryjeon.logjerry.log.refine.DetectionResultView
 import com.jerryjeon.logjerry.log.refine.InvestigationResult
 import com.jerryjeon.logjerry.log.refine.InvestigationResultView
-import com.jerryjeon.logjerry.log.refine.LogContentView
 import com.jerryjeon.logjerry.log.refine.LogFilter
 import com.jerryjeon.logjerry.log.refine.PriorityFilter
 import com.jerryjeon.logjerry.log.refine.RefinedLog
@@ -66,6 +65,7 @@ class LogManager(
             }
         )
     }
+
     private val investigationResult: StateFlow<InvestigationResult> = transformerFlow.map { transformers ->
         val refined = if (transformers.filters.isEmpty()) {
             originalLogs
@@ -88,14 +88,22 @@ class LogManager(
         InvestigationResult(originalLogs, refined, allDetectionResults, transformers.detections)
     }.stateIn(logScope, SharingStarted.Lazily, InvestigationResult(emptyList(), emptyList(), emptyMap(), emptyList()))
 
-    val investigationResultView: StateFlow<InvestigationResultView> = investigationResult.map { investigationResult ->
+    private val detectionExpanded = MutableStateFlow<Map<DetectionResult, Boolean>>(emptyMap())
+
+    val investigationResultView: StateFlow<InvestigationResultView> = combine(investigationResult, detectionExpanded) { result, expanded ->
         // Why should it be separated : make possible to change data of detectionResult
         // TODO don't want to repeat all annotate if just one log has changed. How can I achieve it
-        val refinedLogs = investigationResult.detectionFinishedLogs.map {
-            val logContents = separateAnnotationStrings(it.log, it.detectionResults.values.flatten().map { DetectionResultView(it, it is JsonDetectionResult) })
-            RefinedLog(it, annotate(it.log, logContents, investigationResult.detections))
+        val refinedLogs = result.detectionFinishedLogs.map {
+            val logContents =
+                separateAnnotationStrings(
+                    it.log,
+                    it.detectionResults.values.flatten().map { detectionResult ->
+                        DetectionResultView(detectionResult, expanded[detectionResult] ?: false)
+                    }
+                )
+            RefinedLog(it, annotate(it.log, logContents, result.detections))
         }
-        val allDetectionLogs = investigationResult.allDetectionResults.mapValues { (_, v) ->
+        val allDetectionLogs = result.allDetectionResults.mapValues { (_, v) ->
             v.map { DetectionResultView(it, false) }
         }
         InvestigationResultView(refinedLogs, allDetectionLogs)
@@ -113,20 +121,24 @@ class LogManager(
 
     init {
         logScope.launch {
-            investigationResult.collect { refinedLogs ->
-                val results = refinedLogs.allDetectionResults[DetectionKey.Keyword] ?: emptyList()
-                keywordDetectionFocus.value = results.firstOrNull()?.let {
-                    DetectionFocus(DetectionKey.Keyword, 0, null, results)
+            investigationResult.collect { result ->
+                val keywordDetections = result.allDetectionResults[DetectionKey.Keyword] ?: emptyList()
+                keywordDetectionFocus.value = keywordDetections.firstOrNull()?.let {
+                    DetectionFocus(DetectionKey.Keyword, 0, null, keywordDetections)
                 }
 
-                val results2 = refinedLogs.allDetectionResults[DetectionKey.Exception] ?: emptyList()
-                exceptionDetectionFocus.value = results2.firstOrNull()?.let {
-                    DetectionFocus(DetectionKey.Exception, 0, null, results2)
+                val exceptionDetections = result.allDetectionResults[DetectionKey.Exception] ?: emptyList()
+                exceptionDetectionFocus.value = exceptionDetections.firstOrNull()?.let {
+                    DetectionFocus(DetectionKey.Exception, 0, null, exceptionDetections)
                 }
 
-                val results3 = refinedLogs.allDetectionResults[DetectionKey.Json] ?: emptyList()
-                jsonDetectionFocus.value = results3.firstOrNull()?.let {
-                    DetectionFocus(DetectionKey.Exception, 0, null, results3)
+                val jsonDetections = result.allDetectionResults[DetectionKey.Json] ?: emptyList()
+                jsonDetectionFocus.value = jsonDetections.firstOrNull()?.let {
+                    DetectionFocus(DetectionKey.Exception, 0, null, jsonDetections)
+                }
+
+                detectionExpanded.value = result.allDetectionResults.values.flatten().associateWith {
+                    it is JsonDetectionResult
                 }
             }
         }
@@ -180,11 +192,6 @@ class LogManager(
 
     fun setPriority(priorityFilter: PriorityFilter) {
         this.priorityFilter.value = priorityFilter
-    }
-
-    sealed class LogContent {
-        class Simple(val text: String) : LogContent()
-        class Json(val text: String, val jdr: JsonDetectionResult) : LogContent()
     }
 
     val json = Json { prettyPrint = true }
