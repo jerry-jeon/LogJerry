@@ -1,4 +1,5 @@
 data class Log(
+    val number: Int,
     val date: String,
     val time: String,
     val pid: Long,

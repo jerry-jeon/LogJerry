@@ -1,9 +1,11 @@
 package parse
 
 import Log
-import java.lang.Exception
+import java.util.concurrent.atomic.AtomicInteger
 
 class DefaultParser : LogParser {
+
+    private val number = AtomicInteger(1)
     override fun canParse(raw: String): Boolean {
         // TODO check
         return true
@@ -41,6 +43,6 @@ class DefaultParser : LogParser {
 
         val log = split.subList(4, split.size).joinToString(separator = " ")
 
-        return Log(date, time, pid, tid, packageName, priority, tag, log)
+        return Log(number.getAndIncrement(), date, time, pid, tid, packageName, priority, tag, log)
     }
 }

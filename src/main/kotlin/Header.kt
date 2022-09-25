@@ -2,9 +2,7 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
@@ -13,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 enum class ColumnType {
-    Date, Time, PID, TID, PackageName, Priority, Tag, Log;
+    Number, Date, Time, PID, TID, PackageName, Priority, Tag, Log;
 }
 
 data class ColumnInfo(
@@ -28,6 +26,7 @@ fun RowScope.applyWidth(width: Int?, modifier: Modifier = Modifier): Modifier {
 }
 
 data class Header(
+    val number: ColumnInfo,
     val date: ColumnInfo,
     val time: ColumnInfo,
     val pid: ColumnInfo,
@@ -38,10 +37,11 @@ data class Header(
     val log: ColumnInfo,
 ) {
 
-    val asColumnList: List<ColumnInfo> = listOf(date, time, pid, tid, packageName, priority, tag, log)
+    val asColumnList: List<ColumnInfo> = listOf(number, date, time, pid, tid, packageName, priority, tag, log)
 
     operator fun get(columnType: ColumnType): ColumnInfo {
-        return when(columnType) {
+        return when (columnType) {
+            ColumnType.Number -> number
             ColumnType.Date -> date
             ColumnType.Time -> time
             ColumnType.PID -> pid
@@ -54,7 +54,8 @@ data class Header(
     }
 
     fun copyOf(columnType: ColumnType, columnInfo: ColumnInfo): Header {
-        return when(columnType) {
+        return when (columnType) {
+            ColumnType.Number -> copy(number = columnInfo)
             ColumnType.Date -> copy(date = columnInfo)
             ColumnType.Time -> copy(time = columnInfo)
             ColumnType.PID -> copy(pid = columnInfo)
@@ -68,6 +69,7 @@ data class Header(
 
     companion object {
         val default = Header(
+            number = ColumnInfo(ColumnType.Number, 40, true),
             date = ColumnInfo(ColumnType.Date, 100, true),
             time = ColumnInfo(ColumnType.Time, 100, true),
             pid = ColumnInfo(ColumnType.PID, 40, true),

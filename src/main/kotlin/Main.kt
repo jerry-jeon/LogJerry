@@ -87,6 +87,8 @@ fun App(sourceState: MutableState<Source>) {
         ColumnVisibility(headerState)
         ChooseFileButton(sourceState)
         FilterView(logRefinement)
+        val filteredSize = (if (refinedLogs.size != logs.size) "Filtered size : ${refinedLogs.size}, " else "")
+        Text(filteredSize + "Total : ${logs.size}")
         LogsView(headerState.value, refinedLogs)
     }
 }
