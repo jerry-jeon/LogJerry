@@ -43,6 +43,7 @@ import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogState
@@ -291,7 +292,7 @@ fun main() = application {
     }
     val preferencesState = remember { mutableStateOf(preferences) }
     Window(
-        state = WindowState(width = 1600.dp, height = 800.dp),
+        state = WindowState(width = Dp.Unspecified, height = Dp.Unspecified),
         onCloseRequest = ::exitApplication,
         onPreviewKeyEvent = { keyEvent ->
             if (keyEvent.isMetaPressed && keyEvent.key == Key.F && keyEvent.type == KeyEventType.KeyDown) {
