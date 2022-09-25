@@ -19,9 +19,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import log.refine.Filter
+import log.refine.LogFilter
 import log.refine.RefinedLogs
-import table.ColumnType
 
 class LogManager(
     val originalLogs: List<Log>
@@ -40,19 +39,10 @@ class LogManager(
         }
     }.stateIn(logScope, SharingStarted.Lazily, KeywordDetectionRequest.TurnedOff)
 
-    val filtersFlow: MutableStateFlow<List<Filter>> = MutableStateFlow(emptyList())
+    val filtersFlow: MutableStateFlow<List<LogFilter>> = MutableStateFlow(emptyList())
     private val transformerFlow = combine(filtersFlow, keywordDetectionRequestFlow) { filters, findStatus ->
         Transformers(
-            filters.map { filter ->
-                { log ->
-                    when (filter.columnType) {
-                        ColumnType.PackageName -> filter.text in (log.packageName ?: "")
-                        ColumnType.Tag -> filter.text in log.tag
-                        ColumnType.Log -> filter.text in log.log
-                        else -> throw NotImplementedError("Not implemented filter : ${filter.columnType}")
-                    }
-                }
-            },
+            filters,
             when (findStatus) {
                 is KeywordDetectionRequest.TurnedOn -> defaultDetections + listOf(KeywordDetection(findStatus.keyword))
                 KeywordDetectionRequest.TurnedOff -> defaultDetections
@@ -65,7 +55,7 @@ class LogManager(
             originalLogs
         } else {
             originalLogs
-                .filter { log -> transformers.filters.all { it(log) } }
+                .filter { log -> transformers.filters.all { it.filter(log) } }
         }
             .mapIndexed { logIndex, log ->
                 transformers.detections.fold(log) { acc, detection ->
@@ -104,7 +94,7 @@ class LogManager(
             .stateIn(logScope, SharingStarted.Lazily, null)
 
     data class Transformers(
-        val filters: List<(Log) -> Boolean>,
+        val filters: List<LogFilter>,
         val detections: List<Detection>
     )
 
@@ -119,12 +109,12 @@ class LogManager(
         )
     }
 
-    fun addFilter(filter: Filter) {
-        filtersFlow.value = filtersFlow.value + filter
+    fun addFilter(logFilter: LogFilter) {
+        filtersFlow.value = filtersFlow.value + logFilter
     }
 
-    fun removeFilter(filter: Filter) {
-        filtersFlow.value = filtersFlow.value - filter
+    fun removeFilter(logFilter: LogFilter) {
+        filtersFlow.value = filtersFlow.value - logFilter
     }
 
     fun find(keyword: String) {

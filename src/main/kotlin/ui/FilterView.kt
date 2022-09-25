@@ -37,14 +37,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import log.refine.Filter
+import log.refine.LogFilter
+import log.refine.TextFilter
 import table.ColumnType
 
 @Composable
 fun FilterView(
-    filters: List<Filter>,
-    addFilter: (Filter) -> Unit,
-    removeFilter: (Filter) -> Unit
+    logFilters: List<LogFilter>,
+    addFilter: (LogFilter) -> Unit,
+    removeFilter: (LogFilter) -> Unit
 ) {
     CompositionLocalProvider(
         LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp)
@@ -54,8 +55,8 @@ fun FilterView(
 
             Spacer(Modifier.height(8.dp))
             Row {
-                filters.forEach { filter ->
-                    AppliedFilter(filter, removeFilter)
+                logFilters.filterIsInstance<TextFilter>().forEach { filter ->
+                    AppliedTextFilter(filter, removeFilter)
                     Spacer(Modifier.width(8.dp))
                 }
             }
@@ -65,7 +66,7 @@ fun FilterView(
 
 @Composable
 private fun AddFilterView(
-    addFilter: (Filter) -> Unit
+    addFilter: (LogFilter) -> Unit
 ) {
     var text by remember { mutableStateOf("") }
     val columnTypeState = remember { mutableStateOf(ColumnType.Log) }
@@ -82,7 +83,7 @@ private fun AddFilterView(
             },
             trailingIcon = {
                 IconButton(onClick = {
-                    addFilter(Filter(columnTypeState.value, text))
+                    addFilter(TextFilter(columnTypeState.value, text))
                     text = ""
                 }) {
                     Icon(Icons.Default.Add, "Add a filter")
@@ -126,31 +127,31 @@ private fun SelectColumnTypeView(
 }
 
 @Composable
-private fun AppliedFilter(filter: Filter, removeFilter: (Filter) -> Unit) {
+private fun AppliedTextFilter(textFilter: TextFilter, removeFilter: (LogFilter) -> Unit) {
     Box(
         Modifier
             .padding(horizontal = 4.dp, vertical = 8.dp)
             .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
     ) {
         Row(modifier = Modifier.padding(horizontal = 8.dp)) {
-            if (filter.columnType.icon != null) {
+            if (textFilter.columnType.icon != null) {
                 Icon(
-                    filter.columnType.icon,
+                    textFilter.columnType.icon,
                     contentDescription = "Remove a filter",
                     modifier = Modifier.size(ButtonDefaults.IconSize).align(Alignment.CenterVertically)
                 )
             } else {
                 Text(
-                    "${filter.columnType}",
+                    "${textFilter.columnType}",
                     modifier = Modifier.align(Alignment.CenterVertically),
                 )
             }
             Spacer(Modifier.width(8.dp))
-            Text(filter.text, modifier = Modifier.align(Alignment.CenterVertically))
+            Text(textFilter.text, modifier = Modifier.align(Alignment.CenterVertically))
             Spacer(Modifier.width(8.dp))
             Box(
                 Modifier
-                    .clickable { removeFilter(filter) }
+                    .clickable { removeFilter(textFilter) }
                     .padding(4.dp)
                     .align(Alignment.CenterVertically)
             ) {
@@ -163,3 +164,4 @@ private fun AppliedFilter(filter: Filter, removeFilter: (Filter) -> Unit) {
         }
     }
 }
+
