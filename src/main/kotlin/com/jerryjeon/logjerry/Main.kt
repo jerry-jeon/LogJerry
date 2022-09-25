@@ -63,9 +63,9 @@ import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
-import com.jerryjeon.logjerry.detector.Detection
 import com.jerryjeon.logjerry.detector.DetectionFocus
 import com.jerryjeon.logjerry.detector.DetectorKey
+import com.jerryjeon.logjerry.detector.JsonDetection
 import com.jerryjeon.logjerry.detector.KeywordDetectionRequest
 import com.jerryjeon.logjerry.detector.KeywordDetectionView
 import com.jerryjeon.logjerry.filter.PriorityFilter
@@ -171,7 +171,7 @@ fun ParseCompletedView(
     setPriorityFilter: (PriorityFilter) -> Unit,
     findKeyword: (String) -> Unit,
     setKeywordDetectionEnabled: (Boolean) -> Unit,
-    collapseJsonDetection: (Detection) -> Unit,
+    collapseJsonDetection: (JsonDetection) -> Unit,
     expandJsonDetection: (String) -> Unit
 ) {
     InvalidSentences(parseResult)

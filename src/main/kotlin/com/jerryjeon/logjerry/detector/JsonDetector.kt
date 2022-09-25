@@ -48,14 +48,18 @@ class JsonDetector() : Detector<JsonDetection> {
 class JsonDetection(
     override val range: IntRange,
     override val logIndex: Int,
-    val json: JsonObject
-) : Detection {
+    val json: JsonObject,
     override val id: String = UUID.randomUUID().toString()
+) : Detection {
     override val key: DetectorKey = DetectorKey.Json
     override val style: SpanStyle
         get() = detectedStyle
 
     companion object {
         val detectedStyle = SpanStyle(background = Color(0x40777777))
+    }
+
+    fun move(index: Int): JsonDetection {
+        return JsonDetection(IntRange(range.first + index, range.last + index), logIndex, json, id)
     }
 }

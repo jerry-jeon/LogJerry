@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -44,7 +45,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogState
 import com.jerryjeon.logjerry.detection.DetectionFinishedLog
-import com.jerryjeon.logjerry.detector.Detection
 import com.jerryjeon.logjerry.detector.JsonDetection
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogContentView
@@ -64,15 +64,15 @@ fun LogRow(
     refinedLog: RefinedLog,
     preferences: Preferences,
     header: Header,
-    collapse: (Detection) -> Unit,
-    expand: (annotation: String) -> Unit,
+    collapseJsonDetection: (JsonDetection) -> Unit,
+    expandJsonDetection: (annotation: String) -> Unit,
     divider: @Composable RowScope.() -> Unit
 ) {
     Row(Modifier.height(IntrinsicSize.Min)) {
         Spacer(Modifier.width(8.dp))
         header.asColumnList.forEach { columnInfo ->
             if (columnInfo.visible) {
-                CellByColumnType(preferences, columnInfo, refinedLog, collapse, expand)
+                CellByColumnType(preferences, columnInfo, refinedLog, collapseJsonDetection, expandJsonDetection)
                 if (columnInfo.columnType.showDivider) {
                     divider()
                 }
@@ -87,8 +87,8 @@ fun RowScope.CellByColumnType(
     preferences: Preferences,
     columnInfo: ColumnInfo,
     refinedLog: RefinedLog,
-    collapse: (Detection) -> Unit,
-    expand: (annotation: String) -> Unit,
+    collapseJsonDetection: (JsonDetection) -> Unit,
+    expandJsonDetection: (annotation: String) -> Unit,
 ) {
     val log = refinedLog.detectionFinishedLog.log
     when (columnInfo.columnType) {
@@ -101,7 +101,7 @@ fun RowScope.CellByColumnType(
         ColumnType.Priority -> PriorityCell(preferences, columnInfo, log)
         ColumnType.Tag -> TagCell(preferences, columnInfo, log)
         ColumnType.Detection -> DetectionCell(columnInfo, refinedLog.detectionFinishedLog)
-        ColumnType.Log -> LogCell(preferences, columnInfo, refinedLog, collapse, expand)
+        ColumnType.Log -> LogCell(preferences, columnInfo, refinedLog, collapseJsonDetection, expandJsonDetection)
     }
 }
 
@@ -206,13 +206,13 @@ private fun RowScope.LogCell(
     preferences: Preferences,
     logHeader: ColumnInfo,
     refinedLog: RefinedLog,
-    collapse: (Detection) -> Unit,
-    expand: (annotation: String) -> Unit,
+    collapseJsonDetection: (JsonDetection) -> Unit,
+    expandJsonDetection: (annotation: String) -> Unit,
 ) {
     Box(modifier = this.cellDefaultModifier(logHeader.width)) {
         Column {
             refinedLog.logContentViews.forEach { logContent ->
-                AnnotatedLogView(preferences, logContent, refinedLog, collapse, expand)
+                AnnotatedLogView(preferences, logContent, refinedLog, collapseJsonDetection, expandJsonDetection)
             }
         }
     }
@@ -222,8 +222,8 @@ private fun RowScope.LogCell(
     preferences: Preferences,
     logContentView: LogContentView,
     refinedLog: RefinedLog,
-    collapse: (Detection) -> Unit,
-    expand: (annotation: String) -> Unit,
+    collapseJsonDetection: (JsonDetection) -> Unit,
+    expandJsonDetection: (annotation: String) -> Unit,
 ) {
     when (logContentView) {
         is LogContentView.Simple -> {
@@ -237,14 +237,14 @@ private fun RowScope.LogCell(
                     logContentView.str.getStringAnnotations(tag = "Json", start = offset, end = offset)
                         .firstOrNull()?.let {
                             println("click :${it.item}")
-                            expand(it.item)
+                            expandJsonDetection(it.item)
                         }
                 }
             )
         }
         is LogContentView.Json -> {
             val modifier = logContentView.background?.let { Modifier.background(color = it) } ?: Modifier
-            Box(modifier = modifier.fillMaxWidth().padding(4.dp)) {
+            Box(modifier = modifier.fillMaxWidth().wrapContentHeight().padding(4.dp)) {
                 Text(
                     text = logContentView.str,
                     style = MaterialTheme.typography.body2.copy(
@@ -261,7 +261,7 @@ private fun RowScope.LogCell(
                     }
                     Spacer(Modifier.width(4.dp))
                     IconButton(
-                        onClick = { collapse(logContentView.jsonDetection) },
+                        onClick = { collapseJsonDetection(logContentView.jsonDetection) },
                         modifier = Modifier.size(16.dp),
                     ) {
                         Icon(Icons.Default.Expand, "Collapse the json")

@@ -16,8 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.jerryjeon.logjerry.ColumnDivider
 import com.jerryjeon.logjerry.HeaderDivider
-import com.jerryjeon.logjerry.detector.Detection
 import com.jerryjeon.logjerry.detector.DetectionFocus
+import com.jerryjeon.logjerry.detector.JsonDetection
 import com.jerryjeon.logjerry.logview.RefinedLog
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header
@@ -28,8 +28,8 @@ fun LogsView(
     header: Header,
     logs: List<RefinedLog>,
     detectionFocus: DetectionFocus?,
-    collapse: (Detection) -> Unit,
-    expand: (annotation: String) -> Unit,
+    collapseJsonDetection: (JsonDetection) -> Unit,
+    expandJsonDetection: (annotation: String) -> Unit,
 ) {
     val listState = rememberLazyListState()
 
@@ -47,7 +47,7 @@ fun LogsView(
             logs.forEach {
                 item {
                     Column {
-                        LogRow(it, preferences, header, divider = divider, collapse = collapse, expand = expand)
+                        LogRow(it, preferences, header, divider = divider, collapseJsonDetection = collapseJsonDetection, expandJsonDetection = expandJsonDetection)
                         Divider(color = Color(0xFFE5E7E9))
                     }
                 }

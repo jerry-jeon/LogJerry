@@ -7,6 +7,7 @@ import com.jerryjeon.logjerry.detection.DetectionFinished
 import com.jerryjeon.logjerry.detector.Detection
 import com.jerryjeon.logjerry.detector.Detector
 import com.jerryjeon.logjerry.detector.JsonDetection
+import com.jerryjeon.logjerry.detector.JsonDetector
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogContent
 import com.jerryjeon.logjerry.log.LogContentView
@@ -28,19 +29,14 @@ class LogViewManager(
 ) {
     private val logViewScope = MainScope()
 
-    private val detectionExpanded = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    private val detectionExpandedFlow = MutableStateFlow<Map<String, Boolean>>(emptyMap())
 
-    val investigationViewFlow: StateFlow<InvestigationView> = combine(detectionFinishedFlow, detectionExpanded) { investigation, expanded ->
+    val investigationViewFlow: StateFlow<InvestigationView> = combine(detectionFinishedFlow, detectionExpandedFlow) { investigation, expanded ->
         // Why should it be separated : make possible to change data of detectionResult
         // TODO don't want to repeat all annotate if just one log has changed. How can I achieve it
         val refinedLogs = investigation.detectionFinishedLogs.map {
             val logContents =
-                separateAnnotationStrings(
-                    it.log,
-                    it.detections.values.flatten().map { detectionResult ->
-                        DetectionView(detectionResult, expanded[detectionResult.id] ?: false)
-                    }
-                )
+                separateAnnotationStrings(it.log, it.detections.values.flatten(), expanded)
             RefinedLog(it, annotate(it.log, logContents, investigation.detectors))
         }
         val allDetectionLogs = investigation.allDetections.mapValues { (_, v) ->
@@ -54,45 +50,54 @@ class LogViewManager(
     init {
         logViewScope.launch {
             detectionFinishedFlow.map { detectionFinished ->
-                detectionExpanded.value = detectionFinished.allDetections.values.flatten().associate {
+                detectionExpandedFlow.value = detectionFinished.allDetections.values.flatten().associate {
                     it.id to (it is JsonDetection)
                 }
             }
         }
     }
 
-    private fun separateAnnotationStrings(log: Log, detectionResults: List<DetectionView>): List<LogContent> {
-        val sorted = detectionResults.sortedBy { it.detection.range.first }
+    private fun separateAnnotationStrings(log: Log, detectionResults: List<Detection>, detectionExpanded: Map<String, Boolean>): List<LogContent> {
+        val sortedDetections = detectionResults.sortedBy { it.range.first }
         val originalLog = log.log
 
         var lastEnded = 0
         val logContents = mutableListOf<LogContent>()
-        sorted.forEach {
-            val newStart = it.detection.range.first
-            val newEnd = it.detection.range.last
+        val jsonDetections = mutableListOf<JsonDetection>()
+        sortedDetections.forEach {
+            val newStart = it.range.first
+            val newEnd = it.range.last
             // Assume that there are no overlapping areas.
-            if (it.detection is JsonDetection && it.expanded) {
-                if (lastEnded != newStart) {
-                    logContents.add(LogContent.Simple(originalLog.substring(lastEnded, newStart)))
+            if (it is JsonDetection) {
+                if (detectionExpanded[it.id] == true) {
+                    if (lastEnded != newStart) {
+                        logContents.add(LogContent.Text(originalLog.substring(lastEnded, newStart), jsonDetections.toList()))
+                    }
+                    logContents.add(
+                        LogContent.ExpandedJson(
+                            json.encodeToString(JsonObject.serializer(), it.json), it
+                        )
+                    )
+                    jsonDetections.clear()
+                    lastEnded = newEnd + 1
+                } else {
+                    jsonDetections.add(it.move(-lastEnded)) // expanded range is separated area, so range should be changed
                 }
-                logContents.add(LogContent.Json(json.encodeToString(JsonObject.serializer(), it.detection.json), it.detection))
-                lastEnded = newEnd + 1
             }
         }
         if (lastEnded < originalLog.length) {
-            logContents.add(LogContent.Simple(originalLog.substring(lastEnded)))
+            logContents.add(LogContent.Text(originalLog.substring(lastEnded), jsonDetections.toList()))
         }
         return logContents
     }
 
     private fun annotate(log: Log, logContents: List<LogContent>, detectors: List<Detector<*>>): List<LogContentView> {
-        val result = logContents.map {
-            when (it) {
-                is LogContent.Json -> {
-                    val simple = it
-                    val initial = AnnotatedString.Builder(simple.text)
-                    val newDetections = detectors.flatMap { detection ->
-                        detection.detect(simple.text, log.number)
+        val result = logContents.map { logContent ->
+            when (logContent) {
+                is LogContent.ExpandedJson -> {
+                    val initial = AnnotatedString.Builder(logContent.text)
+                    val newDetections = detectors.filter { it !is JsonDetector }.flatMap { detection ->
+                        detection.detect(logContent.text, log.number)
                     }
 
                     val builder = newDetections.fold(initial) { acc, next ->
@@ -104,16 +109,15 @@ class LogViewManager(
                             )
                         }
                     }
-                    LogContentView.Json(builder.toAnnotatedString(), Color.LightGray, it.jdr)
+                    LogContentView.Json(builder.toAnnotatedString(), Color.LightGray, logContent.jsonDetection)
                 }
-                is LogContent.Simple -> {
-                    val simple = it
-                    val initial = AnnotatedString.Builder(simple.text)
-                    val newDetections = detectors.flatMap { detection ->
-                        detection.detect(simple.text, log.number)
+                is LogContent.Text -> {
+                    val initial = AnnotatedString.Builder(logContent.text)
+                    val newDetections = detectors.filter { it !is JsonDetector }.flatMap { detection ->
+                        detection.detect(logContent.text, log.number)
                     }
 
-                    val builder = newDetections.fold(initial) { acc, next ->
+                    val builder = (newDetections + logContent.jsonDetections).fold(initial) { acc, next ->
                         acc.apply {
                             addStyle(
                                 next.style,
@@ -133,13 +137,11 @@ class LogViewManager(
         return result
     }
 
-    fun collapseJsonDetection(detection: Detection) {
-        println("collapse: ${detection.id}")
-        detectionExpanded.value = detectionExpanded.value + (detection.id to false)
+    fun collapseJsonDetection(detection: JsonDetection) {
+        detectionExpandedFlow.value = detectionExpandedFlow.value + (detection.id to false)
     }
 
     fun expandJsonDetection(annotation: String) {
-        println("expand: $annotation")
-        detectionExpanded.value = detectionExpanded.value + (annotation to true)
+        detectionExpandedFlow.value = detectionExpandedFlow.value + (annotation to true)
     }
 }
