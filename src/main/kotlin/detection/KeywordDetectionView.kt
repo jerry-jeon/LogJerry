@@ -1,3 +1,8 @@
+package detection
+
+import DetectionResult
+import DetectionResultFocus
+import MyTheme
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -20,8 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun KeywordFindView(
-    keywordFindRequest: KeywordFindRequest,
+fun KeywordDetectionView(
+    keywordDetectionRequest: KeywordDetectionRequest,
     detectionResultFocus: DetectionResultFocus?,
     find: (String) -> Unit,
     setFindEnabled: (Boolean) -> Unit,
@@ -31,10 +36,10 @@ fun KeywordFindView(
     CompositionLocalProvider(
         LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp),
     ) {
-        when (keywordFindRequest) {
-            is KeywordFindRequest.TurnedOn -> {
-                KeywordFindRequestViewTurnedOn(
-                    keywordFindRequest,
+        when (keywordDetectionRequest) {
+            is KeywordDetectionRequest.TurnedOn -> {
+                KeywordDetectionRequestViewTurnedOn(
+                    keywordDetectionRequest,
                     find,
                     setFindEnabled,
                     detectionResultFocus,
@@ -42,14 +47,14 @@ fun KeywordFindView(
                     moveToNextOccurrence
                 )
             }
-            KeywordFindRequest.TurnedOff -> {}
+            KeywordDetectionRequest.TurnedOff -> {}
         }
     }
 }
 
 @Composable
-private fun KeywordFindRequestViewTurnedOn(
-    keywordFindRequest: KeywordFindRequest.TurnedOn,
+private fun KeywordDetectionRequestViewTurnedOn(
+    keywordDetectionRequest: KeywordDetectionRequest.TurnedOn,
     find: (String) -> Unit,
     setFindEnabled: (Boolean) -> Unit,
     detectionResultFocus: DetectionResultFocus?,
@@ -58,7 +63,7 @@ private fun KeywordFindRequestViewTurnedOn(
 ) {
     Box(Modifier.padding(8.dp)) {
         OutlinedTextField(
-            value = keywordFindRequest.keyword,
+            value = keywordDetectionRequest.keyword,
             onValueChange = { find(it) },
             leadingIcon = { Icon(Icons.Default.Search, "Search") },
             trailingIcon = {
@@ -87,7 +92,7 @@ private fun KeywordFindRequestViewTurnedOn(
 
 @Preview
 @Composable
-private fun KeywordFindViewPreview() {
+private fun KeywordDetectionViewPreview() {
     MyTheme {
         val results = listOf(
             DetectionResult("keyword", 0, 1),
@@ -96,8 +101,8 @@ private fun KeywordFindViewPreview() {
             DetectionResult("keyword", 3, 1),
             DetectionResult("keyword", 4, 1),
         )
-        KeywordFindView(
-            KeywordFindRequest.TurnedOn("Searching keyword"),
+        KeywordDetectionView(
+            KeywordDetectionRequest.TurnedOn("Searching keyword"),
             DetectionResultFocus(results[2], results),
             {},
             {},

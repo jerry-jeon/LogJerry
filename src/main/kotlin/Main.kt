@@ -44,7 +44,14 @@ import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
+import detection.KeywordDetectionRequest
+import detection.KeywordDetectionView
+import log.LogManager
 import parse.ParseResult
+import parse.ParseStatus
+import source.Source
+import source.SourceManager
+import table.Header
 import ui.ExceptionDetectionView
 import java.awt.FileDialog
 import java.awt.Toolkit
@@ -64,7 +71,7 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
             Column {
                 val logManager = status.logManager
                 val refinedLogs by logManager.refinedLogs.collectAsState()
-                val findStatus = logManager.keywordFindRequestFlow.collectAsState()
+                val findStatus = logManager.keywordDetectionRequestFlow.collectAsState()
                 val keywordDetectionResultFocus = logManager.keywordDetectionResultFocus.collectAsState()
                 val exceptionDetectionResultFocus = logManager.exceptionDetectionResultFocus.collectAsState()
                 val findResult = logManager.activeDetectionResultFocusFlowState.collectAsState()
@@ -89,7 +96,7 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
 @Composable
 fun ParseCompletedView(
     logManager: LogManager,
-    keywordFindRequest: KeywordFindRequest,
+    keywordDetectionRequest: KeywordDetectionRequest,
     detectionResultFocus: DetectionResultFocus?,
     keywordDetectionResultFocus: DetectionResultFocus?,
     exceptionDetectionResultFocus: DetectionResultFocus?,
@@ -102,11 +109,11 @@ fun ParseCompletedView(
     Row {
         FilterView(logManager.filtersFlow.value, logManager::addFilter, logManager::removeFilter)
         Spacer(Modifier.width(16.dp))
-        KeywordFindView(
-            keywordFindRequest,
+        KeywordDetectionView(
+            keywordDetectionRequest,
             keywordDetectionResultFocus,
             logManager::find,
-            logManager::setKeywordFindEnabled,
+            logManager::setKeywordDetectionEnabled,
             { logManager.previousFindResult(true, it) },
             { logManager.nextFindResult(true, it) },
         )

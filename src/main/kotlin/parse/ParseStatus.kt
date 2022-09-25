@@ -1,4 +1,6 @@
-import parse.ParseResult
+package parse
+
+import log.LogManager
 
 sealed class ParseStatus {
     object NotStarted : ParseStatus()

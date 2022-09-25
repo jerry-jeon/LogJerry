@@ -11,6 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import log.SampleData
+import table.ColumnInfo
+import table.ColumnType
+import table.Header
 
 @Composable
 fun LogRow(

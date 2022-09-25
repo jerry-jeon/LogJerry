@@ -1,7 +1,13 @@
-import androidx.compose.ui.graphics.Color
+package log
+
+import Detection
+import DetectionResult
+import DetectionResultFocus
+import Log
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
 import detection.ExceptionDetection
+import detection.KeywordDetection
+import detection.KeywordDetectionRequest
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -11,26 +17,29 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import log.refine.Filter
+import log.refine.RefinedLogs
+import table.ColumnType
 
 class LogManager(
     val originalLogs: List<Log>
 ) {
     private val logScope = MainScope()
 
-    val defaultDetections = listOf<Detection>(ExceptionDetection())
+    private val defaultDetections = listOf<Detection>(ExceptionDetection())
 
-    private val keywordFindEnabledStateFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    private val findKeywordFlow = MutableStateFlow("")
-    val keywordFindRequestFlow = combine(keywordFindEnabledStateFlow, findKeywordFlow) { enabled, keyword ->
+    private val keywordDetectionEnabledStateFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val detectingKeywordFlow = MutableStateFlow("")
+    val keywordDetectionRequestFlow = combine(keywordDetectionEnabledStateFlow, detectingKeywordFlow) { enabled, keyword ->
         if (enabled) {
-            KeywordFindRequest.TurnedOn(keyword)
+            KeywordDetectionRequest.TurnedOn(keyword)
         } else {
-            KeywordFindRequest.TurnedOff
+            KeywordDetectionRequest.TurnedOff
         }
-    }.stateIn(logScope, SharingStarted.Lazily, KeywordFindRequest.TurnedOff)
+    }.stateIn(logScope, SharingStarted.Lazily, KeywordDetectionRequest.TurnedOff)
 
     val filtersFlow: MutableStateFlow<List<Filter>> = MutableStateFlow(emptyList())
-    private val transformerFlow = combine(filtersFlow, keywordFindRequestFlow) { filters, findStatus ->
+    private val transformerFlow = combine(filtersFlow, keywordDetectionRequestFlow) { filters, findStatus ->
         Transformers(
             filters.map { filter ->
                 { log ->
@@ -43,8 +52,8 @@ class LogManager(
                 }
             },
             when (findStatus) {
-                is KeywordFindRequest.TurnedOn -> defaultDetections + listOf(KeywordDetection(findStatus.keyword))
-                KeywordFindRequest.TurnedOff -> defaultDetections
+                is KeywordDetectionRequest.TurnedOn -> defaultDetections + listOf(KeywordDetection(findStatus.keyword))
+                KeywordDetectionRequest.TurnedOff -> defaultDetections
             }
         )
     }
@@ -113,25 +122,6 @@ class LogManager(
         }
     }
 
-    class KeywordDetection(private val keyword: String) : Detection {
-        override val key: String = "keyword"
-        override val detectedStyle: SpanStyle = SpanStyle(background = Color.Yellow)
-        override fun detect(log: Log): List<IntRange> {
-            if (keyword.isBlank()) return emptyList()
-            var startIndex = 0
-            val indexRanges = mutableListOf<IntRange>()
-            while (startIndex != -1) {
-                startIndex = log.originalLog.indexOf(keyword, startIndex)
-                if (startIndex != -1) {
-                    indexRanges.add(startIndex..startIndex + keyword.length)
-                    startIndex += keyword.length
-                }
-            }
-
-            return indexRanges
-        }
-    }
-
     fun addFilter(filter: Filter) {
         filtersFlow.value = filtersFlow.value + filter
     }
@@ -141,11 +131,11 @@ class LogManager(
     }
 
     fun find(keyword: String) {
-        findKeywordFlow.value = keyword
+        detectingKeywordFlow.value = keyword
     }
 
-    fun setKeywordFindEnabled(enabled: Boolean) {
-        keywordFindEnabledStateFlow.value = enabled
+    fun setKeywordDetectionEnabled(enabled: Boolean) {
+        keywordDetectionEnabledStateFlow.value = enabled
     }
 
     fun previousFindResult(keyword: Boolean, detectionResultFocus: DetectionResultFocus) {

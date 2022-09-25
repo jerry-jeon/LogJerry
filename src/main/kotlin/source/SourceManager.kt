@@ -1,10 +1,14 @@
+package source
+
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import log.LogManager
 import parse.DefaultParser
+import parse.ParseStatus
 
 class SourceManager {
     private val sourceScope = MainScope()
@@ -34,7 +38,7 @@ class SourceManager {
     fun findShortcutPressed() {
         when (val value = parseStatusFlow.value) {
             is ParseStatus.Completed -> {
-                value.logManager.setKeywordFindEnabled(true)
+                value.logManager.setKeywordDetectionEnabled(true)
             }
             ParseStatus.NotStarted -> {}
             is ParseStatus.Proceeding -> {}

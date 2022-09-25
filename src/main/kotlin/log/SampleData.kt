@@ -1,3 +1,6 @@
+package log
+
+import Log
 import androidx.compose.ui.text.AnnotatedString
 
 object SampleData {

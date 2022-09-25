@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.MenuScope
+import table.ColumnInfo
+import table.Header
 
 @Composable
 fun ColumnVisibility(headerState: MutableState<Header>) {
