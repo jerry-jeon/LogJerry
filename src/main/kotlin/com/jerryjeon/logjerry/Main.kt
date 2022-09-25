@@ -348,7 +348,7 @@ fun main() = application {
     val tabsState = tabManager.tabs.collectAsState()
     Window(
         title = "LogJerry",
-        icon = painterResource("hamster.svg"),
+        icon = painterResource("LogJerry.png"),
         state = WindowState(width = Dp.Unspecified, height = Dp.Unspecified),
         onCloseRequest = ::exitApplication,
         onPreviewKeyEvent = { keyEvent ->
