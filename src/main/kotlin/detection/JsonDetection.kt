@@ -20,7 +20,7 @@ class JsonDetection : Detection {
         val stack = ArrayDeque<Pair<Int, Char>>()
         val bracketRanges = mutableListOf<IntRange>()
         log.log.forEachIndexed { index, c ->
-            if (c == '{') stack.addFirst(index to '{')
+            if (c == '{') stack.addLast(index to '{')
             else if (c == '}') {
                 val lastOrNull = stack.lastOrNull() ?: return@forEachIndexed
                 if (lastOrNull.second == '{') {
