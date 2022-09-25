@@ -60,7 +60,7 @@ compose.desktop {
                 }
                 notarization {
                     appleID.set(signingProperties.getProperty("compose.desktop.mac.notarization.appleID"))
-                    appleID.set(signingProperties.getProperty("compose.desktop.mac.notarization.password"))
+                    password.set(signingProperties.getProperty("compose.desktop.mac.notarization.password"))
                 }
                 appStore = signingProperties.getProperty("compose.desktop.mac.appStore").toBoolean()
                 provisioningProfile.set(project.file(signingProperties.getProperty("compose.desktop.mac.provisionProfile")))
