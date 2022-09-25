@@ -3,6 +3,7 @@
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -105,13 +106,23 @@ fun ParseCompletedView(
     }
     val filteredSize =
         (if (refinedLogsList.size != logs.size) "Filtered size : ${refinedLogsList.size}, " else "")
-    Text(filteredSize + "Total : ${logs.size}")
+    Text(filteredSize + "Total : ${logs.size}", modifier = Modifier.padding(8.dp))
     LogsView(headerState.value, refinedLogsList, detectionResultFocus)
 }
 
 @Composable
 private fun GettingStartedView() {
-    Text("File - Load or Paste")
+    Column(
+        modifier = Modifier.padding(50.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Getting Started", modifier = Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.h3)
+        Spacer(Modifier.height(8.dp))
+        Text("1. File - Open file (Cmd + O), and choose the android log file", modifier = Modifier.align(Alignment.CenterHorizontally))
+        Spacer(Modifier.height(8.dp))
+        Text("2. Copy the android log, and paste (Cmd + V) to this window", modifier = Modifier.align(Alignment.CenterHorizontally))
+    }
 }
 
 @Composable
@@ -182,7 +193,7 @@ fun main() = application {
         MyTheme {
             MenuBar {
                 Menu("File") {
-                    Item("Open file", shortcut = KeyShortcut(Key.L, ctrl = true)) {
+                    Item("Open file", shortcut = KeyShortcut(Key.O, meta = true)) {
                         sourceManager.openFileDialog()
                     }
                 }
