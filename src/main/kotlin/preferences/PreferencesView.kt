@@ -80,11 +80,17 @@ fun PreferencesView(isOpen: MutableState<Boolean>, preferencesState: MutableStat
                         Spacer(Modifier.height(8.dp))
                     }
                 }
-                Button(enabled = saveEnabled.value, onClick = {
-                    viewModel.save()
-                    isOpen.value = false
-                }) {
-                    Text("Save")
+                Row {
+                    Button(enabled = saveEnabled.value, onClick = {
+                        viewModel.save()
+                        isOpen.value = false
+                    }) {
+                        Text("Save")
+                    }
+                    Spacer(Modifier.width(16.dp))
+                    Button(onClick = { viewModel.restoreToDefault() }) {
+                        Text("Restore to default")
+                    }
                 }
             }
         }

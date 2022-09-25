@@ -19,11 +19,7 @@ class PreferencesViewModel(
     private val preferencesState: MutableState<Preferences>
 ) {
     private val preferenceScope = MainScope()
-    var colorStrings = MutableStateFlow(
-        preferencesState.value.colorByPriority.mapValues { (_, c) ->
-            String.format("#%x", c.toArgb())
-        }
-    )
+    var colorStrings = MutableStateFlow(preferencesState.value.colorByPriority.toColorStrings())
 
     var validColorsByPriority = colorStrings.map {
         it.mapValues { (_, color) ->
@@ -56,6 +52,11 @@ class PreferencesViewModel(
         }
     }
 
+    fun restoreToDefault() {
+        colorStrings.value = Preferences.default.colorByPriority.toColorStrings()
+    }
+
+    private fun Map<Priority, Color>.toColorStrings() = mapValues { (_, c) -> String.format("#%x", c.toArgb()) }
     private fun parseColor(colorString: String): Int {
         if (colorString[0] == '#') { // Use a long to avoid rollovers on #ffXXXXXX
             var color = colorString.substring(1).toLong(16)
