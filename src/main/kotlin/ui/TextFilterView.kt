@@ -133,18 +133,10 @@ private fun AppliedTextFilter(textFilter: TextFilter, removeFilter: (TextFilter)
             .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
     ) {
         Row(modifier = Modifier.padding(horizontal = 8.dp)) {
-            if (textFilter.columnType.icon != null) {
-                Icon(
-                    textFilter.columnType.icon,
-                    contentDescription = "Remove a filter",
-                    modifier = Modifier.size(ButtonDefaults.IconSize).align(Alignment.CenterVertically)
-                )
-            } else {
-                Text(
-                    "${textFilter.columnType}",
-                    modifier = Modifier.align(Alignment.CenterVertically),
-                )
-            }
+            Text(
+                textFilter.columnType.text,
+                modifier = Modifier.align(Alignment.CenterVertically),
+            )
             Spacer(Modifier.width(8.dp))
             Text(textFilter.text, modifier = Modifier.align(Alignment.CenterVertically))
             Spacer(Modifier.width(8.dp))
@@ -163,4 +155,3 @@ private fun AppliedTextFilter(textFilter: TextFilter, removeFilter: (TextFilter)
         }
     }
 }
-
