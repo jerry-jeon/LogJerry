@@ -3,32 +3,25 @@ package com.jerryjeon.logjerry.detection
 import Detection
 import DetectionKey
 import DetectionResult
-import Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 
-class ExceptionDetection : Detection {
+class ExceptionDetection : Detection<ExceptionDetectionResult> {
     override val key = DetectionKey.Exception
     override val detectedStyle: SpanStyle
         get() = SpanStyle(background = Color(0x40EEEEA5))
 
-    override fun detect(log: Log, logIndex: Int): ExceptionDetectionResult? {
-        val lines = log.log.split("\n")
+    override fun detect(logStr: String, logIndex: Int): List<ExceptionDetectionResult> {
+        val lines = logStr.split("\n")
         val stackStartLine = lines.indexOfFirst { isStackTrace(it) }
-            .takeIf { it != -1 } ?: return null
+            .takeIf { it != -1 } ?: return emptyList()
 
         val exceptionLines = lines.subList(0, (stackStartLine - 1).coerceAtLeast(0))
         val words = exceptionLines.joinToString(separator = " ").split(',', '.', ' ', '\n', '$', ':', ';')
         val exception = words.firstOrNull { it.contains("exception", ignoreCase = true) || it.contains("error", ignoreCase = true) }
 
-        return ExceptionDetectionResult(
-            key,
-            detectedStyle,
-            0 until log.log.length,
-            log,
-            logIndex,
-            exception ?: ""
-        )
+        val result = ExceptionDetectionResult(key, detectedStyle, logStr.indices, logIndex, exception ?: "")
+        return listOf(result)
     }
 
     /**
@@ -60,7 +53,6 @@ class ExceptionDetectionResult(
     key: DetectionKey,
     style: SpanStyle,
     range: IntRange,
-    log: Log,
     logIndex: Int,
     val exception: String,
-) : DetectionResult(key, style, listOf(range), log, logIndex)
+) : DetectionResult(key, style, range, logIndex)

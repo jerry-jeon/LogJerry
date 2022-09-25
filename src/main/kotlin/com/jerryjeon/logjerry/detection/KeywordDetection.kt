@@ -3,22 +3,21 @@ package com.jerryjeon.logjerry.detection
 import Detection
 import DetectionKey
 import DetectionResult
-import Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 
-class KeywordDetection(private val keyword: String) : Detection {
+class KeywordDetection(private val keyword: String) : Detection<DetectionResult> {
     override val key: DetectionKey = DetectionKey.Keyword
     override val detectedStyle: SpanStyle = SpanStyle(background = Color.Yellow)
-    override fun detect(log: Log, logIndex: Int): DetectionResult? {
-        if (keyword.isBlank()) return null
+    override fun detect(logStr: String, logIndex: Int): List<DetectionResult> {
+        if (keyword.isBlank()) return emptyList()
         val orKeywords = keyword.split("|")
             .filter { it.isNotBlank() }
         val indexRanges = mutableListOf<IntRange>()
         orKeywords.forEach {
             var startIndex = 0
             while (startIndex != -1) {
-                startIndex = log.log.indexOf(it, startIndex, ignoreCase = true)
+                startIndex = logStr.indexOf(it, startIndex, ignoreCase = true)
                 if (startIndex != -1) {
                     indexRanges.add(startIndex..startIndex + it.length)
                     startIndex += it.length
@@ -26,10 +25,6 @@ class KeywordDetection(private val keyword: String) : Detection {
             }
         }
 
-        return if (indexRanges.isNotEmpty()) {
-            DetectionResult(key, detectedStyle, indexRanges, log, logIndex)
-        } else {
-            null
-        }
+        return indexRanges.map { DetectionResult(key, detectedStyle, it, logIndex) }
     }
 }

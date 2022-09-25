@@ -3,9 +3,6 @@
 package com.jerryjeon.logjerry.detection
 
 import DetectionFocus
-import DetectionKey
-import DetectionResult
-import MyTheme
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -35,10 +32,8 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jerryjeon.logjerry.log.SampleData
 
 @Composable
 fun KeywordDetectionView(
@@ -144,16 +139,4 @@ private fun KeywordDetectionRequestViewTurnedOn(
 @Preview
 @Composable
 private fun KeywordDetectionViewPreview() {
-    MyTheme {
-        val results = listOf(DetectionResult(DetectionKey.Keyword, SpanStyle(), listOf(0..3), SampleData.log, 0))
-        KeywordDetectionView(
-            Modifier,
-            KeywordDetectionRequest.TurnedOn("Searching keyword"),
-            DetectionFocus(DetectionKey.Keyword, 0, results[0], results),
-            {},
-            {},
-            {},
-            {}
-        )
-    }
 }

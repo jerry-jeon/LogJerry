@@ -32,7 +32,7 @@ class LogManager(
 ) {
     private val logScope = MainScope()
 
-    private val defaultDetections = listOf<Detection>(ExceptionDetection(), JsonDetection())
+    private val defaultDetections = listOf(ExceptionDetection(), JsonDetection())
 
     private val keywordDetectionEnabledStateFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     private val detectingKeywordFlow = MutableStateFlow("")
@@ -69,7 +69,8 @@ class LogManager(
         }
             .mapIndexed { logIndex, log ->
                 val detectionResults = mutableMapOf<DetectionKey, MutableList<DetectionResult>>()
-                transformers.detections.mapNotNull { it.detect(log, logIndex) }
+                transformers.detections.map { it.detect(log.log, logIndex) }
+                    .flatten()
                     .forEach {
                         val resultList = detectionResults.getOrPut(it.key) { mutableListOf() }
                         resultList.add(it)
@@ -77,9 +78,7 @@ class LogManager(
                 val annotatedLog = detectionResults.values.flatten()
                     .fold(AnnotatedString.Builder(log.log)) { builder, result ->
                         builder.apply {
-                            result.ranges.forEach { range ->
-                                addStyle(result.style, range.first, range.last)
-                            }
+                            addStyle(result.style, result.range.first, result.range.last)
                         }
                     }.toAnnotatedString()
 
@@ -135,7 +134,7 @@ class LogManager(
 
     data class Transformers(
         val filters: List<LogFilter>,
-        val detections: List<Detection>
+        val detections: List<Detection<*>>
     )
 
     fun addFilter(textFilter: TextFilter) {

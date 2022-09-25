@@ -200,20 +200,17 @@ private fun RowScope.DetectionCell(button: ColumnInfo, refinedLog: RefinedLog) {
     val showPrettyJsonDialog: MutableState<JsonObject?> = remember { mutableStateOf(null) }
 
     Column(modifier = this.cellDefaultModifier(button.width)) {
-        refinedLog.detectionResults.values.flatten().forEach { result ->
-            when (result) {
-                is JsonDetectionResult -> {
-                    result.jsonList.forEachIndexed { index, jsonObject ->
-                        TextButton(onClick = { showPrettyJsonDialog.value = jsonObject }) {
-                            Row {
-                                Text("{ }")
-                                Text("${index + 1}", fontSize = 9.sp)
-                            }
-                        }
+        refinedLog.detectionResults.values
+            .flatten()
+            .filterIsInstance<JsonDetectionResult>()
+            .forEachIndexed { index, result ->
+                TextButton(onClick = { showPrettyJsonDialog.value = result.json }) {
+                    Row {
+                        Text("{ }")
+                        Text("${index + 1}", fontSize = 9.sp)
                     }
                 }
             }
-        }
     }
 
     JsonPrettyDialog(showPrettyJsonDialog)

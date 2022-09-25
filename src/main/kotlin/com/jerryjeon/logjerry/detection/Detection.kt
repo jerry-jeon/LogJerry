@@ -5,17 +5,16 @@ enum class DetectionKey {
     Keyword, Exception, Json;
 }
 
-interface Detection {
+interface Detection<T : DetectionResult> {
     val key: DetectionKey
     val detectedStyle: SpanStyle
-    fun detect(log: Log, logIndex: Int): DetectionResult?
+    fun detect(logStr: String, logIndex: Int): List<T>
 }
 
 open class DetectionResult(
     val key: DetectionKey,
     val style: SpanStyle, // TODO It would be better to move it to other place
-    val ranges: List<IntRange>, // Detected ranges
-    val log: Log,
+    val range: IntRange,
     val logIndex: Int
 )
 
