@@ -13,14 +13,14 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyShortcut
 
 enum class ColumnType(val text: String, val shortcut: KeyShortcut, val icon: ImageVector?, val showDivider: Boolean) {
-    Number("#", KeyShortcut(Key.Zero, meta = true), null, true),
-    Date("Date", KeyShortcut(Key.One, meta = true), Icons.Default.DateRange, true),
-    Time("Time", KeyShortcut(Key.Two, meta = true), Icons.Default.Check, true),
-    Pid("pid", KeyShortcut(Key.Three, meta = true), null, true),
-    Tid("tid", KeyShortcut(Key.Four, meta = true), null, true),
-    PackageName("PackageName", KeyShortcut(Key.Five, meta = true), null, true),
-    Priority("level", KeyShortcut(Key.Six, meta = true), null, true),
-    Tag("Tag", KeyShortcut(Key.Seven, meta = true), Icons.Default.Info, true),
-    Log("Log", KeyShortcut(Key.Eight, meta = true), Icons.Default.List, false),
-    Detection("", KeyShortcut(Key.Nine, meta = true), null, false);
+    Number("#", KeyShortcut(Key.One, meta = true), null, true),
+    Date("Date", KeyShortcut(Key.Two, meta = true), Icons.Default.DateRange, true),
+    Time("Time", KeyShortcut(Key.Three, meta = true), Icons.Default.Check, true),
+    Pid("pid", KeyShortcut(Key.Four, meta = true), null, true),
+    Tid("tid", KeyShortcut(Key.Five, meta = true), null, true),
+    PackageName("PackageName", KeyShortcut(Key.Six, meta = true), null, true),
+    Priority("level", KeyShortcut(Key.Seven, meta = true), null, true),
+    Tag("Tag", KeyShortcut(Key.Eight, meta = true), Icons.Default.Info, true),
+    Log("Log", KeyShortcut(Key.Nine, meta = true), Icons.Default.List, false),
+    Detection("", KeyShortcut(Key.Zero, meta = true), null, false);
 }
