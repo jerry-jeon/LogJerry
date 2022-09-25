@@ -1,5 +1,14 @@
-class Parser {
-    fun parse(raw: String): Log {
+package parse
+
+import Log
+
+class DefaultParser : LogParser {
+    override fun canParse(raw: String): Boolean {
+        // TODO check
+        return true
+    }
+
+    override fun parse(raw: String): Log {
         val split = raw.split(" ")
 
         val date = split[0]
