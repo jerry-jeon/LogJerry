@@ -170,7 +170,7 @@ private fun RowScope.LogCell(logHeader: ColumnInfo, refinedLog: RefinedLog) {
             val currentStyle = MaterialTheme.typography.body2
             val style =
                 if (log.priority == Priority.Error) currentStyle.copy(color = Color.Red) else currentStyle
-            Text(refinedLog.annotatedLog, modifier = Modifier, style = style, lineHeight = 40.sp)
+            Text(refinedLog.annotatedLog, modifier = Modifier, style = style)
         }
     }
 }
