@@ -1,5 +1,3 @@
-import androidx.compose.ui.text.AnnotatedString
-
 data class Log(
     val number: Int,
     val date: String,
@@ -9,8 +7,7 @@ data class Log(
     val packageName: String?,
     val priorityText: String,
     val tag: String,
-    val originalLog: String,
-    val log: AnnotatedString
+    val log: String
 ) {
     val priority = Priority.find(priorityText)
 }

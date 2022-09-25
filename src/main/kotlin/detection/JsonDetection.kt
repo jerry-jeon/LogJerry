@@ -19,7 +19,7 @@ class JsonDetection : Detection {
         // Find bracket pairs, { } and check this is json or not
         val stack = ArrayDeque<Pair<Int, Char>>()
         val bracketRanges = mutableListOf<IntRange>()
-        log.originalLog.forEachIndexed { index, c ->
+        log.log.forEachIndexed { index, c ->
             if (c == '{') stack.addFirst(index to '{')
             else if (c == '}') {
                 val lastOrNull = stack.lastOrNull() ?: return@forEachIndexed
@@ -35,7 +35,7 @@ class JsonDetection : Detection {
         if (bracketRanges.isEmpty()) return null
 
         val jsonList = bracketRanges.mapNotNull {
-            val text = log.originalLog.substring(it)
+            val text = log.log.substring(it)
             try {
                 Json.parseToJsonElement(text).jsonObject
             } catch (_: Exception) {

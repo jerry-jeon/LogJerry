@@ -18,7 +18,7 @@ class KeywordDetection(private val keyword: String) : Detection {
         orKeywords.forEach {
             var startIndex = 0
             while (startIndex != -1) {
-                startIndex = log.originalLog.indexOf(it, startIndex)
+                startIndex = log.log.indexOf(it, startIndex)
                 if (startIndex != -1) {
                     indexRanges.add(startIndex..startIndex + it.length)
                     startIndex += it.length

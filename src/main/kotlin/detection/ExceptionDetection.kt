@@ -13,7 +13,7 @@ class ExceptionDetection : Detection {
         get() = SpanStyle(background = Color(0x40EEEEA5))
 
     override fun detect(log: Log, logIndex: Int): ExceptionDetectionResult? {
-        val lines = log.originalLog.split("\n")
+        val lines = log.log.split("\n")
         val stackStartLine = lines.indexOfFirst { isStackTrace(it) }
             .takeIf { it != -1 } ?: return null
 
@@ -24,7 +24,7 @@ class ExceptionDetection : Detection {
         return ExceptionDetectionResult(
             key,
             detectedStyle,
-            0 until log.originalLog.length,
+            0 until log.log.length,
             log,
             logIndex,
             exception ?: ""

@@ -75,7 +75,7 @@ class LogManager(
                         resultList.add(it)
                     }
                 val annotatedLog = detectionResults.values.flatten()
-                    .fold(AnnotatedString.Builder(log.originalLog)) { builder, result ->
+                    .fold(AnnotatedString.Builder(log.log)) { builder, result ->
                         builder.apply {
                             result.ranges.forEach { range ->
                                 addStyle(result.style, range.first, range.last)

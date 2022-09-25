@@ -6,7 +6,7 @@ import table.ColumnType
 data class TextFilter(
     val columnType: ColumnType,
     val text: String
-): LogFilter {
+) : LogFilter {
     override fun filter(log: Log): Boolean {
         return when (columnType) {
             ColumnType.PackageName -> text in (log.packageName ?: "")
