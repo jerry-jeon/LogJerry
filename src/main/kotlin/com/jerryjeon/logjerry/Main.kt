@@ -55,6 +55,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -233,6 +234,12 @@ private fun GettingStartedView(notStarted: ParseStatus.NotStarted, changeSource:
         Text(
             "1. File - Open file (Cmd + O), and choose the android log file",
             modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "OR",
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            fontWeight = FontWeight.Bold
         )
         Spacer(Modifier.height(8.dp))
         Text(
