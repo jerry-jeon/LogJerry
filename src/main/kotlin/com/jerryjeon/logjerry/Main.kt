@@ -63,6 +63,7 @@ import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
+import com.jerryjeon.logjerry.detection.InvestigationView
 import com.jerryjeon.logjerry.detector.Detection
 import com.jerryjeon.logjerry.detector.DetectionFocus
 import com.jerryjeon.logjerry.detector.DetectionKey
@@ -71,7 +72,6 @@ import com.jerryjeon.logjerry.detector.KeywordDetectionView
 import com.jerryjeon.logjerry.filter.PriorityFilter
 import com.jerryjeon.logjerry.filter.TextFilter
 import com.jerryjeon.logjerry.log.Log
-import com.jerryjeon.logjerry.log.refine.InvestigationView
 import com.jerryjeon.logjerry.parse.ParseResult
 import com.jerryjeon.logjerry.parse.ParseStatus
 import com.jerryjeon.logjerry.preferences.Preferences
@@ -110,15 +110,17 @@ fun ActiveTabView(
         is ParseStatus.Completed -> {
             Column {
                 val logManager = status.logManager
-                val transformationManager = status.filterManager
+                val filterManager = logManager.filterManager
+                val detectorManager = logManager.detectorManager
+                val detectionManager = logManager.detectionManager
                 val investigationView by logManager.investigationViewFlow.collectAsState()
-                val keywordDetectionRequest by transformationManager.keywordDetectionRequestFlow.collectAsState()
-                val keywordDetectionFocus by logManager.keywordDetectionFocus.collectAsState()
-                val exceptionDetectionFocus by logManager.exceptionDetectionFocus.collectAsState()
-                val jsonDetectionFocus by logManager.jsonDetectionFocus.collectAsState()
-                val activeDetectionFocus by logManager.activeDetectionFocusFlowState.collectAsState()
-                val textFilters by transformationManager.textFiltersFlow.collectAsState()
-                val priorityFilters by transformationManager.priorityFilterFlow.collectAsState()
+                val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
+                val keywordDetectionFocus by detectionManager.keywordDetectionFocus.collectAsState()
+                val exceptionDetectionFocus by detectionManager.exceptionDetectionFocus.collectAsState()
+                val jsonDetectionFocus by detectionManager.jsonDetectionFocus.collectAsState()
+                val activeDetectionFocus by detectionManager.activeDetectionFocusFlowState.collectAsState()
+                val textFilters by filterManager.textFiltersFlow.collectAsState()
+                val priorityFilters by filterManager.priorityFilterFlow.collectAsState()
                 ParseCompletedView(
                     keywordDetectionRequest,
                     activeDetectionFocus,
@@ -130,15 +132,15 @@ fun ActiveTabView(
                     preferences,
                     header,
                     status.parseResult,
-                    logManager::focusPreviousDetection,
-                    logManager::focusNextDetection,
+                    detectionManager::focusPreviousDetection,
+                    detectionManager::focusNextDetection,
                     textFilters,
-                    transformationManager::addTextFilter,
-                    transformationManager::removeTextFilter,
+                    filterManager::addTextFilter,
+                    filterManager::removeTextFilter,
                     priorityFilters,
-                    transformationManager::setPriorityFilter,
-                    transformationManager::findKeyword,
-                    transformationManager::setKeywordDetectionEnabled,
+                    filterManager::setPriorityFilter,
+                    detectorManager::findKeyword,
+                    detectorManager::setKeywordDetectionEnabled,
                     logManager::collapseJsonDetection,
                     logManager::expandJsonDetection
                 )

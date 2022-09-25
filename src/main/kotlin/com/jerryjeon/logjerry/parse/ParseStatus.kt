@@ -1,6 +1,5 @@
 package com.jerryjeon.logjerry.parse
 
-import com.jerryjeon.logjerry.filter.FilterManager
 import com.jerryjeon.logjerry.log.LogManager
 
 sealed class ParseStatus {
@@ -10,7 +9,6 @@ sealed class ParseStatus {
     ) : ParseStatus()
     class Completed(
         val parseResult: ParseResult,
-        val filterManager: FilterManager,
-        val logManager: LogManager
+        val logManager: LogManager,
     ) : ParseStatus()
 }

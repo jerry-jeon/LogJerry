@@ -3,26 +3,21 @@ package com.jerryjeon.logjerry.log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import com.jerryjeon.logjerry.detection.DetectionManager
+import com.jerryjeon.logjerry.detection.DetectionView
+import com.jerryjeon.logjerry.detection.InvestigationView
+import com.jerryjeon.logjerry.detection.RefinedLog
 import com.jerryjeon.logjerry.detector.Detection
-import com.jerryjeon.logjerry.detector.DetectionFocus
-import com.jerryjeon.logjerry.detector.DetectionKey
 import com.jerryjeon.logjerry.detector.Detector
 import com.jerryjeon.logjerry.detector.DetectorManager
 import com.jerryjeon.logjerry.detector.JsonDetection
 import com.jerryjeon.logjerry.filter.FilterManager
-import com.jerryjeon.logjerry.log.refine.DetectionFinishedLog
-import com.jerryjeon.logjerry.log.refine.DetectionView
-import com.jerryjeon.logjerry.log.refine.Investigation
-import com.jerryjeon.logjerry.log.refine.InvestigationView
-import com.jerryjeon.logjerry.log.refine.RefinedLog
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -30,9 +25,9 @@ import kotlinx.serialization.json.JsonObject
 
 class LogManager(
     val originalLogs: List<Log>,
-    filterManager: FilterManager,
-    detectorManager: DetectorManager
 ) {
+    val filterManager = FilterManager()
+    val detectorManager = DetectorManager()
     private val logScope = MainScope()
 
     private val filteredLogsFlow = filterManager.filtersFlow.map { filters ->
@@ -44,26 +39,11 @@ class LogManager(
         }
     }
 
-    private val investigationFlow: StateFlow<Investigation> = combine(filteredLogsFlow, detectorManager.detectorsFlow) { filteredLogs, detectors ->
-        val detectionFinishedLogs = filteredLogs
-            .mapIndexed { logIndex, log ->
-                val detectionResults = detectors.map { it.detect(log.log, logIndex) }
-                    .flatten()
-                DetectionFinishedLog(log, detectionResults.groupBy { it.key })
-            }
-
-        val allDetectionResults = mutableMapOf<DetectionKey, List<Detection>>()
-        detectionFinishedLogs.forEach {
-            it.detections.forEach { (key, value) ->
-                allDetectionResults[key] = (allDetectionResults[key] ?: emptyList()) + value
-            }
-        }
-        Investigation(originalLogs, detectionFinishedLogs, allDetectionResults, detectors)
-    }.stateIn(logScope, SharingStarted.Lazily, Investigation(emptyList(), emptyList(), emptyMap(), emptyList()))
+    val detectionManager = DetectionManager(filteredLogsFlow, detectorManager.detectorsFlow)
 
     private val detectionExpanded = MutableStateFlow<Map<String, Boolean>>(emptyMap())
 
-    val investigationViewFlow: StateFlow<InvestigationView> = combine(investigationFlow, detectionExpanded) { investigation, expanded ->
+    val investigationViewFlow: StateFlow<InvestigationView> = combine(detectionManager.detectionFinishedFlow, detectionExpanded) { investigation, expanded ->
         // Why should it be separated : make possible to change data of detectionResult
         // TODO don't want to repeat all annotate if just one log has changed. How can I achieve it
         val refinedLogs = investigation.detectionFinishedLogs.map {
@@ -82,64 +62,14 @@ class LogManager(
         InvestigationView(refinedLogs, allDetectionLogs)
     }.stateIn(logScope, SharingStarted.Lazily, InvestigationView(emptyList(), emptyMap()))
 
-    val keywordDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
-    val exceptionDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
-    val jsonDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
-
-    private val focuses = mapOf(
-        DetectionKey.Keyword to keywordDetectionFocus,
-        DetectionKey.Exception to exceptionDetectionFocus,
-        DetectionKey.Json to jsonDetectionFocus,
-    )
-
     init {
         logScope.launch {
-            investigationFlow.collect { result ->
-                val keywordDetections = result.allDetections[DetectionKey.Keyword] ?: emptyList()
-                keywordDetectionFocus.value = keywordDetections.firstOrNull()?.let {
-                    DetectionFocus(DetectionKey.Keyword, 0, null, keywordDetections)
-                }
-
-                val exceptionDetections = result.allDetections[DetectionKey.Exception] ?: emptyList()
-                exceptionDetectionFocus.value = exceptionDetections.firstOrNull()?.let {
-                    DetectionFocus(DetectionKey.Exception, 0, null, exceptionDetections)
-                }
-
-                val jsonDetections = result.allDetections[DetectionKey.Json] ?: emptyList()
-                jsonDetectionFocus.value = jsonDetections.firstOrNull()?.let {
-                    DetectionFocus(DetectionKey.Exception, 0, null, jsonDetections)
-                }
-
-                detectionExpanded.value = result.allDetections.values.flatten().associate {
+            detectionManager.detectionFinishedFlow.map { detectionFinished ->
+                detectionExpanded.value = detectionFinished.allDetections.values.flatten().associate {
                     it.id to (it is JsonDetection)
                 }
             }
         }
-    }
-
-    val activeDetectionFocusFlowState =
-        merge(keywordDetectionFocus, exceptionDetectionFocus, jsonDetectionFocus)
-            .filter { it?.focusing != null }
-            .stateIn(logScope, SharingStarted.Lazily, null)
-
-    fun focusPreviousDetection(key: DetectionKey, focus: DetectionFocus) {
-        val previousIndex = if (focus.currentIndex <= 0) {
-            focus.allDetections.size - 1
-        } else {
-            focus.currentIndex - 1
-        }
-
-        focuses[key]?.value = focus.copy(currentIndex = previousIndex, focusing = focus.allDetections[previousIndex])
-    }
-
-    fun focusNextDetection(key: DetectionKey, focus: DetectionFocus) {
-        val nextIndex = if (focus.currentIndex >= focus.allDetections.size - 1) {
-            0
-        } else {
-            focus.currentIndex + 1
-        }
-
-        focuses[key]?.value = focus.copy(currentIndex = nextIndex, focusing = focus.allDetections[nextIndex])
     }
 
     val json = Json { prettyPrint = true }

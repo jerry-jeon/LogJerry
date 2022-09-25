@@ -19,14 +19,13 @@ class SourceManager {
         when (it) {
             is Source.File -> {
                 val parseResult = parser.parse(it.file.readLines())
-                val filterManager = FilterManager()
-                ParseStatus.Completed(parseResult, filterManager, LogManager(parseResult.logs, filterManager))
+                ParseStatus.Completed(parseResult, LogManager(parseResult.logs))
             }
 
             is Source.Text -> {
                 val parseResult = parser.parse(it.text.split("\n"))
                 val filterManager = FilterManager()
-                ParseStatus.Completed(parseResult, filterManager, LogManager(parseResult.logs, filterManager))
+                ParseStatus.Completed(parseResult, LogManager(parseResult.logs))
             }
             Source.None -> {
                 ParseStatus.NotStarted
@@ -41,7 +40,7 @@ class SourceManager {
     fun turnOnKeywordDetection() {
         when (val value = parseStatusFlow.value) {
             is ParseStatus.Completed -> {
-                value.filterManager.setKeywordDetectionEnabled(true)
+                value.logManager.detectorManager.setKeywordDetectionEnabled(true)
             }
             ParseStatus.NotStarted -> {}
             is ParseStatus.Proceeding -> {}

@@ -1,4 +1,4 @@
-package com.jerryjeon.logjerry.log.refine
+package com.jerryjeon.logjerry.detection
 
 import com.jerryjeon.logjerry.detector.Detection
 import com.jerryjeon.logjerry.detector.DetectionKey
@@ -6,8 +6,7 @@ import com.jerryjeon.logjerry.detector.Detector
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogContentView
 
-data class Investigation(
-    val originalLogs: List<Log>,
+data class DetectionFinished(
     val detectionFinishedLogs: List<DetectionFinishedLog>,
     val allDetections: Map<DetectionKey, List<Detection>>,
     val detectors: List<Detector<*>>
