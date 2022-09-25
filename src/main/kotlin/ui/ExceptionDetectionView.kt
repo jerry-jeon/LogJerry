@@ -2,7 +2,6 @@ package ui
 
 import DetectionKey
 import DetectionResultFocus
-import IndexedDetectionResult
 import MyTheme
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Column
@@ -23,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import detection.ExceptionDetectionResult
+import log.SampleData
 
 @Composable
 fun ExceptionDetectionView(
@@ -53,10 +53,17 @@ private fun ExceptionDetectionRequestViewTurnedOn(
         detectionResultFocus?.let {
             Column {
                 Row {
-                    Text(
-                        "${it.focusingResult.detectionIndexInView}/ ${detectionResultFocus.totalCount}",
-                        modifier = Modifier.align(Alignment.CenterVertically)
-                    )
+                    if (it.focusing == null) {
+                        Text(
+                            "${it.results.size} results",
+                            modifier = Modifier.align(Alignment.CenterVertically)
+                        )
+                    } else {
+                        Text(
+                            "${it.currentIndexInView} / ${detectionResultFocus.totalCount}",
+                            modifier = Modifier.align(Alignment.CenterVertically)
+                        )
+                    }
                     IconButton(onClick = { moveToPreviousOccurrence(it) }) {
                         Icon(Icons.Default.KeyboardArrowUp, "Previous Occurrence")
                     }
@@ -66,8 +73,9 @@ private fun ExceptionDetectionRequestViewTurnedOn(
                 }
 
                 // TODO cleanup ; don't cast
-                val dr = it.focusingResult.detectionResult as ExceptionDetectionResult
-                Text(dr.exception)
+                (it.focusing as? ExceptionDetectionResult)?.let {
+                    Text(it.exception)
+                }
             }
         }
     }
@@ -78,10 +86,10 @@ private fun ExceptionDetectionRequestViewTurnedOn(
 private fun ExceptionDetectionViewPreview() {
     MyTheme {
         val results = listOf(
-            IndexedDetectionResult(DetectionKey.Exception, ExceptionDetectionResult(0..1, ""), 1, 1),
+            ExceptionDetectionResult(0..1, SampleData.log, 0, "")
         )
         ExceptionDetectionView(
-            DetectionResultFocus(results[2], results),
+            DetectionResultFocus(DetectionKey.Exception, 1, results[2], results),
             {},
             {},
         )

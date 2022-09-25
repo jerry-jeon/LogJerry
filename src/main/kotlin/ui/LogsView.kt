@@ -16,8 +16,8 @@ fun LogsView(header: Header, logs: List<Log>, detectionResultFocus: DetectionRes
     val listState = rememberLazyListState()
 
     LaunchedEffect(detectionResultFocus) {
-        detectionResultFocus?.let {
-            listState.scrollToItem(it.focusingResult.logIndex)
+        detectionResultFocus?.focusing?.let {
+            listState.scrollToItem(it.logIndex)
         }
     }
 

@@ -8,25 +8,21 @@ enum class DetectionKey {
 interface Detection {
     val key: DetectionKey
     val detectedStyle: SpanStyle
-    fun detect(log: Log): DetectionResult?
+    fun detect(log: Log, logIndex: Int): DetectionResult?
 }
 
 open class DetectionResult(
-    val ranges: List<IntRange> // Detected ranges
+    val ranges: List<IntRange>, // Detected ranges
+    val log: Log,
+    val logIndex: Int
 )
 
-class IndexedDetectionResult(
-    val detectionKey: DetectionKey,
-    val detectionResult: DetectionResult,
-    val detectionIndex: Int,
-    val logIndex: Int
+data class DetectionResultFocus(
+    val key: DetectionKey,
+    val currentIndex: Int,
+    val focusing: DetectionResult?,
+    val results: List<DetectionResult>,
 ) {
-    val detectionIndexInView = detectionIndex + 1
-} // IndexedDectionResult
-
-class DetectionResultFocus(
-    val focusingResult: IndexedDetectionResult,
-    val detectionResults: List<IndexedDetectionResult>,
-) {
-    val totalCount = detectionResults.size
+    val totalCount = results.size
+    val currentIndexInView = currentIndex + 1
 }

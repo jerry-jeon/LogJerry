@@ -12,7 +12,7 @@ class ExceptionDetection : Detection {
     override val detectedStyle: SpanStyle
         get() = SpanStyle(background = Color(0x40EEEEA5))
 
-    override fun detect(log: Log): ExceptionDetectionResult? {
+    override fun detect(log: Log, logIndex: Int): ExceptionDetectionResult? {
         val lines = log.originalLog.split("\n")
         val stackStartLine = lines.indexOfFirst { isStackTrace(it) }
             .takeIf { it != -1 } ?: return null
@@ -23,6 +23,8 @@ class ExceptionDetection : Detection {
 
         return ExceptionDetectionResult(
             0 until log.originalLog.length,
+            log,
+            logIndex,
             exception ?: ""
         )
     }
@@ -54,5 +56,7 @@ class ExceptionDetection : Detection {
 
 class ExceptionDetectionResult(
     range: IntRange,
+    log: Log,
+    logIndex: Int,
     val exception: String,
-) : DetectionResult(listOf(range))
+) : DetectionResult(listOf(range), log, logIndex)

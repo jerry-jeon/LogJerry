@@ -3,7 +3,6 @@ package detection
 import DetectionKey
 import DetectionResult
 import DetectionResultFocus
-import IndexedDetectionResult
 import MyTheme
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Box
@@ -25,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import log.SampleData
 
 @Composable
 fun KeywordDetectionView(
@@ -71,10 +71,17 @@ private fun KeywordDetectionRequestViewTurnedOn(
             trailingIcon = {
                 Row {
                     detectionResultFocus?.let {
-                        Text(
-                            "${it.focusingResult.detectionIndexInView}/ ${detectionResultFocus.totalCount}",
-                            modifier = Modifier.align(Alignment.CenterVertically)
-                        )
+                        if (it.focusing == null) {
+                            Text(
+                                "${it.results.size} results",
+                                modifier = Modifier.align(Alignment.CenterVertically)
+                            )
+                        } else {
+                            Text(
+                                "${it.currentIndexInView} / ${detectionResultFocus.totalCount}",
+                                modifier = Modifier.align(Alignment.CenterVertically)
+                            )
+                        }
                         IconButton(onClick = { moveToPreviousOccurrence(it) }) {
                             Icon(Icons.Default.KeyboardArrowUp, "Previous Occurrence")
                         }
@@ -96,12 +103,10 @@ private fun KeywordDetectionRequestViewTurnedOn(
 @Composable
 private fun KeywordDetectionViewPreview() {
     MyTheme {
-        val results = listOf(
-            IndexedDetectionResult(DetectionKey.Keyword, DetectionResult((listOf(0..3))), 0, 1),
-        )
+        val results = listOf(DetectionResult((listOf(0..3)), SampleData.log, 0))
         KeywordDetectionView(
             KeywordDetectionRequest.TurnedOn("Searching keyword"),
-            DetectionResultFocus(results[2], results),
+            DetectionResultFocus(DetectionKey.Keyword, 0, results[0], results),
             {},
             {},
             {},
