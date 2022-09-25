@@ -33,7 +33,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -58,7 +57,6 @@ import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
-import parse.DefaultParser
 import parse.ParseResult
 import java.awt.FileDialog
 import java.awt.Toolkit
@@ -67,28 +65,11 @@ import java.io.File
 
 @Composable
 @Preview
-fun App(headerState: MutableState<Header>, sourceState: MutableState<Source>) {
-    val parser = DefaultParser()
-    var parseStatus by remember<MutableState<ParseStatus>> { mutableStateOf(ParseStatus.NotStarted) }
+fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
+    val parseStatus = sourceManager.parseStatusFlow.collectAsState(ParseStatus.NotStarted)
     // Flow would be better
 
-    LaunchedEffect(sourceState.value) {
-        when (val source = sourceState.value) {
-            is Source.File -> {
-                val parseResult = parser.parse(source.file.readLines())
-                parseStatus = ParseStatus.Completed(parseResult, LogRefinement(parseResult.logs))
-            }
-
-            is Source.Text -> {
-                val parseResult = parser.parse(source.text.split("\n"))
-                parseStatus = ParseStatus.Completed(parseResult, LogRefinement(parseResult.logs))
-            }
-
-            Source.None -> {}
-        }
-    }
-
-    when (val status = parseStatus) {
+    when (val status = parseStatus.value) {
         ParseStatus.NotStarted -> GettingStartedView()
         is ParseStatus.Proceeding -> Text("Proceeding.... ${status.percent}")
         is ParseStatus.Completed -> {
@@ -267,7 +248,8 @@ fun MyTheme(content: @Composable () -> Unit) {
 }
 
 fun main() = application {
-    val sourceState: MutableState<Source> = remember { mutableStateOf(Source.None) }
+    val sourceManager = SourceManager()
+    val sourceState = sourceManager.sourceFlow.collectAsState(initial = Source.None)
     val headerState = remember { mutableStateOf(Header.default) }
     Window(
         state = WindowState(width = 1600.dp, height = 800.dp),
@@ -278,7 +260,7 @@ fun main() = application {
                     .systemClipboard
                     .getData(DataFlavor.stringFlavor)
                     .takeIf { it is String }
-                    ?.let { sourceState.value = Source.Text(it.toString()) }
+                    ?.let { sourceManager.changeSource(Source.Text(it.toString())) }
             }
             false
         }
@@ -287,7 +269,7 @@ fun main() = application {
             MenuBar {
                 Menu("File") {
                     Item("Open file", shortcut = KeyShortcut(Key.L, ctrl = true)) {
-                        openFileDialog(sourceState)
+                        sourceManager.openFileDialog()
                     }
                 }
                 Menu("Columns") {
@@ -296,16 +278,16 @@ fun main() = application {
                     }
                 }
             }
-            App(headerState, sourceState)
+            App(headerState, sourceManager)
         }
     }
 }
 
-private fun openFileDialog(sourceState: MutableState<Source>) {
+private fun SourceManager.openFileDialog() {
     val fileDialog = FileDialog(ComposeWindow())
     fileDialog.isVisible = true
     fileDialog.file?.let {
         val file = File(File(fileDialog.directory), it)
-        sourceState.value = Source.File(file)
+        changeSource(Source.File(file))
     }
 }
