@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.6.10"
+    kotlin("plugin.serialization") version "1.6.10"
     id("org.jetbrains.compose") version "1.1.0"
     id("org.jlleitschuh.gradle.ktlint-idea") version "10.2.0"
 }
@@ -20,6 +21,7 @@ repositories {
 dependencies {
     implementation(compose.desktop.macos_arm64)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
     testImplementation("io.kotest:kotest-assertions-core:5.4.1")
 }

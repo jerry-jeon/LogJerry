@@ -53,6 +53,7 @@ import source.Source
 import source.SourceManager
 import table.Header
 import ui.ExceptionDetectionView
+import ui.JsonDetectionView
 import ui.PriorityFilterView
 import java.awt.FileDialog
 import java.awt.Toolkit
@@ -75,6 +76,7 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
                 val findStatus = logManager.keywordDetectionRequestFlow.collectAsState()
                 val keywordDetectionResultFocus = logManager.keywordDetectionResultFocus.collectAsState()
                 val exceptionDetectionResultFocus = logManager.exceptionDetectionResultFocus.collectAsState()
+                val jsonDetectionResultFocus = logManager.jsonDetectionResultFocus.collectAsState()
                 val findResult = logManager.activeDetectionResultFocusFlowState.collectAsState()
                 val refinedLogsList = refinedLogs.refined
                 val logs = logManager.originalLogs
@@ -84,6 +86,7 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
                     findResult.value,
                     keywordDetectionResultFocus.value,
                     exceptionDetectionResultFocus.value,
+                    jsonDetectionResultFocus.value,
                     refinedLogsList,
                     logs,
                     headerState,
@@ -101,6 +104,7 @@ fun ParseCompletedView(
     detectionResultFocus: DetectionResultFocus?,
     keywordDetectionResultFocus: DetectionResultFocus?,
     exceptionDetectionResultFocus: DetectionResultFocus?,
+    jsonDetectionResultFocus: DetectionResultFocus?,
     refinedLogsList: List<Log>,
     logs: List<Log>,
     headerState: MutableState<Header>,
@@ -116,13 +120,18 @@ fun ParseCompletedView(
             keywordDetectionResultFocus,
             logManager::find,
             logManager::setKeywordDetectionEnabled,
-            { logManager.previousFindResult(true, it) },
-            { logManager.nextFindResult(true, it) },
+            { logManager.previousFindResult(DetectionKey.Keyword, it) },
+            { logManager.nextFindResult(DetectionKey.Keyword, it) },
         )
         ExceptionDetectionView(
             exceptionDetectionResultFocus,
-            { logManager.previousFindResult(false, it) },
-            { logManager.nextFindResult(false, it) },
+            { logManager.previousFindResult(DetectionKey.Exception, it) },
+            { logManager.nextFindResult(DetectionKey.Exception, it) },
+        )
+        JsonDetectionView(
+            jsonDetectionResultFocus,
+            { logManager.previousFindResult(DetectionKey.Json, it) },
+            { logManager.nextFindResult(DetectionKey.Json, it) },
         )
     }
     val filteredSize =

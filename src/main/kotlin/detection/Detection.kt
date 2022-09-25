@@ -2,7 +2,7 @@ import androidx.compose.ui.text.SpanStyle
 
 // When we support custom detection, then key should be String
 enum class DetectionKey {
-    Keyword, Exception
+    Keyword, Exception, Json;
 }
 
 interface Detection {
