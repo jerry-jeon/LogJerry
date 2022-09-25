@@ -18,8 +18,16 @@ class DefaultParser : LogParser {
         rawLines.forEachIndexed { index, s ->
             lastLog = try {
                 val log = parseSingleLineLog(s)
-                lastLog?.let { logs.add(it) }
-                log
+
+                // Custom continuation
+                if (log.log.startsWith("Cont(")) {
+                    lastLog?.let {
+                        it.copy(log = "${it.log}${log.log.substringAfter(") ")}")
+                    } ?: log
+                } else {
+                    lastLog?.let { logs.add(it) }
+                    log
+                }
             } catch (e: Exception) {
                 val continuedLog = if (lastLog == null) {
                     invalidSentences.add(index to s)
