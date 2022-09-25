@@ -23,6 +23,7 @@ repositories {
 dependencies {
     implementation(compose.desktop.macos_arm64)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
     implementation("org.jetbrains.compose.material:material-icons-extended-desktop:1.1.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
