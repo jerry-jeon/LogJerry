@@ -24,7 +24,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jerryjeon.logjerry.detection.ExceptionDetection
+import com.jerryjeon.logjerry.detection.ExceptionDetectionResult
 
 @Composable
 fun ExceptionDetectionView(
@@ -38,8 +38,8 @@ fun ExceptionDetectionView(
     ) {
         Box(modifier = modifier) {
             Column(Modifier.height(IntrinsicSize.Min).padding(8.dp)) {
-                Text(AnnotatedString("Exception", spanStyle = ExceptionDetection().detectedStyle))
-                if(detectionFocus == null) {
+                Text(AnnotatedString("Exception", spanStyle = ExceptionDetectionResult.detectedStyle))
+                if (detectionFocus == null) {
                     Spacer(Modifier.height(16.dp))
                     Text("No results", textAlign = TextAlign.Center)
                 } else {

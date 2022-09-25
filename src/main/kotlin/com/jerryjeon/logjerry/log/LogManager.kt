@@ -60,7 +60,6 @@ class LogManager(
         )
     }
     val refineResult: StateFlow<RefineResult> = transformerFlow.map { transformers ->
-        val allDetectionResults = mutableMapOf<DetectionKey, List<DetectionResult>>()
         val refined = if (transformers.filters.isEmpty()) {
             originalLogs
         } else {
@@ -68,31 +67,18 @@ class LogManager(
                 .filter { log -> transformers.filters.all { it.filter(log) } }
         }
             .mapIndexed { logIndex, log ->
-                val detectionResults = mutableMapOf<DetectionKey, MutableList<DetectionResult>>()
-                transformers.detections.map { it.detect(log.log, logIndex) }
+                val detectionResults = transformers.detections.map { it.detect(log.log, logIndex) }
                     .flatten()
-                    .forEach {
-                        val resultList = detectionResults.getOrPut(it.key) { mutableListOf() }
-                        resultList.add(it)
-                    }
-                val annotatedLog = detectionResults.values.flatten()
-                    .fold(AnnotatedString.Builder(log.log)) { builder, result ->
-                        builder.apply {
-                            addStyle(result.style, result.range.first, result.range.last)
-                        }
-                    }.toAnnotatedString()
-
-                // TODO cleanup codes
-                detectionResults.forEach { (k, v) ->
-                    val exist = allDetectionResults[k]
-                    if (exist != null) {
-                        allDetectionResults[k] = exist + v
-                    } else {
-                        allDetectionResults[k] = v
-                    }
-                }
-                RefinedLog(log, annotatedLog, detectionResults)
+                val annotatedLog = annotate(log, detectionResults)
+                RefinedLog(log, annotatedLog, detectionResults.groupBy { it.key })
             }
+
+        val allDetectionResults = mutableMapOf<DetectionKey, List<DetectionResult>>()
+        refined.forEach {
+            it.detectionResults.forEach { (key, value) ->
+                allDetectionResults[key] = (allDetectionResults[key] ?: emptyList()) + value
+            }
+        }
         RefineResult(originalLogs, refined, allDetectionResults)
     }.stateIn(logScope, SharingStarted.Lazily, RefineResult(emptyList(), emptyList(), emptyMap()))
 
@@ -175,5 +161,13 @@ class LogManager(
 
     fun setPriority(priorityFilter: PriorityFilter) {
         this.priorityFilter.value = priorityFilter
+    }
+
+    fun annotate(log: Log, detectionResults: List<DetectionResult>): AnnotatedString {
+        // Assume that there are no overlapping areas.
+        // TODO: Support overlapping detection
+        val initial = DetectionResult.AnnotationResult(AnnotatedString.Builder(log.log), 0)
+        val annotationResult = detectionResults.fold(initial) { acc, next -> next.annotate(acc) }
+        return annotationResult.builder.toAnnotatedString()
     }
 }

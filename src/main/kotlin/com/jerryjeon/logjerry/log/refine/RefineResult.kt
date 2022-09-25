@@ -16,3 +16,9 @@ data class RefinedLog(
     val annotatedLog: AnnotatedString,
     val detectionResults: Map<DetectionKey, List<DetectionResult>>
 )
+
+// JsonDetectionResult annotation affects other DetectionResults, so it seems
+// annotate(AnnotatedString, List) is needed
+
+// If detectionResult is activated...?
+//

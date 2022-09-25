@@ -8,9 +8,6 @@ import androidx.compose.ui.text.SpanStyle
 
 class ExceptionDetection : Detection<ExceptionDetectionResult> {
     override val key = DetectionKey.Exception
-    override val detectedStyle: SpanStyle
-        get() = SpanStyle(background = Color(0x40EEEEA5))
-
     override fun detect(logStr: String, logIndex: Int): List<ExceptionDetectionResult> {
         val lines = logStr.split("\n")
         val stackStartLine = lines.indexOfFirst { isStackTrace(it) }
@@ -20,7 +17,7 @@ class ExceptionDetection : Detection<ExceptionDetectionResult> {
         val words = exceptionLines.joinToString(separator = " ").split(',', '.', ' ', '\n', '$', ':', ';')
         val exception = words.firstOrNull { it.contains("exception", ignoreCase = true) || it.contains("error", ignoreCase = true) }
 
-        val result = ExceptionDetectionResult(key, detectedStyle, logStr.indices, logIndex, exception ?: "")
+        val result = ExceptionDetectionResult(logStr.indices, logIndex, exception ?: "")
         return listOf(result)
     }
 
@@ -50,9 +47,16 @@ class ExceptionDetection : Detection<ExceptionDetectionResult> {
 }
 
 class ExceptionDetectionResult(
-    key: DetectionKey,
-    style: SpanStyle,
-    range: IntRange,
-    logIndex: Int,
+    override val range: IntRange,
+    override val logIndex: Int,
     val exception: String,
-) : DetectionResult(key, style, range, logIndex)
+) : DetectionResult {
+
+    companion object {
+        val detectedStyle = SpanStyle(background = Color(0x40EEEEA5))
+    }
+    override val key: DetectionKey = DetectionKey.Exception
+    override fun annotate(result: DetectionResult.AnnotationResult): DetectionResult.AnnotationResult {
+        return annotateWithNoIndexChange(detectedStyle, result)
+    }
+}

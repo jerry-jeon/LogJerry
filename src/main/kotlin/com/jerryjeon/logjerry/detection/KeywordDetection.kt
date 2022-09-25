@@ -8,7 +8,6 @@ import androidx.compose.ui.text.SpanStyle
 
 class KeywordDetection(private val keyword: String) : Detection<DetectionResult> {
     override val key: DetectionKey = DetectionKey.Keyword
-    override val detectedStyle: SpanStyle = SpanStyle(background = Color.Yellow)
     override fun detect(logStr: String, logIndex: Int): List<DetectionResult> {
         if (keyword.isBlank()) return emptyList()
         val orKeywords = keyword.split("|")
@@ -25,6 +24,14 @@ class KeywordDetection(private val keyword: String) : Detection<DetectionResult>
             }
         }
 
-        return indexRanges.map { DetectionResult(key, detectedStyle, it, logIndex) }
+        return indexRanges.map { KeywordDetectionResult(it, logIndex) }
+    }
+}
+
+class KeywordDetectionResult(override val range: IntRange, override val logIndex: Int) : DetectionResult {
+    override val key: DetectionKey = DetectionKey.Keyword
+    private val detectedStyle: SpanStyle = SpanStyle(background = Color.Yellow)
+    override fun annotate(result: DetectionResult.AnnotationResult): DetectionResult.AnnotationResult {
+        return annotateWithNoIndexChange(detectedStyle, result)
     }
 }

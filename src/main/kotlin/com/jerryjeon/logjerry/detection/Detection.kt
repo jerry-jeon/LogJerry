@@ -1,3 +1,4 @@
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 
 // When we support custom detection, then key should be String
@@ -7,16 +8,28 @@ enum class DetectionKey {
 
 interface Detection<T : DetectionResult> {
     val key: DetectionKey
-    val detectedStyle: SpanStyle
     fun detect(logStr: String, logIndex: Int): List<T>
 }
 
-open class DetectionResult(
-    val key: DetectionKey,
-    val style: SpanStyle, // TODO It would be better to move it to other place
-    val range: IntRange,
+interface DetectionResult {
+    val key: DetectionKey
+    val range: IntRange
     val logIndex: Int
-)
+    fun annotate(result: AnnotationResult): AnnotationResult
+
+    fun annotateWithNoIndexChange(style: SpanStyle, result: AnnotationResult): AnnotationResult {
+        val (builder, startIndexChanged) = result
+        return AnnotationResult(
+            builder.apply { addStyle(style, startIndexChanged + range.first, startIndexChanged + range.last) },
+            startIndexChanged
+        )
+    }
+
+    data class AnnotationResult(
+        val builder: AnnotatedString.Builder,
+        val startIndexChanged: Int
+    )
+}
 
 data class DetectionFocus(
     val key: DetectionKey,

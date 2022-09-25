@@ -9,10 +9,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 
-class JsonDetection : Detection<JsonDetectionResult> {
-    override val key = DetectionKey.Json
-    override val detectedStyle: SpanStyle
-        get() = SpanStyle(background = Color(0x40777777))
+class JsonDetection() : Detection<JsonDetectionResult> {
+    override val key: DetectionKey = DetectionKey.Json
 
     override fun detect(logStr: String, logIndex: Int): List<JsonDetectionResult> {
         // Find bracket pairs, { } and check this is json or not
@@ -44,15 +42,23 @@ class JsonDetection : Detection<JsonDetectionResult> {
             .filter { (_, json) -> json.isNotEmpty() } // Filter empty json
 
         return jsonList.map { (range, json) ->
-            JsonDetectionResult(key, detectedStyle, range, logIndex, json)
+            JsonDetectionResult(range, logIndex, json)
         }
     }
 }
 
 class JsonDetectionResult(
-    key: DetectionKey,
-    style: SpanStyle,
-    ranges: IntRange,
-    logIndex: Int,
+    override val range: IntRange,
+    override val logIndex: Int,
     val json: JsonObject
-) : DetectionResult(key, style, ranges, logIndex)
+) : DetectionResult {
+    override val key: DetectionKey = DetectionKey.Json
+
+    companion object {
+        val detectedStyle = SpanStyle(background = Color(0x40777777))
+    }
+
+    override fun annotate(result: DetectionResult.AnnotationResult): DetectionResult.AnnotationResult {
+        return annotateWithNoIndexChange(detectedStyle, result)
+    }
+}
