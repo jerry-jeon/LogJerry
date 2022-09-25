@@ -16,7 +16,7 @@ fun App() {
 
         LazyColumn {
             item { HeaderRow(header.value) }
-            item { LogRow(SampleData.log) }
+            item { LogRow(SampleData.log, header.value) }
         }
     }
 }

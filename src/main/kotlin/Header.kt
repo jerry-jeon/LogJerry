@@ -19,6 +19,11 @@ data class ColumnInfo(
     val visible: Boolean
 )
 
+// TODO Find cleaner way
+fun RowScope.applyWidth(width: Int?, modifier: Modifier = Modifier): Modifier {
+    return if (width == null) modifier.weight(1f) else modifier.width(width.dp)
+}
+
 data class Header(
     val date: ColumnInfo,
     val time: ColumnInfo,
@@ -34,14 +39,14 @@ data class Header(
 
     companion object {
         val default = Header(
-            date = ColumnInfo(ColumnType.Date, 60, true),
-            time = ColumnInfo(ColumnType.Date, 60, true),
-            pid = ColumnInfo(ColumnType.Date, 60, true),
-            tid = ColumnInfo(ColumnType.Date, 60, true),
-            packageName = ColumnInfo(ColumnType.Date, 60, true),
-            priority = ColumnInfo(ColumnType.Date, 60, true),
-            tag = ColumnInfo(ColumnType.Date, 60, true),
-            log = ColumnInfo(ColumnType.Date, 60, true),
+            date = ColumnInfo(ColumnType.Date, 100, true),
+            time = ColumnInfo(ColumnType.Time, 100, true),
+            pid = ColumnInfo(ColumnType.PID, 40, true),
+            tid = ColumnInfo(ColumnType.TID, 40, true),
+            packageName = ColumnInfo(ColumnType.PackageName, 120, true),
+            priority = ColumnInfo(ColumnType.Priority, 60, true),
+            tag = ColumnInfo(ColumnType.Tag, 200, true),
+            log = ColumnInfo(ColumnType.Log, null, true),
         )
     }
 }
@@ -49,9 +54,7 @@ data class Header(
 @Composable
 fun RowScope.HeaderView(columnInfo: ColumnInfo, modifier: Modifier = Modifier) {
     if (columnInfo.visible) {
-        val newModifier: Modifier =
-            if (columnInfo.width == null) modifier.weight(1f) else modifier.width(columnInfo.width.dp)
-        Text(text = columnInfo.columnType.name, modifier = newModifier)
+        Text(text = columnInfo.columnType.name, modifier = applyWidth(columnInfo.width, modifier))
     }
 }
 
