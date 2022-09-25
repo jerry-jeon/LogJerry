@@ -90,7 +90,9 @@ private fun GettingStartedView() {
 private fun FilterAndLogs(headerState: MutableState<Header>, logManager: LogManager) {
     val refinedLogs by logManager.refinedLogs.collectAsState(emptyList())
     val logs = logManager.originalLogs
+    val fsState = logManager.findStatusFlow.collectAsState()
     Column {
+        FindView(logManager, fsState.value)
         FilterView(logManager)
         val filteredSize = (if (refinedLogs.size != logs.size) "Filtered size : ${refinedLogs.size}, " else "")
         Text(filteredSize + "Total : ${logs.size}")
@@ -127,8 +129,32 @@ private fun InvalidSentences(parseResult: ParseResult) {
 }
 
 @Composable
+private fun FindView(logManager: LogManager, findStatus: FindStatus) {
+    when (findStatus) {
+        is FindStatus.TurnedOn -> {
+            Row {
+                TextField(
+                    value = findStatus.keyword,
+                    onValueChange = {
+                        logManager.find(it)
+                    }
+                )
+                Spacer(Modifier.width(8.dp))
+                IconButton(onClick = {
+                    logManager.findEnabled(false)
+                }) {
+                    Icon(Icons.Default.Close, "Close find")
+                }
+            }
+        }
+        FindStatus.TurnedOff -> {}
+    }
+}
+
+@Composable
 private fun FilterView(logManager: LogManager) {
-    val filters by logManager.filtersFlow.collectAsState(emptyList())
+    val filters = logManager.filtersFlow.value
+    // TODO take filters as flow
     // Provide only useful column types
     var columnType by remember { mutableStateOf(ColumnType.Log) }
     val items = listOf(ColumnType.Log, ColumnType.PackageName)
@@ -261,6 +287,9 @@ fun main() = application {
                     .getData(DataFlavor.stringFlavor)
                     .takeIf { it is String }
                     ?.let { sourceManager.changeSource(Source.Text(it.toString())) }
+            }
+            if (keyEvent.isMetaPressed && keyEvent.key == Key.F && keyEvent.type == KeyEventType.KeyUp) {
+                sourceManager.findPressed()
             }
             false
         }

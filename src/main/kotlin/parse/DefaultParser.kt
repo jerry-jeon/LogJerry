@@ -1,6 +1,7 @@
 package parse
 
 import Log
+import androidx.compose.ui.text.AnnotatedString
 import java.util.concurrent.atomic.AtomicInteger
 
 class DefaultParser : LogParser {
@@ -27,7 +28,7 @@ class DefaultParser : LogParser {
                 } else {
                     lastLog!!
                 }
-                continuedLog.copy(log = continuedLog.log + s)
+                continuedLog.copy(originalLog = continuedLog.originalLog + s)
             }
         }
         return ParseResult(logs, invalidSentences)
@@ -47,8 +48,8 @@ class DefaultParser : LogParser {
         val priority = fourthSegment[0]
         val tag = fourthSegment[1].removeSuffix(":")
 
-        val log = split.subList(4, split.size).joinToString(separator = " ")
+        val originalLog = split.subList(4, split.size).joinToString(separator = " ")
 
-        return Log(number.getAndIncrement(), date, time, pid, tid, packageName, priority, tag, log)
+        return Log(number.getAndIncrement(), date, time, pid, tid, packageName, priority, tag, originalLog, AnnotatedString(originalLog))
     }
 }

@@ -1,3 +1,5 @@
+import androidx.compose.ui.text.AnnotatedString
+
 data class Log(
     val number: Int,
     val date: String,
@@ -7,5 +9,6 @@ data class Log(
     val packageName: String?,
     val priority: String,
     val tag: String,
-    val log: String
+    val originalLog: String,
+    val log: AnnotatedString
 )
