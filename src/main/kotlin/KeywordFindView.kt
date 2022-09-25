@@ -15,19 +15,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun FindView(
-    findRequest: FindRequest,
-    findResult: FindResult?,
+fun KeywordFindView(
+    keywordFindRequest: KeywordFindRequest,
+    detectionResultFocus: DetectionResultFocus?,
     find: (String) -> Unit,
     setFindEnabled: (Boolean) -> Unit,
-    moveToPreviousOccurrence: (FindResult) -> Unit,
-    moveToNextOccurrence: (FindResult) -> Unit,
+    moveToPreviousOccurrence: (DetectionResultFocus) -> Unit,
+    moveToNextOccurrence: (DetectionResultFocus) -> Unit,
 ) {
-    when (findRequest) {
-        is FindRequest.TurnedOn -> {
+    when (keywordFindRequest) {
+        is KeywordFindRequest.TurnedOn -> {
             Row {
                 TextField(
-                    value = findRequest.keyword,
+                    value = keywordFindRequest.keyword,
                     onValueChange = {
                         find(it)
                     }
@@ -39,8 +39,8 @@ fun FindView(
                     Icon(Icons.Default.Close, "Close find")
                 }
 
-                findResult?.let {
-                    Text("${it.focusingResult.detectionIndexInView}/ ${findResult.totalCount}", modifier = Modifier.align(Alignment.CenterVertically))
+                detectionResultFocus?.let {
+                    Text("${it.focusingResult.detectionIndexInView}/ ${detectionResultFocus.totalCount}", modifier = Modifier.align(Alignment.CenterVertically))
                     IconButton(onClick = {
                         moveToPreviousOccurrence(it)
                     }) {
@@ -54,6 +54,6 @@ fun FindView(
                 }
             }
         }
-        FindRequest.TurnedOff -> {}
+        KeywordFindRequest.TurnedOff -> {}
     }
 }

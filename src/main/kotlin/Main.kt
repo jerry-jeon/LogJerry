@@ -22,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,14 +62,14 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
             Column {
                 val logManager = status.logManager
                 val refinedLogs by logManager.refinedLogs.collectAsState()
-                val findStatus = logManager.findRequestFlow.collectAsState()
-                val findResult = logManager.findResultFlowState.collectAsState()
+                val findStatus = logManager.keywordFindRequestFlow.collectAsState()
+                val findResult = logManager.dectectionResultFocusFlowState.collectAsState()
                 val refinedLogsList = refinedLogs.refined
                 val logs = logManager.originalLogs
                 ParseCompletedView(
-                    findStatus,
-                    findResult,
                     logManager,
+                    findStatus.value,
+                    findResult.value,
                     refinedLogsList,
                     logs,
                     headerState,
@@ -83,20 +82,20 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
 
 @Composable
 fun ParseCompletedView(
-    findRequest: State<FindRequest>,
-    findResult: State<FindResult?>,
     logManager: LogManager,
+    keywordFindRequest: KeywordFindRequest,
+    detectionResultFocus: DetectionResultFocus?,
     refinedLogsList: List<Log>,
     logs: List<Log>,
     headerState: MutableState<Header>,
     parseResult: ParseResult
 ) {
     InvalidSentences(parseResult)
-    FindView(
-        findRequest.value,
-        findResult.value,
+    KeywordFindView(
+        keywordFindRequest,
+        detectionResultFocus,
         logManager::find,
-        logManager::findEnabled,
+        logManager::setKeywordFindEnabled,
         logManager::previousFindResult,
         logManager::nextFindResult
     )
@@ -104,7 +103,7 @@ fun ParseCompletedView(
     val filteredSize =
         (if (refinedLogsList.size != logs.size) "Filtered size : ${refinedLogsList.size}, " else "")
     Text(filteredSize + "Total : ${logs.size}")
-    LogsView(headerState.value, refinedLogsList, findResult.value)
+    LogsView(headerState.value, refinedLogsList, detectionResultFocus)
 }
 
 @Composable
@@ -172,7 +171,7 @@ fun main() = application {
                     ?.let { sourceManager.changeSource(Source.Text(it.toString())) }
             }
             if (keyEvent.isMetaPressed && keyEvent.key == Key.F && keyEvent.type == KeyEventType.KeyUp) {
-                sourceManager.findPressed()
+                sourceManager.findShortcutPressed()
             }
             false
         }

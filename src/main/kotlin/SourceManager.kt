@@ -31,10 +31,10 @@ class SourceManager {
         this.sourceFlow.value = source
     }
 
-    fun findPressed() {
+    fun findShortcutPressed() {
         when (val value = parseStatusFlow.value) {
             is ParseStatus.Completed -> {
-                value.logManager.findEnabled(true)
+                value.logManager.setKeywordFindEnabled(true)
             }
             ParseStatus.NotStarted -> {}
             is ParseStatus.Proceeding -> {}

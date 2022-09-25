@@ -15,18 +15,18 @@ class LogManager(
 ) {
     private val logScope = MainScope()
 
-    private val findEnabledStateFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val keywordFindEnabledStateFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     private val findKeywordFlow = MutableStateFlow("")
-    val findRequestFlow = combine(findEnabledStateFlow, findKeywordFlow) { enabled, keyword ->
+    val keywordFindRequestFlow = combine(keywordFindEnabledStateFlow, findKeywordFlow) { enabled, keyword ->
         if (enabled) {
-            FindRequest.TurnedOn(keyword)
+            KeywordFindRequest.TurnedOn(keyword)
         } else {
-            FindRequest.TurnedOff
+            KeywordFindRequest.TurnedOff
         }
-    }.stateIn(logScope, SharingStarted.Lazily, FindRequest.TurnedOff)
+    }.stateIn(logScope, SharingStarted.Lazily, KeywordFindRequest.TurnedOff)
 
     val filtersFlow: MutableStateFlow<List<Filter>> = MutableStateFlow(emptyList())
-    private val transformerFlow = combine(filtersFlow, findRequestFlow) { filters, findStatus ->
+    private val transformerFlow = combine(filtersFlow, keywordFindRequestFlow) { filters, findStatus ->
         Transformers(
             filters.map { filter ->
                 { log ->
@@ -35,8 +35,8 @@ class LogManager(
                 }
             },
             when (findStatus) {
-                is FindRequest.TurnedOn -> listOf(KeywordDetection(findStatus.keyword))
-                FindRequest.TurnedOff -> emptyList()
+                is KeywordFindRequest.TurnedOn -> listOf(KeywordDetection(findStatus.keyword))
+                KeywordFindRequest.TurnedOff -> emptyList()
             }
         )
     }
@@ -66,12 +66,12 @@ class LogManager(
         it.detectionResults["keyword"] ?: emptyList()
     }.stateIn(logScope, SharingStarted.Lazily, emptyList())
 
-    private val refreshedFindResult = keywordDetections
-        .map { results -> results.firstOrNull()?.let { FindResult(it, results) } }
+    private val refreshedDetectionResultFocus = keywordDetections
+        .map { results -> results.firstOrNull()?.let { DetectionResultFocus(it, results) } }
 
-    private val findResultChangeFromUser = MutableStateFlow<FindResult?>(null)
+    private val detectionResultFocusChangeFromUser = MutableStateFlow<DetectionResultFocus?>(null)
 
-    val findResultFlowState = merge(refreshedFindResult, findResultChangeFromUser)
+    val dectectionResultFocusFlowState = merge(refreshedDetectionResultFocus, detectionResultFocusChangeFromUser)
         .stateIn(logScope, SharingStarted.Lazily, null)
 
     data class Transformers(
@@ -126,29 +126,29 @@ class LogManager(
         findKeywordFlow.value = keyword
     }
 
-    fun findEnabled(enabled: Boolean) {
-        findEnabledStateFlow.value = enabled
+    fun setKeywordFindEnabled(enabled: Boolean) {
+        keywordFindEnabledStateFlow.value = enabled
     }
 
-    fun previousFindResult(findResult: FindResult) {
-        val results = findResult.detectionResults
-        val previousIndex = if (findResult.focusingResult.detectionIndex <= 0) {
+    fun previousFindResult(detectionResultFocus: DetectionResultFocus) {
+        val results = detectionResultFocus.detectionResults
+        val previousIndex = if (detectionResultFocus.focusingResult.detectionIndex <= 0) {
             results.size - 1
         } else {
-            findResult.focusingResult.detectionIndex - 1
+            detectionResultFocus.focusingResult.detectionIndex - 1
         }
 
-        findResultChangeFromUser.value = FindResult(results[previousIndex], results)
+        detectionResultFocusChangeFromUser.value = DetectionResultFocus(results[previousIndex], results)
     }
 
-    fun nextFindResult(findResult: FindResult) {
-        val results = findResult.detectionResults
-        val nextIndex = if (findResult.focusingResult.detectionIndex >= results.size - 1) {
+    fun nextFindResult(detectionResultFocus: DetectionResultFocus) {
+        val results = detectionResultFocus.detectionResults
+        val nextIndex = if (detectionResultFocus.focusingResult.detectionIndex >= results.size - 1) {
             0
         } else {
-            findResult.focusingResult.detectionIndex + 1
+            detectionResultFocus.focusingResult.detectionIndex + 1
         }
 
-        findResultChangeFromUser.value = FindResult(results[nextIndex], results)
+        detectionResultFocusChangeFromUser.value = DetectionResultFocus(results[nextIndex], results)
     }
 }

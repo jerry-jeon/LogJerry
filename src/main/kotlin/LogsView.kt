@@ -11,11 +11,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun LogsView(header: Header, logs: List<Log>, findResult: FindResult?) {
+fun LogsView(header: Header, logs: List<Log>, detectionResultFocus: DetectionResultFocus?) {
     val listState = rememberLazyListState()
 
-    LaunchedEffect(findResult) {
-        findResult?.let {
+    LaunchedEffect(detectionResultFocus) {
+        detectionResultFocus?.let {
             listState.scrollToItem(it.focusingResult.logIndex)
         }
     }
