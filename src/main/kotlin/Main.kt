@@ -249,14 +249,14 @@ fun main() = application {
         state = WindowState(width = 1600.dp, height = 800.dp),
         onCloseRequest = ::exitApplication,
         onPreviewKeyEvent = { keyEvent ->
-            if (keyEvent.isMetaPressed && keyEvent.key == Key.V && keyEvent.type == KeyEventType.KeyUp) {
+            if (keyEvent.isMetaPressed && keyEvent.key == Key.V && keyEvent.type == KeyEventType.KeyDown) {
                 Toolkit.getDefaultToolkit()
                     .systemClipboard
                     .getData(DataFlavor.stringFlavor)
                     .takeIf { it is String }
                     ?.let { sourceManager.changeSource(Source.Text(it.toString())) }
             }
-            if (keyEvent.isMetaPressed && keyEvent.key == Key.F && keyEvent.type == KeyEventType.KeyUp) {
+            if (keyEvent.isMetaPressed && keyEvent.key == Key.F && keyEvent.type == KeyEventType.KeyDown) {
                 sourceManager.findShortcutPressed()
             }
             false
