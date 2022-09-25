@@ -87,7 +87,7 @@ private fun KeywordDetectionRequestViewTurnedOn(
             modifier = Modifier.focusRequester(focusRequester).onPreviewKeyEvent {
                 when {
                     it.key == Key.Enter && it.type == KeyEventType.KeyDown -> {
-                        detectionResultFocus?.let { focus ->
+                        detectionFocus?.let { focus ->
                             if (it.isShiftPressed) {
                                 moveToPreviousOccurrence(focus)
                             } else {
