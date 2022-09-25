@@ -1,6 +1,7 @@
 package ui
 
 import Priority
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Slider
 import androidx.compose.material.Text
@@ -19,6 +21,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,7 +32,7 @@ fun PriorityFilterView(
     priorityFilter: PriorityFilter,
     changePriorityFilter: (PriorityFilter) -> Unit
 ) {
-    Column(Modifier.width(IntrinsicSize.Min)) {
+    Column(Modifier.width(IntrinsicSize.Min).border(1.dp, Color.LightGray, RoundedCornerShape(4.dp)).padding(8.dp)) {
         Text("Log level")
         Spacer(Modifier.height(8.dp))
         var value by remember { mutableStateOf(priorityFilter.priority.ordinal.toFloat()) }
