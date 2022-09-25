@@ -1,7 +1,7 @@
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
-class LogRefinement(
+class LogManager(
     val originalLogs: List<Log>
 ) {
     val filtersFlow = MutableStateFlow(emptyList<Filter>())

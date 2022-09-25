@@ -73,7 +73,10 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
         ParseStatus.NotStarted -> GettingStartedView()
         is ParseStatus.Proceeding -> Text("Proceeding.... ${status.percent}")
         is ParseStatus.Completed -> {
-            FilterAndLogs(headerState, status)
+            Column {
+                InvalidSentences(status.parseResult)
+                FilterAndLogs(headerState, status.logManager)
+            }
         }
     }
 }
@@ -84,13 +87,11 @@ private fun GettingStartedView() {
 }
 
 @Composable
-private fun FilterAndLogs(headerState: MutableState<Header>, completed: ParseStatus.Completed) {
-    val logRefinement = completed.logRefinement
-    val refinedLogs by logRefinement.refinedLogs.collectAsState(emptyList())
-    val logs = logRefinement.originalLogs
+private fun FilterAndLogs(headerState: MutableState<Header>, logManager: LogManager) {
+    val refinedLogs by logManager.refinedLogs.collectAsState(emptyList())
+    val logs = logManager.originalLogs
     Column {
-        InvalidSentences(completed.parseResult)
-        FilterView(logRefinement)
+        FilterView(logManager)
         val filteredSize = (if (refinedLogs.size != logs.size) "Filtered size : ${refinedLogs.size}, " else "")
         Text(filteredSize + "Total : ${logs.size}")
         LogsView(headerState.value, refinedLogs)
@@ -126,8 +127,8 @@ private fun InvalidSentences(parseResult: ParseResult) {
 }
 
 @Composable
-private fun FilterView(logRefinement: LogRefinement) {
-    val filters by logRefinement.filtersFlow.collectAsState(emptyList())
+private fun FilterView(logManager: LogManager) {
+    val filters by logManager.filtersFlow.collectAsState(emptyList())
     // Provide only useful column types
     var columnType by remember { mutableStateOf(ColumnType.Log) }
     val items = listOf(ColumnType.Log, ColumnType.PackageName)
@@ -164,7 +165,7 @@ private fun FilterView(logRefinement: LogRefinement) {
             )
             Spacer(Modifier.width(8.dp))
             Button(onClick = {
-                logRefinement.addFilter(Filter(columnType, text))
+                logManager.addFilter(Filter(columnType, text))
                 text = ""
             }) {
                 Text("Add filter")
@@ -195,7 +196,7 @@ private fun FilterView(logRefinement: LogRefinement) {
                         Box(
                             Modifier
                                 .background(Color.Gray, CircleShape)
-                                .clickable { logRefinement.removeFilter(filter) }
+                                .clickable { logManager.removeFilter(filter) }
                                 .padding(4.dp)
                                 .align(Alignment.CenterVertically)
                         ) {
@@ -249,7 +250,6 @@ fun MyTheme(content: @Composable () -> Unit) {
 
 fun main() = application {
     val sourceManager = SourceManager()
-    val sourceState = sourceManager.sourceFlow.collectAsState(initial = Source.None)
     val headerState = remember { mutableStateOf(Header.default) }
     Window(
         state = WindowState(width = 1600.dp, height = 800.dp),

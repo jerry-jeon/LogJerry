@@ -4,25 +4,21 @@ import kotlinx.coroutines.flow.map
 import parse.DefaultParser
 
 class SourceManager {
+    private val parser = DefaultParser()
     val sourceFlow: MutableStateFlow<Source> = MutableStateFlow(Source.None)
-    val parseStatusFlow: Flow<ParseStatus>
-    val parser = DefaultParser()
+    val parseStatusFlow: Flow<ParseStatus> = sourceFlow.map {
+        when (it) {
+            is Source.File -> {
+                val parseResult = parser.parse(it.file.readLines())
+                ParseStatus.Completed(parseResult, LogManager(parseResult.logs))
+            }
 
-    init {
-        parseStatusFlow = sourceFlow.map {
-            when (it) {
-                is Source.File -> {
-                    val parseResult = parser.parse(it.file.readLines())
-                    ParseStatus.Completed(parseResult, LogRefinement(parseResult.logs))
-                }
-
-                is Source.Text -> {
-                    val parseResult = parser.parse(it.text.split("\n"))
-                    ParseStatus.Completed(parseResult, LogRefinement(parseResult.logs))
-                }
-                Source.None -> {
-                    ParseStatus.NotStarted
-                }
+            is Source.Text -> {
+                val parseResult = parser.parse(it.text.split("\n"))
+                ParseStatus.Completed(parseResult, LogManager(parseResult.logs))
+            }
+            Source.None -> {
+                ParseStatus.NotStarted
             }
         }
     }

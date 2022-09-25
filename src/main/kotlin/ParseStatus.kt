@@ -7,6 +7,6 @@ sealed class ParseStatus {
     ) : ParseStatus()
     class Completed(
         val parseResult: ParseResult,
-        val logRefinement: LogRefinement
+        val logManager: LogManager
     ) : ParseStatus()
 }
