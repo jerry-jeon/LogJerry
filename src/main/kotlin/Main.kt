@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Checkbox
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
@@ -60,14 +59,13 @@ import java.io.File
 
 @Composable
 @Preview
-fun App(sourceState: MutableState<Source>) {
+fun App(headerState: MutableState<Header>, sourceState: MutableState<Source>) {
     val parser = DefaultParser()
     var logs by remember { mutableStateOf(emptyList<Log>()) }
 
     var logRefinement: LogRefinement by remember { mutableStateOf(LogRefinement(emptyList())) }
     val refinedLogs by logRefinement.refinedLogs.collectAsState(emptyList())
     // Flow would be better
-    val headerState = remember { mutableStateOf(Header.default) }
 
     LaunchedEffect(sourceState.value) {
         when (val source = sourceState.value) {
@@ -86,7 +84,6 @@ fun App(sourceState: MutableState<Source>) {
     }
 
     Column {
-        ColumnVisibility(headerState)
         FilterView(logRefinement)
         val filteredSize = (if (refinedLogs.size != logs.size) "Filtered size : ${refinedLogs.size}, " else "")
         Text(filteredSize + "Total : ${logs.size}")
@@ -165,32 +162,6 @@ private fun LogsView(header: Header, logs: List<Log>) {
 }
 
 @Composable
-fun ColumnVisibility(headerState: MutableState<Header>) {
-    val asColumnList = headerState.value.asColumnList
-
-    Column {
-        asColumnList.chunked(4).forEach { chunked ->
-            Row {
-                chunked.forEach { columnInfo ->
-                    ColumnCheckBox(columnInfo, headerState)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ColumnCheckBox(columnInfo: ColumnInfo, headerState: MutableState<Header>) {
-    var header by headerState
-    Row {
-        Text(columnInfo.columnType.name)
-        Checkbox(columnInfo.visible, onCheckedChange = {
-            header = header.copyOf(columnInfo.columnType, columnInfo.copy(visible = it))
-        })
-    }
-}
-
-@Composable
 fun ColumnDivider() {
     Box(Modifier.padding(horizontal = 5.dp)) {
         Divider(Modifier.fillMaxHeight().width(1.dp))
@@ -211,6 +182,7 @@ fun MyTheme(content: @Composable () -> Unit) {
 
 fun main() = application {
     val sourceState: MutableState<Source> = remember { mutableStateOf(Source.None) }
+    val headerState = remember { mutableStateOf(Header.default) }
     Window(
         state = WindowState(width = 1600.dp, height = 800.dp),
         onCloseRequest = ::exitApplication,
@@ -232,8 +204,13 @@ fun main() = application {
                         openFileDialog(sourceState)
                     }
                 }
+                Menu("Columns") {
+                    headerState.value.asColumnList.forEach { columnInfo ->
+                        columnCheckboxItem(columnInfo, headerState)
+                    }
+                }
             }
-            App(sourceState)
+            App(headerState, sourceState)
         }
     }
 }

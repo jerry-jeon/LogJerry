@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalComposeUiApi::class)
+
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -7,11 +9,22 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyShortcut
 import androidx.compose.ui.unit.dp
 
-enum class ColumnType {
-    Number, Date, Time, PID, TID, PackageName, Priority, Tag, Log;
+enum class ColumnType(val shortcut: KeyShortcut) {
+    Number(KeyShortcut(Key.Zero, meta = true)),
+    Date(KeyShortcut(Key.One, meta = true)),
+    Time(KeyShortcut(Key.Two, meta = true)),
+    PID(KeyShortcut(Key.Three, meta = true)),
+    TID(KeyShortcut(Key.Four, meta = true)),
+    PackageName(KeyShortcut(Key.Five, meta = true)),
+    Priority(KeyShortcut(Key.Six, meta = true)),
+    Tag(KeyShortcut(Key.Seven, meta = true)),
+    Log(KeyShortcut(Key.Eight, meta = true));
 }
 
 data class ColumnInfo(
