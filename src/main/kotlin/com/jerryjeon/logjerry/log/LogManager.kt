@@ -33,26 +33,30 @@ class LogManager(
 ) {
     private val logScope = MainScope()
 
-    private val investigationFlow: StateFlow<Investigation> = transformationManager.transformerFlow.map { transformers ->
-        val refined = if (transformers.filters.isEmpty()) {
+    private val filteredLogsFlow = transformationManager.filtersFlow.map { filters ->
+        if (filters.isEmpty()) {
             originalLogs
         } else {
             originalLogs
-                .filter { log -> transformers.filters.all { it.filter(log) } }
+                .filter { log -> filters.all { it.filter(log) } }
         }
+    }
+
+    private val investigationFlow: StateFlow<Investigation> = combine(filteredLogsFlow, transformationManager.detectorsFlow) { filteredLogs, detectors ->
+        val detectionFinishedLogs = filteredLogs
             .mapIndexed { logIndex, log ->
-                val detectionResults = transformers.detectors.map { it.detect(log.log, logIndex) }
+                val detectionResults = detectors.map { it.detect(log.log, logIndex) }
                     .flatten()
                 DetectionFinishedLog(log, detectionResults.groupBy { it.key })
             }
 
         val allDetectionResults = mutableMapOf<DetectionKey, List<Detection>>()
-        refined.forEach {
+        detectionFinishedLogs.forEach {
             it.detections.forEach { (key, value) ->
                 allDetectionResults[key] = (allDetectionResults[key] ?: emptyList()) + value
             }
         }
-        Investigation(originalLogs, refined, allDetectionResults, transformers.detectors)
+        Investigation(originalLogs, detectionFinishedLogs, allDetectionResults, detectors)
     }.stateIn(logScope, SharingStarted.Lazily, Investigation(emptyList(), emptyList(), emptyMap(), emptyList()))
 
     private val detectionExpanded = MutableStateFlow<Map<String, Boolean>>(emptyMap())

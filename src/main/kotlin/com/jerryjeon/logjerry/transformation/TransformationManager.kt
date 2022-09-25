@@ -11,37 +11,39 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class TransformationManager {
     private val transformationScope = MainScope()
 
     private val defaultDetectors = listOf(ExceptionDetector(), JsonDetector())
-
-    private val keywordDetectionEnabledStateFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val keywordDetectorEnabledStateFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     private val detectingKeywordFlow = MutableStateFlow("")
     val keywordDetectionRequestFlow =
-        combine(keywordDetectionEnabledStateFlow, detectingKeywordFlow) { enabled, keyword ->
+        combine(keywordDetectorEnabledStateFlow, detectingKeywordFlow) { enabled, keyword ->
             if (enabled) {
                 KeywordDetectionRequest.TurnedOn(keyword)
             } else {
                 KeywordDetectionRequest.TurnedOff
             }
         }.stateIn(transformationScope, SharingStarted.Lazily, KeywordDetectionRequest.TurnedOff)
+    val detectorsFlow = keywordDetectionRequestFlow.map {
+        when (it) {
+            is KeywordDetectionRequest.TurnedOn -> defaultDetectors + listOf(KeywordDetector(it.keyword))
+            KeywordDetectionRequest.TurnedOff -> defaultDetectors
+        }
+    }
 
     val textFiltersFlow: MutableStateFlow<List<TextFilter>> = MutableStateFlow(emptyList())
     val priorityFilterFlow: MutableStateFlow<PriorityFilter> = MutableStateFlow(PriorityFilter(Priority.Verbose))
-    private val filtersFlow = combine(textFiltersFlow, priorityFilterFlow) { textFilters, priorityFilter ->
+    val filtersFlow = combine(textFiltersFlow, priorityFilterFlow) { textFilters, priorityFilter ->
         textFilters + listOf(priorityFilter)
     }
 
     val transformerFlow = combine(filtersFlow, keywordDetectionRequestFlow) { filters, findStatus ->
         Transformation(
             filters,
-            when (findStatus) {
-                is KeywordDetectionRequest.TurnedOn -> defaultDetectors + listOf(KeywordDetector(findStatus.keyword))
-                KeywordDetectionRequest.TurnedOff -> defaultDetectors
-            }
         )
     }
 
@@ -62,6 +64,6 @@ class TransformationManager {
     }
 
     fun setKeywordDetectionEnabled(enabled: Boolean) {
-        keywordDetectionEnabledStateFlow.value = enabled
+        keywordDetectorEnabledStateFlow.value = enabled
     }
 }
