@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -13,13 +14,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.LocalTextStyle
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -49,14 +52,23 @@ fun TextFilterView(
     CompositionLocalProvider(
         LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp)
     ) {
-        Column(Modifier.padding(8.dp)) {
-            AddTextFilterView(addFilter)
+        Box(Modifier.border(1.dp, Color.LightGray, RoundedCornerShape(4.dp)).padding(8.dp)) {
+            Column {
+                Text("Filter")
+                Spacer(Modifier.height(8.dp))
+                AddTextFilterView(addFilter)
 
-            Spacer(Modifier.height(8.dp))
-            Row {
-                textFilters.filterIsInstance<TextFilter>().forEach { filter ->
-                    AppliedTextFilter(filter, removeFilter)
-                    Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.height(8.dp))
+                // FlowRow must be better, but it works strangely..
+                Column {
+                    textFilters.chunked(2).forEach {
+                        Row {
+                            it.forEach { filter ->
+                                AppliedTextFilter(filter, removeFilter)
+                                Spacer(Modifier.width(8.dp))
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -70,7 +82,7 @@ private fun AddTextFilterView(
     var text by remember { mutableStateOf("") }
     val columnTypeState = remember { mutableStateOf(ColumnType.Log) }
     Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-        OutlinedTextField(
+        TextField(
             modifier = Modifier.height(60.dp),
             value = text,
             onValueChange = {
@@ -88,6 +100,9 @@ private fun AddTextFilterView(
                     Icon(Icons.Default.Add, "Add a filter")
                 }
             },
+            colors = TextFieldDefaults.textFieldColors(
+                backgroundColor = Color.Transparent
+            )
         )
     }
 }
@@ -110,6 +125,7 @@ private fun SelectColumnTypeView(
                 modifier = Modifier.wrapContentWidth().align(Alignment.CenterVertically),
                 textAlign = TextAlign.Center
             )
+            Spacer(Modifier.width(4.dp))
             Icon(Icons.Default.ArrowDropDown, "Column types", modifier = Modifier.align(Alignment.CenterVertically))
         }
         DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
@@ -132,19 +148,23 @@ private fun AppliedTextFilter(textFilter: TextFilter, removeFilter: (TextFilter)
             .padding(horizontal = 4.dp, vertical = 8.dp)
             .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp))
     ) {
-        Row(modifier = Modifier.padding(horizontal = 8.dp)) {
+        Row(modifier = Modifier.height(30.dp)) {
+            Spacer(Modifier.width(8.dp))
             Text(
                 textFilter.columnType.text,
                 modifier = Modifier.align(Alignment.CenterVertically),
             )
+            Spacer(Modifier.width(8.dp))
+            Divider(Modifier.width(1.dp).fillMaxHeight())
             Spacer(Modifier.width(8.dp))
             Text(textFilter.text, modifier = Modifier.align(Alignment.CenterVertically))
             Spacer(Modifier.width(8.dp))
             Box(
                 Modifier
                     .clickable { removeFilter(textFilter) }
-                    .padding(4.dp)
                     .align(Alignment.CenterVertically)
+                    .fillMaxHeight()
+                    .aspectRatio(1f)
             ) {
                 Icon(
                     Icons.Default.Close,
