@@ -92,7 +92,7 @@ data class Header(
 
     companion object {
         val default = Header(
-            number = ColumnInfo(ColumnType.Number, 80, true),
+            number = ColumnInfo(ColumnType.Number, 90, true),
             date = ColumnInfo(ColumnType.Date, 100, true),
             time = ColumnInfo(ColumnType.Time, 100, true),
             pid = ColumnInfo(ColumnType.PID, 40, true),
@@ -107,12 +107,15 @@ data class Header(
 
 @Composable
 fun RowScope.HeaderView(columnInfo: ColumnInfo, modifier: Modifier = Modifier) {
-    if (columnInfo.visible) {
-        if(columnInfo.columnType.icon != null) {
+    Row(applyWidth(columnInfo.width, modifier)) {
+        if (columnInfo.columnType.icon != null) {
             Icon(columnInfo.columnType.icon, "ColumnType icon", Modifier.align(Alignment.CenterVertically))
         }
         Spacer(Modifier.width(4.dp))
-        Text(text = columnInfo.columnType.name, modifier = applyWidth(columnInfo.width, modifier).align(Alignment.CenterVertically))
+        Text(
+            text = columnInfo.columnType.name,
+            modifier = Modifier.align(Alignment.CenterVertically)
+        )
     }
 }
 
@@ -120,8 +123,10 @@ fun RowScope.HeaderView(columnInfo: ColumnInfo, modifier: Modifier = Modifier) {
 fun HeaderRow(header: Header, divider: @Composable RowScope.() -> Unit) {
     Row(Modifier.height(IntrinsicSize.Min)) {
         header.asColumnList.forEach {
-            HeaderView(it)
-            divider()
+            if (it.visible) {
+                HeaderView(it)
+                divider()
+            }
         }
     }
 }
