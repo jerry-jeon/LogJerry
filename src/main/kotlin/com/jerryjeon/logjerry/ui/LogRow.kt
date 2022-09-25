@@ -10,15 +10,22 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Button
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Expand
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogState
+import com.jerryjeon.logjerry.detection.DetectionResult
 import com.jerryjeon.logjerry.detection.JsonDetectionResult
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogContentView
@@ -44,10 +52,9 @@ import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.ColumnInfo
 import com.jerryjeon.logjerry.table.ColumnType
 import com.jerryjeon.logjerry.table.Header
+import com.jerryjeon.logjerry.util.copyToClipboard
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import java.awt.Toolkit
-import java.awt.datatransfer.StringSelection
 
 val json = Json { prettyPrint = true }
 
@@ -56,13 +63,14 @@ fun LogRow(
     refinedLog: RefinedLog,
     preferences: Preferences,
     header: Header,
+    collapse: (DetectionResult) -> Unit,
     divider: @Composable RowScope.() -> Unit
 ) {
     Row(Modifier.height(IntrinsicSize.Min)) {
         Spacer(Modifier.width(8.dp))
         header.asColumnList.forEach { columnInfo ->
             if (columnInfo.visible) {
-                CellByColumnType(preferences, columnInfo, refinedLog)
+                CellByColumnType(preferences, columnInfo, refinedLog, collapse)
                 if (columnInfo.columnType.showDivider) {
                     divider()
                 }
@@ -73,7 +81,12 @@ fun LogRow(
 }
 
 @Composable
-fun RowScope.CellByColumnType(preferences: Preferences, columnInfo: ColumnInfo, refinedLog: RefinedLog) {
+fun RowScope.CellByColumnType(
+    preferences: Preferences,
+    columnInfo: ColumnInfo,
+    refinedLog: RefinedLog,
+    collapse: (DetectionResult) -> Unit
+) {
     val log = refinedLog.detectionFinishedLog.log
     when (columnInfo.columnType) {
         ColumnType.Number -> NumberCell(preferences, columnInfo, log)
@@ -85,7 +98,7 @@ fun RowScope.CellByColumnType(preferences: Preferences, columnInfo: ColumnInfo, 
         ColumnType.Priority -> PriorityCell(preferences, columnInfo, log)
         ColumnType.Tag -> TagCell(preferences, columnInfo, log)
         ColumnType.Detection -> DetectionCell(columnInfo, refinedLog.detectionFinishedLog)
-        ColumnType.Log -> LogCell(preferences, columnInfo, refinedLog)
+        ColumnType.Log -> LogCell(preferences, columnInfo, refinedLog, collapse)
     }
 }
 
@@ -186,19 +199,29 @@ private fun RowScope.TagCell(preferences: Preferences, tag: ColumnInfo, log: Log
 }
 
 @Composable
-private fun RowScope.LogCell(preferences: Preferences, logHeader: ColumnInfo, refinedLog: RefinedLog) {
+private fun RowScope.LogCell(
+    preferences: Preferences,
+    logHeader: ColumnInfo,
+    refinedLog: RefinedLog,
+    collapse: (DetectionResult) -> Unit
+) {
     Box(modifier = this.cellDefaultModifier(logHeader.width)) {
         SelectionContainer {
             Column {
                 refinedLog.logContentViews.forEach { logContent ->
-                    AnnotatedLogView(preferences, logContent, refinedLog)
+                    AnnotatedLogView(preferences, logContent, refinedLog, collapse)
                 }
             }
         }
     }
 }
 
-@Composable fun AnnotatedLogView(preferences: Preferences, logContentView: LogContentView, refinedLog: RefinedLog) {
+@Composable fun AnnotatedLogView(
+    preferences: Preferences,
+    logContentView: LogContentView,
+    refinedLog: RefinedLog,
+    collapse: (DetectionResult) -> Unit
+) {
     when (logContentView) {
         is LogContentView.Simple -> {
             Text(
@@ -210,14 +233,31 @@ private fun RowScope.LogCell(preferences: Preferences, logHeader: ColumnInfo, re
             )
         }
         is LogContentView.Json -> {
-            Text(
-                text = logContentView.str,
-                style = MaterialTheme.typography.body2.copy(
-                    fontSize = preferences.fontSize,
-                    color = preferences.colorByPriority.getValue(refinedLog.detectionFinishedLog.log.priority)
-                ),
-                modifier = logContentView.background?.let { Modifier.background(color = it) } ?: Modifier
-            )
+            val modifier = logContentView.background?.let { Modifier.background(color = it) } ?: Modifier
+            Box(modifier = modifier.fillMaxWidth().padding(4.dp)) {
+                Text(
+                    text = logContentView.str,
+                    style = MaterialTheme.typography.body2.copy(
+                        fontSize = preferences.fontSize,
+                        color = preferences.colorByPriority.getValue(refinedLog.detectionFinishedLog.log.priority)
+                    )
+                )
+                Row(modifier = Modifier.align(Alignment.TopEnd)) {
+                    IconButton(
+                        onClick = { copyToClipboard(logContentView.str.toString()) },
+                        modifier = Modifier.size(16.dp),
+                    ) {
+                        Icon(Icons.Default.ContentCopy, "Copy the json")
+                    }
+                    Spacer(Modifier.width(4.dp))
+                    IconButton(
+                        onClick = { collapse(logContentView.jsonDetectionResult) },
+                        modifier = Modifier.size(16.dp),
+                    ) {
+                        Icon(Icons.Default.Expand, "Collapse the json")
+                    }
+                }
+            }
         }
     }
 }
@@ -284,13 +324,6 @@ private fun JsonPrettyDialog(
             }
         }
     }
-}
-
-private fun copyToClipboard(prettyJson: String) {
-    val selection = StringSelection(prettyJson)
-    Toolkit.getDefaultToolkit()
-        .systemClipboard
-        .setContents(selection, selection)
 }
 
 /*

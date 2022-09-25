@@ -264,4 +264,8 @@ class LogManager(
         // Detector 가 필요하네..
         return result
     }
+
+    fun collapse(detectionResult: DetectionResult) {
+        detectionExpanded.value = detectionExpanded.value + (detectionResult to false)
+    }
 }

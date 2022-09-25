@@ -200,7 +200,7 @@ fun ParseCompletedView(
         )
     }
     Divider(color = Color.Black)
-    LogsView(preferences, headerState.value, investigationResultView.refinedLogs, detectionFocus)
+    LogsView(preferences, headerState.value, investigationResultView.refinedLogs, detectionFocus, logManager::collapse)
 }
 
 @Composable
