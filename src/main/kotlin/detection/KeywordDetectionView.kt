@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalComposeUiApi::class, ExperimentalComposeUiApi::class)
+
 package detection
 
 import DetectionFocus
@@ -23,9 +25,16 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -75,7 +84,25 @@ private fun KeywordDetectionRequestViewTurnedOn(
 
     Box(modifier.padding(8.dp)) {
         OutlinedTextField(
-            modifier = Modifier.focusRequester(focusRequester),
+            modifier = Modifier.focusRequester(focusRequester).onPreviewKeyEvent {
+                when {
+                    it.key == Key.Enter && it.type == KeyEventType.KeyDown -> {
+                        detectionResultFocus?.let { focus ->
+                            if (it.isShiftPressed) {
+                                moveToPreviousOccurrence(focus)
+                            } else {
+                                moveToNextOccurrence(focus)
+                            }
+                        }
+                        true
+                    }
+                    it.key == Key.Escape && it.type == KeyEventType.KeyDown -> {
+                        setFindEnabled(false)
+                        true
+                    }
+                    else -> false
+                }
+            },
             value = keywordDetectionRequest.keyword,
             onValueChange = { find(it) },
             leadingIcon = { Icon(Icons.Default.Search, "Search") },
