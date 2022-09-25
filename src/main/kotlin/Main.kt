@@ -2,6 +2,8 @@
 @file:OptIn(ExperimentalComposeUiApi::class)
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,23 +12,35 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Divider
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isMetaPressed
@@ -47,28 +61,91 @@ import java.io.File
 fun App(sourceState: MutableState<Source>) {
     val parser = DefaultParser()
     var logs by remember { mutableStateOf(emptyList<Log>()) }
+
+    var logRefinement: LogRefinement by remember { mutableStateOf(LogRefinement(emptyList())) }
+    val refinedLogs by logRefinement.refinedLogs.collectAsState(emptyList())
     // Flow would be better
+    val headerState = remember { mutableStateOf(Header.default) }
 
     LaunchedEffect(sourceState.value) {
         when (val source = sourceState.value) {
             is Source.File -> {
                 logs = parser.parse(source.file.readLines())
+                logRefinement = LogRefinement(logs)
             }
 
             is Source.Text -> {
                 logs = parser.parse(source.text.split("\n"))
+                logRefinement = LogRefinement(logs)
             }
 
             Source.None -> {}
         }
     }
 
-    val headerState = remember { mutableStateOf(Header.default) }
     Column {
         ColumnVisibility(headerState)
         ChooseFileButton(sourceState)
+        FilterView(logRefinement)
+        LogsView(headerState.value, refinedLogs)
+    }
+}
 
-        LogsView(headerState.value, logs)
+@Composable
+private fun FilterView(logRefinement: LogRefinement) {
+    val filters by logRefinement.filtersFlow.collectAsState(emptyList())
+    // Provide only useful column types
+    var columnType by remember { mutableStateOf(ColumnType.Log) }
+    val items = listOf(ColumnType.Log, ColumnType.PackageName)
+    var text by remember { mutableStateOf("Text") }
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.wrapContentSize(Alignment.TopStart)) {
+        Text(
+            columnType.name,
+            modifier = Modifier.width(300.dp).clickable(onClick = { expanded = true }).background(
+                Color.Gray
+            )
+        )
+        DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
+            items.forEach {
+                DropdownMenuItem(onClick = {
+                    columnType = it
+                    expanded = false
+                }) {
+                    Text(text = it.name)
+                }
+            }
+        }
+    }
+    TextField(
+        value = text,
+        onValueChange = {
+            text = it
+        }
+    )
+    Button(onClick = {
+        logRefinement.addFilter(Filter(columnType, text))
+        text = ""
+    }) {
+        Text("Add filter")
+    }
+    filters.forEach { filter ->
+        Box(Modifier.background(color = Color.Cyan)) {
+            Row {
+                Button(onClick = {
+                    logRefinement.removeFilter(filter)
+                }) {
+                    Icon(
+                        Icons.Filled.Close,
+                        contentDescription = "Favorite",
+                        modifier = Modifier.size(ButtonDefaults.IconSize)
+                    )
+                }
+                Text(filter.columnType.toString())
+                Text(filter.text)
+            }
+        }
     }
 }
 

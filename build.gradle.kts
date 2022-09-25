@@ -19,6 +19,7 @@ repositories {
 
 dependencies {
     implementation(compose.desktop.macos_arm64)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
     testImplementation("io.kotest:kotest-assertions-core:5.4.1")
 }
