@@ -92,8 +92,9 @@ private fun FilterAndLogs(headerState: MutableState<Header>, logManager: LogMana
     val refinedLogsList = refinedLogs.refined
     val logs = logManager.originalLogs
     val fsState = logManager.findStatusFlow.collectAsState()
+    val findResult = logManager.findResult.collectAsState()
     Column {
-        FindView(logManager, fsState.value)
+        FindView(logManager, fsState.value, findResult.value)
         FilterView(logManager)
         val filteredSize = (if (refinedLogsList.size != logs.size) "Filtered size : ${refinedLogsList.size}, " else "")
         Text(filteredSize + "Total : ${logs.size}")
@@ -130,7 +131,7 @@ private fun InvalidSentences(parseResult: ParseResult) {
 }
 
 @Composable
-private fun FindView(logManager: LogManager, findStatus: FindStatus) {
+private fun FindView(logManager: LogManager, findStatus: FindStatus, findResult: List<DetectionResult>) {
     when (findStatus) {
         is FindStatus.TurnedOn -> {
             Row {
@@ -146,6 +147,8 @@ private fun FindView(logManager: LogManager, findStatus: FindStatus) {
                 }) {
                     Icon(Icons.Default.Close, "Close find")
                 }
+
+                Text("0 / ${findResult.size}")
             }
         }
         FindStatus.TurnedOff -> {}

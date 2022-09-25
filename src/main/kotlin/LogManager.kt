@@ -48,30 +48,40 @@ class LogManager(
         }
             .mapIndexed { index, log ->
                 transformers.detections.fold(log) { acc, detection ->
-                    val changedLog = doDetection(detection, acc)
-                    (detectionResults.getOrPut(detection.key) { mutableListOf() })
-                        .add(DetectionResult(detection.key, index))
+                    val (changed, changedLog) = doDetection(detection, acc)
+                    if (changed) {
+                        (detectionResults.getOrPut(detection.key) { mutableListOf() })
+                            .add(DetectionResult(detection.key, index))
+                    }
                     changedLog
                 }
             }
         RefinedLogs(originalLogs, refined, detectionResults)
     }.stateIn(logScope, SharingStarted.Lazily, RefinedLogs(emptyList(), emptyList(), emptyMap()))
 
+    val findResult = refinedLogs.map {
+        it.detectionResults["keyword"] ?: emptyList()
+    }.stateIn(logScope, SharingStarted.Lazily, emptyList())
+
     data class Transformers(
         val filters: List<(Log) -> Boolean>,
         val detections: List<Detection>
     )
 
-    private fun doDetection(detection: Detection, log: Log): Log {
+    private fun doDetection(detection: Detection, log: Log): Pair<Boolean, Log> {
         val indexRanges = detection.detect(log)
 
-        return log.copy(
-            log = indexRanges.fold(AnnotatedString.Builder(log.originalLog)) { builder, range ->
-                builder.apply {
-                    addStyle(detection.detectedStyle, range.first, range.last)
-                }
-            }.toAnnotatedString()
-        )
+        return if (indexRanges.isEmpty()) {
+            false to log
+        } else {
+            true to log.copy(
+                log = indexRanges.fold(AnnotatedString.Builder(log.originalLog)) { builder, range ->
+                    builder.apply {
+                        addStyle(detection.detectedStyle, range.first, range.last)
+                    }
+                }.toAnnotatedString()
+            )
+        }
     }
 
     class KeywordDetection(private val keyword: String) : Detection {
