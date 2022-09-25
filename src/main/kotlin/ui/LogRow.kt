@@ -1,4 +1,5 @@
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogState
 import detection.JsonDetectionResult
@@ -25,6 +27,8 @@ import log.refine.RefinedLog
 import table.ColumnInfo
 import table.ColumnType
 import table.Header
+
+val json = Json { prettyPrint = true }
 
 @Composable
 fun LogRow(
@@ -56,7 +60,7 @@ fun RowScope.CellByColumnType(columnInfo: ColumnInfo, refinedLog: RefinedLog) {
         ColumnType.PackageName -> PackagerNameCell(columnInfo, log)
         ColumnType.Priority -> PriorityCell(columnInfo, log)
         ColumnType.Tag -> TagCell(columnInfo, log)
-        ColumnType.Button -> ButtonCell(columnInfo, refinedLog)
+        ColumnType.Detection -> DetectionCell(columnInfo, refinedLog)
         ColumnType.Log -> LogCell(columnInfo, refinedLog)
     }
 }
@@ -102,30 +106,35 @@ private fun RowScope.TagCell(tag: ColumnInfo, log: Log) {
 }
 
 @Composable
-private fun RowScope.ButtonCell(button: ColumnInfo, refinedLog: RefinedLog) {
-    var showDialog by remember { mutableStateOf(false) }
+private fun RowScope.DetectionCell(button: ColumnInfo, refinedLog: RefinedLog) {
+    var showPrettyJsonDialog: Pair<Boolean, JsonObject>? by remember { mutableStateOf(null) }
 
-    Box(modifier = this.cellDefaultModifier(button.width)) {
-        if (refinedLog.detectionResults[DetectionKey.Json] != null) {
-            TextButton(onClick = { showDialog = true }) {
-                Text("{ }")
+    Column(modifier = this.cellDefaultModifier(button.width)) {
+        refinedLog.detectionResults.values.flatten().forEach { result ->
+            when (result) {
+                is JsonDetectionResult -> {
+                    result.jsonList.forEachIndexed { index, jsonObject ->
+                        TextButton(onClick = { showPrettyJsonDialog = true to jsonObject }) {
+                            Row {
+                                Text("{ }")
+                                Text("${index + 1}", fontSize = 9.sp)
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
-    if (showDialog) {
+    showPrettyJsonDialog?.let { (_, jsonObject) ->
         Dialog(
-            onCloseRequest = { showDialog = false },
+            onCloseRequest = { showPrettyJsonDialog = null },
             title = "Pretty Json",
             state = DialogState(width = 800.dp, height = 600.dp)
         ) {
-            val json = Json { prettyPrint = true }
-            Text(
-                json.encodeToString(
-                    JsonObject.serializer(),
-                    (refinedLog.detectionResults.get(DetectionKey.Json)!!.get(0) as JsonDetectionResult).jsonList.get(0)
-                )
-            )
+            SelectionContainer {
+                Text(json.encodeToString(JsonObject.serializer(), jsonObject), modifier = Modifier.padding(16.dp))
+            }
         }
     }
 }

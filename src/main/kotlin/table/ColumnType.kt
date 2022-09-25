@@ -21,6 +21,6 @@ enum class ColumnType(val text: String, val shortcut: KeyShortcut, val icon: Ima
     PackageName("PackageName", KeyShortcut(Key.Five, meta = true), null, true),
     Priority("level", KeyShortcut(Key.Six, meta = true), null, true),
     Tag("Tag", KeyShortcut(Key.Seven, meta = true), Icons.Default.Info, true),
-    Button("B", KeyShortcut(Key.Nine, meta = true), null, false),
-    Log("Log", KeyShortcut(Key.Eight, meta = true), Icons.Default.List, false);
+    Log("Log", KeyShortcut(Key.Eight, meta = true), Icons.Default.List, false),
+    Detection("", KeyShortcut(Key.Nine, meta = true), null, false);
 }
