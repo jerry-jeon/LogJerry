@@ -3,6 +3,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
@@ -118,9 +119,11 @@ private fun RowScope.ButtonCell(logHeader: ColumnInfo, refinedLog: RefinedLog) {
 
 @Composable
 private fun RowScope.LogCell(logHeader: ColumnInfo, log: Log) {
-    // TODO make if configurable
-    val style = if (log.priority == Priority.Error) TextStyle.Default.copy(color = Color.Red) else TextStyle.Default
-    Text(log.log, modifier = this.cellDefaultModifier(logHeader.width), style = style)
+    SelectionContainer {
+        // TODO make if configurable
+        val style = if (log.priority == Priority.Error) TextStyle.Default.copy(color = Color.Red) else TextStyle.Default
+        Text(log.log, modifier = this.cellDefaultModifier(logHeader.width), style = style)
+    }
 }
 
 /*
