@@ -1,4 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:OptIn(ExperimentalComposeUiApi::class)
+
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,26 +18,50 @@ import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import parse.DefaultParser
+import java.awt.Toolkit
+import java.awt.datatransfer.DataFlavor
 import java.io.File
 
 @Composable
 @Preview
-fun App() {
+fun App(sourceState: MutableState<Source>) {
     val parser = DefaultParser()
+    var logs by remember { mutableStateOf(emptyList<Log>()) }
+    // Flow would be better
+
+    LaunchedEffect(sourceState.value) {
+        when(val source = sourceState.value) {
+            is Source.File -> {
+                logs = parser.parse(source.file.readLines())
+            }
+            is Source.Text -> {
+                logs = parser.parse(source.text.split("\n"))
+            }
+
+            Source.None -> {}
+        }
+    }
+
     MyTheme {
-        var logs by remember { mutableStateOf(emptyList<Log>()) }
         val headerState = remember { mutableStateOf(Header.default) }
         val header by headerState
 
@@ -46,7 +72,7 @@ fun App() {
                 fileDialog.isVisible = true
                 fileDialog.file?.let {
                     val file = File(File(fileDialog.directory), it)
-                    logs = parser.parse(file.readLines())
+                    sourceState.value = Source.File(file)
                 }
             }) {
                 Text("File Picker")
@@ -112,10 +138,21 @@ fun MyTheme(content: @Composable () -> Unit) {
 }
 
 fun main() = application {
+    val sourceState: MutableState<Source> = remember { mutableStateOf(Source.None) }
     Window(
         state = WindowState(width = 1600.dp, height = 800.dp),
-        onCloseRequest = ::exitApplication
+        onCloseRequest = ::exitApplication,
+        onPreviewKeyEvent = { keyEvent ->
+            if(keyEvent.isMetaPressed && keyEvent.key == Key.V && keyEvent.type == KeyEventType.KeyUp) {
+                Toolkit.getDefaultToolkit()
+                    .systemClipboard
+                    .getData(DataFlavor.stringFlavor)
+                    .takeIf { it is String }
+                    ?.let { sourceState.value = Source.Text(it.toString()) }
+            }
+            false
+        }
     ) {
-        App()
+        App(sourceState)
     }
 }
