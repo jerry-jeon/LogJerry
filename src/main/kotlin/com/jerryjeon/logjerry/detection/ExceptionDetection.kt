@@ -52,8 +52,9 @@ class ExceptionDetectionResult(
     companion object {
         val detectedStyle = SpanStyle(background = Color(0x40EEEEA5))
     }
-    override val key: DetectionKey = DetectionKey.Exception
-    override fun annotate(result: DetectionResult.AnnotationResult): DetectionResult.AnnotationResult {
-        return annotateWithNoIndexChange(detectedStyle, result)
-    }
+
+    override val key: DetectionKey
+        get() = DetectionKey.Exception
+    override val style: SpanStyle
+        get() = detectedStyle
 }

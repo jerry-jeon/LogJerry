@@ -1,7 +1,5 @@
 package com.jerryjeon.logjerry.detection
 
-import com.jerryjeon.logjerry.parse.DefaultParser
-import io.kotest.matchers.collections.shouldNotBeEmpty
 import org.junit.jupiter.api.Test
 
 internal class ExceptionDetectionTest {
@@ -47,10 +45,7 @@ internal class ExceptionDetectionTest {
 
     @Test
     fun testExceptionDetection() {
-        val log = DefaultParser().parse(originalExceptionLog.split("\n")).logs.first()
-        println(log)
-
-        val detect = detection.detect(log)
-        detect.shouldNotBeEmpty()
+        println("abc".substring(0, 1))
+        println("abc".substring(1, 1))
     }
 }

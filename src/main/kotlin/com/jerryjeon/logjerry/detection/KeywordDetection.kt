@@ -27,8 +27,7 @@ class KeywordDetection(private val keyword: String) : Detection<DetectionResult>
 
 class KeywordDetectionResult(override val range: IntRange, override val logIndex: Int) : DetectionResult {
     override val key: DetectionKey = DetectionKey.Keyword
+    override val style: SpanStyle
+        get() = detectedStyle
     private val detectedStyle: SpanStyle = SpanStyle(background = Color.Yellow)
-    override fun annotate(result: DetectionResult.AnnotationResult): DetectionResult.AnnotationResult {
-        return annotateWithNoIndexChange(detectedStyle, result)
-    }
 }

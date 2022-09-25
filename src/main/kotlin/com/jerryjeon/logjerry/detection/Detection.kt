@@ -1,6 +1,5 @@
 package com.jerryjeon.logjerry.detection
 
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 
 // When we support custom detection, then key should be String
@@ -17,20 +16,7 @@ interface DetectionResult {
     val key: DetectionKey
     val range: IntRange
     val logIndex: Int
-    fun annotate(result: AnnotationResult): AnnotationResult
-
-    fun annotateWithNoIndexChange(style: SpanStyle, result: AnnotationResult): AnnotationResult {
-        val (builder, startIndexChanged) = result
-        return AnnotationResult(
-            builder.apply { addStyle(style, startIndexChanged + range.first, startIndexChanged + range.last) },
-            startIndexChanged
-        )
-    }
-
-    data class AnnotationResult(
-        val builder: AnnotatedString.Builder,
-        val startIndexChanged: Int
-    )
+    val style: SpanStyle
 }
 
 data class DetectionFocus(

@@ -50,12 +50,10 @@ class JsonDetectionResult(
     val json: JsonObject
 ) : DetectionResult {
     override val key: DetectionKey = DetectionKey.Json
+    override val style: SpanStyle
+        get() = detectedStyle
 
     companion object {
         val detectedStyle = SpanStyle(background = Color(0x40777777))
-    }
-
-    override fun annotate(result: DetectionResult.AnnotationResult): DetectionResult.AnnotationResult {
-        return annotateWithNoIndexChange(detectedStyle, result)
     }
 }

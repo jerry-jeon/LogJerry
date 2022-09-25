@@ -1,18 +1,22 @@
 package com.jerryjeon.logjerry.log
 
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import com.jerryjeon.logjerry.detection.Detection
 import com.jerryjeon.logjerry.detection.DetectionFocus
 import com.jerryjeon.logjerry.detection.DetectionKey
 import com.jerryjeon.logjerry.detection.DetectionResult
 import com.jerryjeon.logjerry.detection.ExceptionDetection
 import com.jerryjeon.logjerry.detection.JsonDetection
+import com.jerryjeon.logjerry.detection.JsonDetectionResult
 import com.jerryjeon.logjerry.detection.KeywordDetection
 import com.jerryjeon.logjerry.detection.KeywordDetectionRequest
 import com.jerryjeon.logjerry.log.refine.DetectionFinishedLog
+import com.jerryjeon.logjerry.log.refine.DetectionResultView
 import com.jerryjeon.logjerry.log.refine.InvestigationResult
 import com.jerryjeon.logjerry.log.refine.InvestigationResultView
-import com.jerryjeon.logjerry.log.refine.LogContent
+import com.jerryjeon.logjerry.log.refine.LogContentView
 import com.jerryjeon.logjerry.log.refine.LogFilter
 import com.jerryjeon.logjerry.log.refine.PriorityFilter
 import com.jerryjeon.logjerry.log.refine.RefinedLog
@@ -27,6 +31,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 
 class LogManager(
     val originalLogs: List<Log>
@@ -79,16 +85,19 @@ class LogManager(
                 allDetectionResults[key] = (allDetectionResults[key] ?: emptyList()) + value
             }
         }
-        InvestigationResult(originalLogs, refined, allDetectionResults)
-    }.stateIn(logScope, SharingStarted.Lazily, InvestigationResult(emptyList(), emptyList(), emptyMap()))
+        InvestigationResult(originalLogs, refined, allDetectionResults, transformers.detections)
+    }.stateIn(logScope, SharingStarted.Lazily, InvestigationResult(emptyList(), emptyList(), emptyMap(), emptyList()))
 
     val investigationResultView: StateFlow<InvestigationResultView> = investigationResult.map { investigationResult ->
         // Why should it be separated : make possible to change data of detectionResult
         // TODO don't want to repeat all annotate if just one log has changed. How can I achieve it
         val refinedLogs = investigationResult.detectionFinishedLogs.map {
-            RefinedLog(it, annotate(it.log, it.detectionResults.values.flatten()))
+            val logContents = separateAnnotationStrings(it.log, it.detectionResults.values.flatten().map { DetectionResultView(it, it is JsonDetectionResult) })
+            RefinedLog(it, annotate(it.log, logContents, investigationResult.detections))
         }
-        val allDetectionLogs = investigationResult.allDetectionResults
+        val allDetectionLogs = investigationResult.allDetectionResults.mapValues { (_, v) ->
+            v.map { DetectionResultView(it, false) }
+        }
         InvestigationResultView(refinedLogs, allDetectionLogs)
     }.stateIn(logScope, SharingStarted.Lazily, InvestigationResultView(emptyList(), emptyMap()))
 
@@ -173,11 +182,79 @@ class LogManager(
         this.priorityFilter.value = priorityFilter
     }
 
-    private fun annotate(log: Log, detectionResults: List<DetectionResult>): List<LogContent> {
-        // Assume that there are no overlapping areas.
-        // TODO: Support overlapping detection
-        val initial = DetectionResult.AnnotationResult(AnnotatedString.Builder(log.log), 0)
-        val annotationResult = detectionResults.fold(initial) { acc, next -> next.annotate(acc) }
-        return listOf(LogContent.Simple(annotationResult.builder.toAnnotatedString()))
+    sealed class LogContent {
+        class Simple(val text: String) : LogContent()
+        class Json(val text: String, val jdr: JsonDetectionResult) : LogContent()
+    }
+
+    val json = Json { prettyPrint = true }
+    private fun separateAnnotationStrings(log: Log, detectionResults: List<DetectionResultView>): List<LogContent> {
+        val sorted = detectionResults.sortedBy { it.detectionResult.range.first }
+        val originalLog = log.log
+
+        var lastEnded = 0
+        val logContents = mutableListOf<LogContent>()
+        sorted.forEach {
+            val newStart = it.detectionResult.range.first
+            val newEnd = it.detectionResult.range.last
+            // Assume that there are no overlapping areas.
+            if (it.detectionResult is JsonDetectionResult && it.expanded) {
+                if (lastEnded != newStart) {
+                    logContents.add(LogContent.Simple(originalLog.substring(lastEnded, newStart)))
+                }
+                logContents.add(LogContent.Json(json.encodeToString(JsonObject.serializer(), it.detectionResult.json), it.detectionResult))
+                lastEnded = newEnd + 1
+            }
+        }
+        if (lastEnded < originalLog.length) {
+            logContents.add(LogContent.Simple(originalLog.substring(lastEnded)))
+        }
+        return logContents
+    }
+
+    private fun annotate(log: Log, logContents: List<LogContent>, detections: List<Detection<*>>): List<LogContentView> {
+        val result = logContents.map {
+            when (it) {
+                is LogContent.Json -> {
+                    val simple = it
+                    val initial = AnnotatedString.Builder(simple.text)
+                    val results = detections.flatMap { detection ->
+                        detection.detect(simple.text, log.number)
+                    }
+
+                    val builder = results.fold(initial) { acc, next ->
+                        acc.apply {
+                            addStyle(
+                                SpanStyle(),
+                                next.range.first,
+                                next.range.last + 1
+                            )
+                        }
+                    }
+                    LogContentView.Json(builder.toAnnotatedString(), Color.LightGray, it.jdr)
+                }
+                is LogContent.Simple -> {
+                    val simple = it
+                    val initial = AnnotatedString.Builder(simple.text)
+                    val results = detections.flatMap { detection ->
+                        detection.detect(simple.text, log.number)
+                    }
+
+                    val builder = results.fold(initial) { acc, next ->
+                        acc.apply {
+                            addStyle(
+                                next.style,
+                                next.range.first,
+                                next.range.last + 1
+                            )
+                        }
+                    }
+                    LogContentView.Simple(builder.toAnnotatedString())
+                }
+            }
+        }
+
+        // Detector 가 필요하네..
+        return result
     }
 }

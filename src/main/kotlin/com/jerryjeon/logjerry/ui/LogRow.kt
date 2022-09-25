@@ -38,7 +38,7 @@ import androidx.compose.ui.window.DialogState
 import com.jerryjeon.logjerry.detection.JsonDetectionResult
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.refine.DetectionFinishedLog
-import com.jerryjeon.logjerry.log.refine.LogContent
+import com.jerryjeon.logjerry.log.refine.LogContentView
 import com.jerryjeon.logjerry.log.refine.RefinedLog
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.ColumnInfo
@@ -189,8 +189,8 @@ private fun RowScope.TagCell(preferences: Preferences, tag: ColumnInfo, log: Log
 private fun RowScope.LogCell(preferences: Preferences, logHeader: ColumnInfo, refinedLog: RefinedLog) {
     Box(modifier = this.cellDefaultModifier(logHeader.width)) {
         SelectionContainer {
-            refinedLog.logContents.forEach { logContent ->
-                Column {
+            Column {
+                refinedLog.logContentViews.forEach { logContent ->
                     AnnotatedLogView(preferences, logContent, refinedLog)
                 }
             }
@@ -198,25 +198,25 @@ private fun RowScope.LogCell(preferences: Preferences, logHeader: ColumnInfo, re
     }
 }
 
-@Composable fun AnnotatedLogView(preferences: Preferences, logContent: LogContent, refinedLog: RefinedLog) {
-    when (logContent) {
-        is LogContent.Simple -> {
+@Composable fun AnnotatedLogView(preferences: Preferences, logContentView: LogContentView, refinedLog: RefinedLog) {
+    when (logContentView) {
+        is LogContentView.Simple -> {
             Text(
-                text = logContent.str,
+                text = logContentView.str,
                 style = MaterialTheme.typography.body2.copy(
                     fontSize = preferences.fontSize,
                     color = preferences.colorByPriority.getValue(refinedLog.detectionFinishedLog.log.priority)
                 ),
             )
         }
-        is LogContent.Json -> {
+        is LogContentView.Json -> {
             Text(
-                text = logContent.str,
+                text = logContentView.str,
                 style = MaterialTheme.typography.body2.copy(
                     fontSize = preferences.fontSize,
                     color = preferences.colorByPriority.getValue(refinedLog.detectionFinishedLog.log.priority)
                 ),
-                modifier = logContent.background?.let { Modifier.background(color = it) } ?: Modifier
+                modifier = logContentView.background?.let { Modifier.background(color = it) } ?: Modifier
             )
         }
     }
