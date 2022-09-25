@@ -8,6 +8,8 @@ import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -80,7 +82,9 @@ private fun RowScope.TagCell(tag: ColumnInfo, log: Log) {
 
 @Composable
 private fun RowScope.LogCell(logHeader: ColumnInfo, log: Log) {
-    Text(log.log, modifier = this.cellDefaultModifier(logHeader.width))
+    // TODO make if configurable
+    val style = if (log.priority == "E") TextStyle.Default.copy(color = Color.Red) else TextStyle.Default
+    Text(log.log, modifier = this.cellDefaultModifier(logHeader.width), style = style)
 }
 
 @Preview
