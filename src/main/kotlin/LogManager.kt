@@ -50,7 +50,7 @@ class LogManager(
             originalLogs
         } else {
             originalLogs
-                .filter { log -> transformers.filters.any { it(log) } }
+                .filter { log -> transformers.filters.all { it(log) } }
         }
             .mapIndexed { logIndex, log ->
                 transformers.detections.fold(log) { acc, detection ->
