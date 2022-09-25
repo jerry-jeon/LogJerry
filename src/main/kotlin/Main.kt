@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:OptIn(ExperimentalComposeUiApi::class)
+@file:OptIn(ExperimentalComposeUiApi::class, ExperimentalSerializationApi::class)
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.border
@@ -46,6 +46,9 @@ import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import detection.KeywordDetectionRequest
 import detection.KeywordDetectionView
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
 import log.LogManager
 import log.refine.RefinedLog
 import parse.ParseResult
@@ -254,7 +257,12 @@ fun main() = application {
     val sourceManager = SourceManager()
     val headerState = remember { mutableStateOf(Header.default) }
     val preferenceOpen = remember { mutableStateOf(false) }
-    val preferencesState = remember { mutableStateOf(Preferences.default) }
+    val preferences = try {
+        Preferences.file.inputStream().use { Json.decodeFromStream(it) }
+    } catch (e: Exception) {
+        Preferences.default
+    }
+    val preferencesState = remember { mutableStateOf(preferences) }
     Window(
         state = WindowState(width = 1600.dp, height = 800.dp),
         onCloseRequest = ::exitApplication,

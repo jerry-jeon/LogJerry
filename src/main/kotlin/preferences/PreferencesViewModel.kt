@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package preferences
 
 import Priority
@@ -9,6 +11,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToStream
 
 class PreferencesViewModel(
     private val preferencesState: MutableState<Preferences>
@@ -45,6 +50,10 @@ class PreferencesViewModel(
         preferencesState.value = preferencesState.value.copy(
             colorByPriority = saving.mapValues { (_, color) -> color!! }
         )
+
+        Preferences.file.outputStream().use {
+            Json.encodeToStream(preferencesState.value, it)
+        }
     }
 
     private fun parseColor(colorString: String): Int {
