@@ -11,20 +11,26 @@ class DefaultParser : LogParser {
         return true
     }
 
-    override fun parse(rawLines: List<String>): List<Log> {
+    override fun parse(rawLines: List<String>): ParseResult {
         val logs = mutableListOf<Log>()
+        val invalidSentences = mutableListOf<Pair<Int, String>>()
         var lastLog: Log? = null
-        rawLines.forEach { s ->
+        rawLines.forEachIndexed { index, s ->
             lastLog = try {
                 val log = parseSingleLineLog(s)
                 lastLog?.let { logs.add(it) }
                 log
             } catch (e: Exception) {
-                val continuedLog = lastLog ?: throw IllegalArgumentException("Invalid sentence: $s", e)
+                val continuedLog = if (lastLog == null) {
+                    invalidSentences.add(index to s)
+                    return@forEachIndexed
+                } else {
+                    lastLog!!
+                }
                 continuedLog.copy(log = continuedLog.log + s)
             }
         }
-        return logs.toList()
+        return ParseResult(logs, invalidSentences)
     }
     private fun parseSingleLineLog(raw: String): Log {
         val split = raw.split(" ")

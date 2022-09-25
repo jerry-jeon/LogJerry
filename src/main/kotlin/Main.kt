@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -24,6 +25,7 @@ import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
@@ -57,6 +59,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import parse.DefaultParser
+import parse.ParseResult
 import java.awt.FileDialog
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -66,33 +69,78 @@ import java.io.File
 @Preview
 fun App(headerState: MutableState<Header>, sourceState: MutableState<Source>) {
     val parser = DefaultParser()
-    var logs by remember { mutableStateOf(emptyList<Log>()) }
-
-    var logRefinement: LogRefinement by remember { mutableStateOf(LogRefinement(emptyList())) }
-    val refinedLogs by logRefinement.refinedLogs.collectAsState(emptyList())
+    var parseStatus by remember<MutableState<ParseStatus>> { mutableStateOf(ParseStatus.NotStarted) }
     // Flow would be better
 
     LaunchedEffect(sourceState.value) {
         when (val source = sourceState.value) {
             is Source.File -> {
-                logs = parser.parse(source.file.readLines())
-                logRefinement = LogRefinement(logs)
+                val parseResult = parser.parse(source.file.readLines())
+                parseStatus = ParseStatus.Completed(parseResult, LogRefinement(parseResult.logs))
             }
 
             is Source.Text -> {
-                logs = parser.parse(source.text.split("\n"))
-                logRefinement = LogRefinement(logs)
+                val parseResult = parser.parse(source.text.split("\n"))
+                parseStatus = ParseStatus.Completed(parseResult, LogRefinement(parseResult.logs))
             }
 
             Source.None -> {}
         }
     }
 
+    when (val status = parseStatus) {
+        ParseStatus.NotStarted -> GettingStartedView()
+        is ParseStatus.Proceeding -> Text("Proceeding.... ${status.percent}")
+        is ParseStatus.Completed -> {
+            FilterAndLogs(headerState, status)
+        }
+    }
+}
+
+@Composable
+private fun GettingStartedView() {
+    Text("File - Load or Paste")
+}
+
+@Composable
+private fun FilterAndLogs(headerState: MutableState<Header>, completed: ParseStatus.Completed) {
+    val logRefinement = completed.logRefinement
+    val refinedLogs by logRefinement.refinedLogs.collectAsState(emptyList())
+    val logs = logRefinement.originalLogs
     Column {
+        InvalidSentences(completed.parseResult)
         FilterView(logRefinement)
         val filteredSize = (if (refinedLogs.size != logs.size) "Filtered size : ${refinedLogs.size}, " else "")
         Text(filteredSize + "Total : ${logs.size}")
         LogsView(headerState.value, refinedLogs)
+    }
+}
+
+@Composable
+private fun InvalidSentences(parseResult: ParseResult) {
+    var showInvalidSentence by remember { mutableStateOf(true) }
+    val invalidSentences = parseResult.invalidSentences
+    if (showInvalidSentence) {
+        Column(Modifier.fillMaxWidth().background(Color.LightGray).padding(8.dp)) {
+            Row {
+                IconButton(
+                    onClick = { showInvalidSentence = false },
+                    modifier = Modifier.size(16.dp).align(Alignment.CenterVertically)
+                ) {
+                    Icon(Icons.Default.Close, "Close showing invalid sentences")
+                }
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "There were ${invalidSentences.size} invalid sentences",
+                    color = Color.Red,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            invalidSentences.forEach { (index, s) ->
+                Text("L#${index + 1} : $s")
+            }
+        }
     }
 }
 
