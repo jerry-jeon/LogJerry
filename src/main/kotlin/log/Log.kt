@@ -15,12 +15,12 @@ data class Log(
     val priority = Priority.find(priorityText)
 }
 
-enum class Priority(val text: String, val level: Int) {
-    Verbose("V", 1),
-    Debug("D", 2),
-    Info("I", 3),
-    Warning("W", 4),
-    Error("E", 5);
+enum class Priority(val text: String, val fullText: String, val level: Int) {
+    Verbose("V", "Verb", 1),
+    Debug("D", "Debug", 2),
+    Info("I", "Info", 3),
+    Warning("W", "Warn", 4),
+    Error("E", "Error", 5);
 
     companion object {
         fun find(text: String): Priority {
