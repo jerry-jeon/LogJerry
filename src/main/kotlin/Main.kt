@@ -18,13 +18,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -330,6 +335,9 @@ fun main() = application {
                     Item("Next Tab", shortcut = KeyShortcut(Key.RightBracket, meta = true, shift = true)) {
                         tabManager.moveToNextTab()
                     }
+                    Item("Close Tab", shortcut = KeyShortcut(Key.W, meta = true)) {
+                        tabManager.closeActiveTab()
+                    }
                 }
                 Menu("Columns") {
                     headerState.value.asColumnList.forEach { columnInfo ->
@@ -343,9 +351,9 @@ fun main() = application {
                 }
             }
             Column {
-                TabView(tabsState.value, tabManager::activate)
+                TabView(tabsState.value, tabManager::activate, tabManager::close)
                 Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
-                ActiveTabView(preferencesState.value, headerState, tabsState.value.activated)
+                ActiveTabView(preferencesState.value, headerState, tabsState.value.active)
                 PreferencesView(preferenceOpen, preferencesState)
             }
         }
@@ -353,19 +361,22 @@ fun main() = application {
 }
 
 @Composable
-private fun TabView(tabs: Tabs, activate: (Tab) -> Unit) {
+private fun TabView(tabs: Tabs, activate: (Tab) -> Unit, close: (Tab) -> Unit) {
     val (tabList, activated) = tabs
     val scrollState = rememberScrollState()
     Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).horizontalScroll(scrollState)) {
         tabList.forEach { tab ->
-            Box(
+            Row(
                 modifier = Modifier
                     .background(if (tab === activated) Color.LightGray else Color.Transparent)
                     .clickable { activate(tab) }
                     .padding(8.dp)
             ) {
-                Text(tab.name, style = MaterialTheme.typography.body2)
+                Text(tab.name, modifier = Modifier.align(Alignment.CenterVertically), style = MaterialTheme.typography.body2)
                 Spacer(Modifier.width(8.dp))
+                IconButton(modifier = Modifier.size(16.dp).align(Alignment.CenterVertically), onClick = { close(tab) }) {
+                    Icon(Icons.Default.Close, "Close tab")
+                }
             }
             Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
         }

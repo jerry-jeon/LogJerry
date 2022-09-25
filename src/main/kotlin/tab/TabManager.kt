@@ -10,19 +10,19 @@ class TabManager(initialTab: Tab = Tab(name = "Getting Started", sourceManager =
     val tabs = MutableStateFlow(Tabs(listOf(initialTab), initialTab))
 
     fun findShortcutPressed() {
-        tabs.value.activated.sourceManager.turnOnKeywordDetection()
+        tabs.value.active.sourceManager.turnOnKeywordDetection()
     }
 
     fun onNewFileSelected(file: File) {
         val newActiveTab = Tab(file.name, SourceManager())
         newActiveTab.sourceManager.changeSource(Source.File(file))
 
-        val (tabList, activated) = tabs.value
+        val (tabList, active) = tabs.value
 
-        val newTabList = when (activated.sourceManager.sourceFlow.value) {
+        val newTabList = when (active.sourceManager.sourceFlow.value) {
             Source.None -> {
                 // Remove getting started view
-                (tabList - activated) + newActiveTab
+                (tabList - active) + newActiveTab
             }
             else -> {
                 tabList + newActiveTab
@@ -30,20 +30,20 @@ class TabManager(initialTab: Tab = Tab(name = "Getting Started", sourceManager =
         }
         tabs.value = tabs.value.copy(
             tabList = newTabList,
-            activated = newActiveTab
+            active = newActiveTab
         )
     }
 
     fun activate(tab: Tab) {
-        tabs.value = tabs.value.copy(activated = tab)
+        tabs.value = tabs.value.copy(active = tab)
     }
 
     fun newTab() {
-        val newActiveTab = Tab("Getting Started", SourceManager())
+        val newActiveTab = Tab.gettingStarted()
         val (tabList, _) = tabs.value
         tabs.value = tabs.value.copy(
             tabList = tabList + newActiveTab,
-            activated = newActiveTab
+            active = newActiveTab
         )
     }
 
@@ -55,7 +55,7 @@ class TabManager(initialTab: Tab = Tab(name = "Getting Started", sourceManager =
         } else {
             tabList[index - 1]
         }
-        tabs.value = tabs.value.copy(activated = newActiveTab)
+        tabs.value = tabs.value.copy(active = newActiveTab)
     }
 
     fun moveToNextTab() {
@@ -66,6 +66,39 @@ class TabManager(initialTab: Tab = Tab(name = "Getting Started", sourceManager =
         } else {
             tabList[index + 1]
         }
-        tabs.value = tabs.value.copy(activated = newActiveTab)
+        tabs.value = tabs.value.copy(active = newActiveTab)
+    }
+    fun closeActiveTab() {
+        close(tabs.value.active)
+    }
+
+    fun close(tab: Tab) {
+        val tabList = tabs.value.tabList
+        val closingTabIndex = tabList.indexOf(tab)
+
+        when (tab) {
+            tabs.value.active -> {
+                when {
+                    tabList.size <= 1 -> {
+                        val newActiveTab = Tab.gettingStarted()
+                        tabs.value = Tabs(
+                            tabList = listOf(newActiveTab),
+                            active = newActiveTab
+                        )
+                    }
+                    else -> {
+                        val nexIndex = if(closingTabIndex <= 0) tabList.size - 1 else closingTabIndex - 1
+                        val newActiveTab = tabList[nexIndex]
+                        tabs.value = tabs.value.copy(
+                            tabList = (tabList - tab),
+                            active = newActiveTab
+                        )
+                    }
+                }
+            }
+            else -> {
+                tabs.value = tabs.value.copy(tabList = (tabList - tab))
+            }
+        }
     }
 }
