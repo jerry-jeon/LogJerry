@@ -28,7 +28,7 @@ class DefaultParser : LogParser {
                 } else {
                     lastLog!!
                 }
-                continuedLog.copy(originalLog = continuedLog.originalLog + s)
+                continuedLog.copy(originalLog = "${continuedLog.originalLog}\n$s")
             }
         }
         lastLog?.let { logs.add(it) }
