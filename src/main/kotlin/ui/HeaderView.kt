@@ -4,6 +4,7 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -35,6 +36,7 @@ fun RowScope.HeaderView(columnInfo: ColumnInfo, modifier: Modifier = Modifier) {
 @Composable
 fun HeaderRow(header: Header, divider: @Composable RowScope.() -> Unit) {
     Row(Modifier.height(IntrinsicSize.Min)) {
+        Spacer(Modifier.width(8.dp))
         header.asColumnList.forEach {
             if (it.visible) {
                 HeaderView(it)
@@ -43,6 +45,7 @@ fun HeaderRow(header: Header, divider: @Composable RowScope.() -> Unit) {
                 }
             }
         }
+        Spacer(Modifier.width(8.dp))
     }
 }
 

@@ -174,7 +174,7 @@ private fun GettingStartedView() {
             modifier = Modifier.align(Alignment.CenterHorizontally),
             style = MaterialTheme.typography.h3
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(24.dp))
         Text(
             "1. File - Open file (Cmd + O), and choose the android log file",
             modifier = Modifier.align(Alignment.CenterHorizontally)

@@ -49,11 +49,11 @@ data class Header(
         val default = Header(
             number = ColumnInfo(ColumnType.Number, 50, true),
             date = ColumnInfo(ColumnType.Date, 100, false),
-            time = ColumnInfo(ColumnType.Time, 110, true),
+            time = ColumnInfo(ColumnType.Time, 100, true),
             pid = ColumnInfo(ColumnType.Pid, 50, false),
             tid = ColumnInfo(ColumnType.Tid, 50, false),
             packageName = ColumnInfo(ColumnType.PackageName, 130, true),
-            priority = ColumnInfo(ColumnType.Priority, 70, true),
+            priority = ColumnInfo(ColumnType.Priority, 40, true),
             tag = ColumnInfo(ColumnType.Tag, 200, true),
             log = ColumnInfo(ColumnType.Log, null, true),
             detection = ColumnInfo(ColumnType.Detection, 50, true)

@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -24,7 +26,6 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -46,6 +47,7 @@ fun LogRow(
     divider: @Composable RowScope.() -> Unit
 ) {
     Row(Modifier.height(IntrinsicSize.Min)) {
+        Spacer(Modifier.width(8.dp))
         header.asColumnList.forEach { columnInfo ->
             if (columnInfo.visible) {
                 CellByColumnType(columnInfo, refinedLog)
@@ -54,6 +56,7 @@ fun LogRow(
                 }
             }
         }
+        Spacer(Modifier.width(8.dp))
     }
 }
 
@@ -101,7 +104,11 @@ private fun RowScope.TidCell(tid: ColumnInfo, log: Log) {
 
 @Composable
 private fun RowScope.PackagerNameCell(packageName: ColumnInfo, log: Log) {
-    Text(log.packageName ?: "?", style = MaterialTheme.typography.body2, modifier = this.cellDefaultModifier(packageName.width))
+    Text(
+        log.packageName ?: "?",
+        style = MaterialTheme.typography.body2,
+        modifier = this.cellDefaultModifier(packageName.width)
+    )
 }
 
 @Composable
@@ -159,10 +166,11 @@ private fun RowScope.LogCell(logHeader: ColumnInfo, refinedLog: RefinedLog) {
     val log = refinedLog.log
     Box(modifier = this.cellDefaultModifier(logHeader.width)) {
         SelectionContainer {
-            // TODO make if configurable
+            // TODO make it configurable
+            val currentStyle = MaterialTheme.typography.body2
             val style =
-                if (log.priority == Priority.Error) TextStyle.Default.copy(color = Color.Red) else TextStyle.Default
-            Text(refinedLog.annotatedLog, modifier = Modifier, style = style)
+                if (log.priority == Priority.Error) currentStyle.copy(color = Color.Red) else currentStyle
+            Text(refinedLog.annotatedLog, modifier = Modifier, style = style, lineHeight = 40.sp)
         }
     }
 }
@@ -178,5 +186,5 @@ fun LogRowPreview() {
 */
 fun RowScope.cellDefaultModifier(width: Int?, modifier: Modifier = Modifier): Modifier {
     return applyWidth(width, modifier)
-        .padding(4.dp)
+        .padding(horizontal = 4.dp, vertical = 8.dp)
 }
