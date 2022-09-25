@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,6 +21,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,39 +46,51 @@ fun JsonDetectionView(
                     }
                 }
                 Text(title)
-                detectionResultFocus?.let {
-                    Column {
-                        Row {
-                            Row(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                                if (it.focusing == null) {
-                                    Text(
-                                        "${it.results.size} results",
-                                        modifier = Modifier.align(Alignment.CenterVertically)
-                                    )
-                                } else {
-                                    Text(
-                                        "${it.currentIndexInView} / ${detectionResultFocus.totalCount}",
-                                        modifier = Modifier.align(Alignment.CenterVertically)
-                                    )
-                                }
-                            }
-                            IconButton(onClick = { moveToPreviousOccurrence(it) }) {
-                                Icon(Icons.Default.KeyboardArrowUp, "Previous Occurrence")
-                            }
-                            IconButton(onClick = { moveToNextOccurrence(it) }) {
-                                Icon(Icons.Default.KeyboardArrowDown, "Next Occurrence")
-                            }
-                        }
+                if(detectionResultFocus == null) {
+                    Spacer(Modifier.height(16.dp))
+                    Text("No results", textAlign = TextAlign.Center)
+                } else {
+                    JsonDetectionFocusExist(detectionResultFocus, moveToPreviousOccurrence, moveToNextOccurrence)
+                }
+            }
+        }
+    }
+}
 
-                        // TODO cleanup ; don't cast
-                        /*
+@Composable
+fun JsonDetectionFocusExist(
+    focus: DetectionResultFocus,
+    moveToPreviousOccurrence: (DetectionResultFocus) -> Unit,
+    moveToNextOccurrence: (DetectionResultFocus) -> Unit
+) {
+    Column {
+        Row {
+            Row(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                if (focus.focusing == null) {
+                    Text(
+                        "${focus.results.size} results",
+                        modifier = Modifier.align(Alignment.CenterVertically)
+                    )
+                } else {
+                    Text(
+                        "${focus.currentIndexInView} / ${focus.totalCount}",
+                        modifier = Modifier.align(Alignment.CenterVertically)
+                    )
+                }
+            }
+            IconButton(onClick = { moveToPreviousOccurrence(focus) }) {
+                Icon(Icons.Default.KeyboardArrowUp, "Previous Occurrence")
+            }
+            IconButton(onClick = { moveToNextOccurrence(focus) }) {
+                Icon(Icons.Default.KeyboardArrowDown, "Next Occurrence")
+            }
+        }
+
+        // TODO cleanup ; don't cast
+        /*
                                         (it.focusing as? JsonDetectionResult)?.let {
                                             Text(it.jsonList) // TODO show summary of json
                                         }
                         */
-                    }
-                }
-            }
-        }
     }
 }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,6 +21,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import detection.ExceptionDetection
@@ -37,8 +39,24 @@ fun ExceptionDetectionView(
         Box(modifier = modifier) {
             Column(Modifier.height(IntrinsicSize.Min).padding(8.dp)) {
                 Text(AnnotatedString("Exception", spanStyle = ExceptionDetection().detectedStyle))
-                detectionResultFocus?.let {
-                    Row {
+                if(detectionResultFocus == null) {
+                    Spacer(Modifier.height(16.dp))
+                    Text("No results", textAlign = TextAlign.Center)
+                } else {
+                    ExceptionDetectionFocusExist(detectionResultFocus, moveToPreviousOccurrence, moveToNextOccurrence)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ExceptionDetectionFocusExist(
+    focus: DetectionResultFocus,
+    moveToPreviousOccurrence: (DetectionResultFocus) -> Unit,
+    moveToNextOccurrence: (DetectionResultFocus) -> Unit
+) {
+    Row {
 /* TODO not sure it's helpful... remove it because it looks bad
                         Row(modifier = Modifier.weight(1f).fillMaxHeight()) {
                             // TODO cleanup ; don't cast
@@ -47,28 +65,24 @@ fun ExceptionDetectionView(
                             }
                         }
 */
-                        Row(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                            if (it.focusing == null) {
-                                Text(
-                                    "${it.results.size} results",
-                                    modifier = Modifier.align(Alignment.CenterVertically)
-                                )
-                            } else {
-                                Text(
-                                    "${it.currentIndexInView} / ${detectionResultFocus.totalCount}",
-                                    modifier = Modifier.align(Alignment.CenterVertically)
-                                )
-                            }
-                        }
-                        IconButton(onClick = { moveToPreviousOccurrence(it) }) {
-                            Icon(Icons.Default.KeyboardArrowUp, "Previous Occurrence")
-                        }
-                        IconButton(onClick = { moveToNextOccurrence(it) }) {
-                            Icon(Icons.Default.KeyboardArrowDown, "Next Occurrence")
-                        }
-                    }
-                }
+        Row(modifier = Modifier.weight(1f).fillMaxHeight()) {
+            if (focus.focusing == null) {
+                Text(
+                    "${focus.results.size} results",
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            } else {
+                Text(
+                    "${focus.currentIndexInView} / ${focus.totalCount}",
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
             }
+        }
+        IconButton(onClick = { moveToPreviousOccurrence(focus) }) {
+            Icon(Icons.Default.KeyboardArrowUp, "Previous Occurrence")
+        }
+        IconButton(onClick = { moveToNextOccurrence(focus) }) {
+            Icon(Icons.Default.KeyboardArrowDown, "Next Occurrence")
         }
     }
 }
