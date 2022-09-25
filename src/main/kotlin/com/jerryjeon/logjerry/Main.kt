@@ -63,15 +63,15 @@ import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
-import com.jerryjeon.logjerry.detection.InvestigationView
 import com.jerryjeon.logjerry.detector.Detection
 import com.jerryjeon.logjerry.detector.DetectionFocus
-import com.jerryjeon.logjerry.detector.DetectionKey
+import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.detector.KeywordDetectionRequest
 import com.jerryjeon.logjerry.detector.KeywordDetectionView
 import com.jerryjeon.logjerry.filter.PriorityFilter
 import com.jerryjeon.logjerry.filter.TextFilter
 import com.jerryjeon.logjerry.log.Log
+import com.jerryjeon.logjerry.logview.InvestigationView
 import com.jerryjeon.logjerry.parse.ParseResult
 import com.jerryjeon.logjerry.parse.ParseStatus
 import com.jerryjeon.logjerry.preferences.Preferences
@@ -113,7 +113,8 @@ fun ActiveTabView(
                 val filterManager = logManager.filterManager
                 val detectorManager = logManager.detectorManager
                 val detectionManager = logManager.detectionManager
-                val investigationView by logManager.investigationViewFlow.collectAsState()
+                val logViewManager = logManager.logViewManager
+                val investigationView by logViewManager.investigationViewFlow.collectAsState()
                 val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
                 val keywordDetectionFocus by detectionManager.keywordDetectionFocus.collectAsState()
                 val exceptionDetectionFocus by detectionManager.exceptionDetectionFocus.collectAsState()
@@ -141,8 +142,8 @@ fun ActiveTabView(
                     filterManager::setPriorityFilter,
                     detectorManager::findKeyword,
                     detectorManager::setKeywordDetectionEnabled,
-                    logManager::collapseJsonDetection,
-                    logManager::expandJsonDetection
+                    logViewManager::collapseJsonDetection,
+                    logViewManager::expandJsonDetection
                 )
             }
         }
@@ -161,8 +162,8 @@ fun ParseCompletedView(
     preferences: Preferences,
     header: Header,
     parseResult: ParseResult,
-    focusPreviousDetection: (DetectionKey, DetectionFocus) -> Unit,
-    focusNextDetection: (DetectionKey, DetectionFocus) -> Unit,
+    focusPreviousDetection: (DetectorKey, DetectionFocus) -> Unit,
+    focusNextDetection: (DetectorKey, DetectionFocus) -> Unit,
     textFilters: List<TextFilter>,
     addTextFilter: (TextFilter) -> Unit,
     removeTextFilter: (TextFilter) -> Unit,
@@ -187,8 +188,8 @@ fun ParseCompletedView(
                     ExceptionDetectionView(
                         Modifier.width(200.dp).wrapContentHeight(),
                         exceptionDetectionFocus,
-                        { focusPreviousDetection(DetectionKey.Exception, it) },
-                        { focusNextDetection(DetectionKey.Exception, it) },
+                        { focusPreviousDetection(DetectorKey.Exception, it) },
+                        { focusNextDetection(DetectorKey.Exception, it) },
                     )
                     Spacer(Modifier.width(8.dp))
                     Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
@@ -196,8 +197,8 @@ fun ParseCompletedView(
                     JsonDetectionView(
                         Modifier.width(200.dp).wrapContentHeight(),
                         jsonDetectionFocus,
-                        { focusPreviousDetection(DetectionKey.Json, it) },
-                        { focusNextDetection(DetectionKey.Json, it) },
+                        { focusPreviousDetection(DetectorKey.Json, it) },
+                        { focusNextDetection(DetectorKey.Json, it) },
                     )
                     Spacer(Modifier.width(8.dp))
                     Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
@@ -220,8 +221,8 @@ fun ParseCompletedView(
             keywordDetectionFocus,
             findKeyword,
             setKeywordDetectionEnabled,
-            { focusPreviousDetection(DetectionKey.Keyword, it) },
-            { focusNextDetection(DetectionKey.Keyword, it) },
+            { focusPreviousDetection(DetectorKey.Keyword, it) },
+            { focusNextDetection(DetectorKey.Keyword, it) },
         )
     }
     Divider(color = Color.Black)

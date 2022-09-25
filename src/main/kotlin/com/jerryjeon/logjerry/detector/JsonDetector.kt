@@ -8,7 +8,7 @@ import kotlinx.serialization.json.jsonObject
 import java.util.UUID
 
 class JsonDetector() : Detector<JsonDetection> {
-    override val key: DetectionKey = DetectionKey.Json
+    override val key: DetectorKey = DetectorKey.Json
 
     override fun detect(logStr: String, logIndex: Int): List<JsonDetection> {
         // Find bracket pairs, { } and check this is json or not
@@ -51,7 +51,7 @@ class JsonDetection(
     val json: JsonObject
 ) : Detection {
     override val id: String = UUID.randomUUID().toString()
-    override val key: DetectionKey = DetectionKey.Json
+    override val key: DetectorKey = DetectorKey.Json
     override val style: SpanStyle
         get() = detectedStyle
 

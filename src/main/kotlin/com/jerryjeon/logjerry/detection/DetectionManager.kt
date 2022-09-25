@@ -2,8 +2,8 @@ package com.jerryjeon.logjerry.detection
 
 import com.jerryjeon.logjerry.detector.Detection
 import com.jerryjeon.logjerry.detector.DetectionFocus
-import com.jerryjeon.logjerry.detector.DetectionKey
 import com.jerryjeon.logjerry.detector.Detector
+import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.log.Log
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.Flow
@@ -30,7 +30,7 @@ class DetectionManager(
                 DetectionFinishedLog(log, detectionResults.groupBy { it.key })
             }
 
-        val allDetectionResults = mutableMapOf<DetectionKey, List<Detection>>()
+        val allDetectionResults = mutableMapOf<DetectorKey, List<Detection>>()
         detectionFinishedLogs.forEach {
             it.detections.forEach { (key, value) ->
                 allDetectionResults[key] = (allDetectionResults[key] ?: emptyList()) + value
@@ -44,9 +44,9 @@ class DetectionManager(
     val jsonDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
 
     private val focuses = mapOf(
-        DetectionKey.Keyword to keywordDetectionFocus,
-        DetectionKey.Exception to exceptionDetectionFocus,
-        DetectionKey.Json to jsonDetectionFocus,
+        DetectorKey.Keyword to keywordDetectionFocus,
+        DetectorKey.Exception to exceptionDetectionFocus,
+        DetectorKey.Json to jsonDetectionFocus,
     )
 
     val activeDetectionFocusFlowState =
@@ -57,25 +57,25 @@ class DetectionManager(
     init {
         detectionScope.launch {
             detectionFinishedFlow.collect { result ->
-                val keywordDetections = result.allDetections[DetectionKey.Keyword] ?: emptyList()
+                val keywordDetections = result.allDetections[DetectorKey.Keyword] ?: emptyList()
                 keywordDetectionFocus.value = keywordDetections.firstOrNull()?.let {
-                    DetectionFocus(DetectionKey.Keyword, 0, null, keywordDetections)
+                    DetectionFocus(DetectorKey.Keyword, 0, null, keywordDetections)
                 }
 
-                val exceptionDetections = result.allDetections[DetectionKey.Exception] ?: emptyList()
+                val exceptionDetections = result.allDetections[DetectorKey.Exception] ?: emptyList()
                 exceptionDetectionFocus.value = exceptionDetections.firstOrNull()?.let {
-                    DetectionFocus(DetectionKey.Exception, 0, null, exceptionDetections)
+                    DetectionFocus(DetectorKey.Exception, 0, null, exceptionDetections)
                 }
 
-                val jsonDetections = result.allDetections[DetectionKey.Json] ?: emptyList()
+                val jsonDetections = result.allDetections[DetectorKey.Json] ?: emptyList()
                 jsonDetectionFocus.value = jsonDetections.firstOrNull()?.let {
-                    DetectionFocus(DetectionKey.Exception, 0, null, jsonDetections)
+                    DetectionFocus(DetectorKey.Exception, 0, null, jsonDetections)
                 }
             }
         }
     }
 
-    fun focusPreviousDetection(key: DetectionKey, focus: DetectionFocus) {
+    fun focusPreviousDetection(key: DetectorKey, focus: DetectionFocus) {
         val previousIndex = if (focus.currentIndex <= 0) {
             focus.allDetections.size - 1
         } else {
@@ -85,7 +85,7 @@ class DetectionManager(
         focuses[key]?.value = focus.copy(currentIndex = previousIndex, focusing = focus.allDetections[previousIndex])
     }
 
-    fun focusNextDetection(key: DetectionKey, focus: DetectionFocus) {
+    fun focusNextDetection(key: DetectorKey, focus: DetectionFocus) {
         val nextIndex = if (focus.currentIndex >= focus.allDetections.size - 1) {
             0
         } else {

@@ -5,7 +5,7 @@ import androidx.compose.ui.text.SpanStyle
 import java.util.UUID
 
 class ExceptionDetector : Detector<ExceptionDetection> {
-    override val key = DetectionKey.Exception
+    override val key = DetectorKey.Exception
     override fun detect(logStr: String, logIndex: Int): List<ExceptionDetection> {
         val lines = logStr.split("\n")
         val stackStartLine = lines.indexOfFirst { isStackTrace(it) }
@@ -56,8 +56,8 @@ class ExceptionDetection(
         val detectedStyle = SpanStyle(background = Color(0x40EEEEA5))
     }
 
-    override val key: DetectionKey
-        get() = DetectionKey.Exception
+    override val key: DetectorKey
+        get() = DetectorKey.Exception
     override val style: SpanStyle
         get() = detectedStyle
 }
