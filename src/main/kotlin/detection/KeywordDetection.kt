@@ -12,13 +12,17 @@ class KeywordDetection(private val keyword: String) : Detection {
     override val detectedStyle: SpanStyle = SpanStyle(background = Color.Yellow)
     override fun detect(log: Log, logIndex: Int): DetectionResult? {
         if (keyword.isBlank()) return null
-        var startIndex = 0
+        val orKeywords = keyword.split("|")
+            .filter { it.isNotBlank() }
         val indexRanges = mutableListOf<IntRange>()
-        while (startIndex != -1) {
-            startIndex = log.originalLog.indexOf(keyword, startIndex)
-            if (startIndex != -1) {
-                indexRanges.add(startIndex..startIndex + keyword.length)
-                startIndex += keyword.length
+        orKeywords.forEach {
+            var startIndex = 0
+            while (startIndex != -1) {
+                startIndex = log.originalLog.indexOf(it, startIndex)
+                if (startIndex != -1) {
+                    indexRanges.add(startIndex..startIndex + it.length)
+                    startIndex += it.length
+                }
             }
         }
 
