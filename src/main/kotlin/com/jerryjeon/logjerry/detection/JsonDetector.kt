@@ -7,10 +7,10 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import java.util.UUID
 
-class JsonDetection() : Detection<JsonDetectionResult> {
+class JsonDetector() : Detector<JsonDetection> {
     override val key: DetectionKey = DetectionKey.Json
 
-    override fun detect(logStr: String, logIndex: Int): List<JsonDetectionResult> {
+    override fun detect(logStr: String, logIndex: Int): List<JsonDetection> {
         // Find bracket pairs, { } and check this is json or not
         val stack = ArrayDeque<Pair<Int, Char>>()
         val bracketRanges = mutableListOf<IntRange>()
@@ -40,16 +40,16 @@ class JsonDetection() : Detection<JsonDetectionResult> {
             .filter { (_, json) -> json.isNotEmpty() } // Filter empty json
 
         return jsonList.map { (range, json) ->
-            JsonDetectionResult(range, logIndex, json)
+            JsonDetection(range, logIndex, json)
         }
     }
 }
 
-class JsonDetectionResult(
+class JsonDetection(
     override val range: IntRange,
     override val logIndex: Int,
     val json: JsonObject
-) : DetectionResult {
+) : Detection {
     override val id: String = UUID.randomUUID().toString()
     override val key: DetectionKey = DetectionKey.Json
     override val style: SpanStyle

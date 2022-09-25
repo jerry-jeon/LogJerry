@@ -2,31 +2,31 @@ package com.jerryjeon.logjerry.log.refine
 
 import com.jerryjeon.logjerry.detection.Detection
 import com.jerryjeon.logjerry.detection.DetectionKey
-import com.jerryjeon.logjerry.detection.DetectionResult
+import com.jerryjeon.logjerry.detection.Detector
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogContentView
 
-data class InvestigationResult(
+data class Investigation(
     val originalLogs: List<Log>,
     val detectionFinishedLogs: List<DetectionFinishedLog>,
-    val allDetectionResults: Map<DetectionKey, List<DetectionResult>>,
-    val detections: List<Detection<*>>
+    val allDetections: Map<DetectionKey, List<Detection>>,
+    val detectors: List<Detector<*>>
 )
 
 data class DetectionFinishedLog(
     val log: Log,
-    val detectionResults: Map<DetectionKey, List<DetectionResult>>
+    val detections: Map<DetectionKey, List<Detection>>
 )
 
 // TODO The role is not clear... It should be refactored
-data class DetectionResultView(
-    val detectionResult: DetectionResult,
+data class DetectionView(
+    val detection: Detection,
     val expanded: Boolean
 )
 
-data class InvestigationResultView(
+data class InvestigationView(
     val refinedLogs: List<RefinedLog>,
-    val allDetectionResults: Map<DetectionKey, List<DetectionResultView>>,
+    val allDetectionViews: Map<DetectionKey, List<DetectionView>>,
 )
 
 class RefinedLog(

@@ -1,8 +1,8 @@
 package com.jerryjeon.logjerry.log
 
-import com.jerryjeon.logjerry.detection.JsonDetectionResult
+import com.jerryjeon.logjerry.detection.JsonDetection
 
 sealed class LogContent {
     class Simple(val text: String) : LogContent()
-    class Json(val text: String, val jdr: JsonDetectionResult) : LogContent()
+    class Json(val text: String, val jdr: JsonDetection) : LogContent()
 }

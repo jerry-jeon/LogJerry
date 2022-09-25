@@ -70,7 +70,7 @@ import com.jerryjeon.logjerry.detection.KeywordDetectionRequest
 import com.jerryjeon.logjerry.detection.KeywordDetectionView
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogManager
-import com.jerryjeon.logjerry.log.refine.InvestigationResultView
+import com.jerryjeon.logjerry.log.refine.InvestigationView
 import com.jerryjeon.logjerry.parse.ParseResult
 import com.jerryjeon.logjerry.parse.ParseStatus
 import com.jerryjeon.logjerry.preferences.Preferences
@@ -109,21 +109,21 @@ fun ActiveTabView(
         is ParseStatus.Completed -> {
             Column {
                 val logManager = status.logManager
-                val investigationResultView by logManager.investigationResultView.collectAsState()
+                val investigationView by logManager.investigationViewFlow.collectAsState()
                 val findStatus = logManager.keywordDetectionRequestFlow.collectAsState()
-                val keywordDetectionResultFocus = logManager.keywordDetectionFocus.collectAsState()
-                val exceptionDetectionResultFocus = logManager.exceptionDetectionFocus.collectAsState()
-                val jsonDetectionResultFocus = logManager.jsonDetectionFocus.collectAsState()
-                val findResult = logManager.activeDetectionResultFocusFlowState.collectAsState()
+                val keywordDetectionFocus = logManager.keywordDetectionFocus.collectAsState()
+                val exceptionDetectionFocus = logManager.exceptionDetectionFocus.collectAsState()
+                val jsonDetectionFocus = logManager.jsonDetectionFocus.collectAsState()
+                val activeDetectionFocus = logManager.activeDetectionFocusFlowState.collectAsState()
                 val logs = logManager.originalLogs
                 ParseCompletedView(
                     logManager,
                     findStatus.value,
-                    findResult.value,
-                    keywordDetectionResultFocus.value,
-                    exceptionDetectionResultFocus.value,
-                    jsonDetectionResultFocus.value,
-                    investigationResultView,
+                    activeDetectionFocus.value,
+                    keywordDetectionFocus.value,
+                    exceptionDetectionFocus.value,
+                    jsonDetectionFocus.value,
+                    investigationView,
                     logs,
                     preferences,
                     headerState,
@@ -142,7 +142,7 @@ fun ParseCompletedView(
     keywordDetectionFocus: DetectionFocus?,
     exceptionDetectionFocus: DetectionFocus?,
     jsonDetectionFocus: DetectionFocus?,
-    investigationResultView: InvestigationResultView,
+    investigationView: InvestigationView,
     logs: List<Log>,
     preferences: Preferences,
     headerState: MutableState<Header>,
@@ -152,7 +152,7 @@ fun ParseCompletedView(
     Row(modifier = Modifier.padding(16.dp)) {
         TextFilterView(logManager.textFiltersFlow.value, logManager::addFilter, logManager::removeFilter)
         Spacer(Modifier.width(16.dp))
-        PriorityFilterView(logManager.priorityFilter.value, logManager::setPriority)
+        PriorityFilterView(logManager.priorityFilterFlow.value, logManager::setPriority)
         Spacer(Modifier.width(16.dp))
         Box(modifier = Modifier.weight(0.5f).border(1.dp, Color.LightGray, RoundedCornerShape(4.dp))) {
             Column {
@@ -162,8 +162,8 @@ fun ParseCompletedView(
                     ExceptionDetectionView(
                         Modifier.width(200.dp).wrapContentHeight(),
                         exceptionDetectionFocus,
-                        { logManager.previousFindResult(DetectionKey.Exception, it) },
-                        { logManager.nextFindResult(DetectionKey.Exception, it) },
+                        { logManager.focusPreviousDetection(DetectionKey.Exception, it) },
+                        { logManager.focusNextDetection(DetectionKey.Exception, it) },
                     )
                     Spacer(Modifier.width(8.dp))
                     Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
@@ -171,8 +171,8 @@ fun ParseCompletedView(
                     JsonDetectionView(
                         Modifier.width(200.dp).wrapContentHeight(),
                         jsonDetectionFocus,
-                        { logManager.previousFindResult(DetectionKey.Json, it) },
-                        { logManager.nextFindResult(DetectionKey.Json, it) },
+                        { logManager.focusPreviousDetection(DetectionKey.Json, it) },
+                        { logManager.focusNextDetection(DetectionKey.Json, it) },
                     )
                     Spacer(Modifier.width(8.dp))
                     Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
@@ -181,7 +181,7 @@ fun ParseCompletedView(
             }
         }
     }
-    investigationResultView.refinedLogs.size
+    investigationView.refinedLogs.size
     val filteredSize = "filteredSize " // TODO fix it
 /*
     val filteredSize =
@@ -195,12 +195,12 @@ fun ParseCompletedView(
             keywordDetectionFocus,
             logManager::find,
             logManager::setKeywordDetectionEnabled,
-            { logManager.previousFindResult(DetectionKey.Keyword, it) },
-            { logManager.nextFindResult(DetectionKey.Keyword, it) },
+            { logManager.focusPreviousDetection(DetectionKey.Keyword, it) },
+            { logManager.focusNextDetection(DetectionKey.Keyword, it) },
         )
     }
     Divider(color = Color.Black)
-    LogsView(preferences, headerState.value, investigationResultView.refinedLogs, detectionFocus, logManager::collapse, logManager::expand)
+    LogsView(preferences, headerState.value, investigationView.refinedLogs, detectionFocus, logManager::collapse, logManager::expand)
 }
 
 @Composable

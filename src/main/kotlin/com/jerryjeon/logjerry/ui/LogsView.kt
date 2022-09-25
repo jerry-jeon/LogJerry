@@ -16,8 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.jerryjeon.logjerry.ColumnDivider
 import com.jerryjeon.logjerry.HeaderDivider
+import com.jerryjeon.logjerry.detection.Detection
 import com.jerryjeon.logjerry.detection.DetectionFocus
-import com.jerryjeon.logjerry.detection.DetectionResult
 import com.jerryjeon.logjerry.log.refine.RefinedLog
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header
@@ -28,7 +28,7 @@ fun LogsView(
     header: Header,
     logs: List<RefinedLog>,
     detectionFocus: DetectionFocus?,
-    collapse: (DetectionResult) -> Unit,
+    collapse: (Detection) -> Unit,
     expand: (annotation: String) -> Unit,
 ) {
     val listState = rememberLazyListState()

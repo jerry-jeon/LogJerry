@@ -4,9 +4,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import java.util.UUID
 
-class ExceptionDetection : Detection<ExceptionDetectionResult> {
+class ExceptionDetector : Detector<ExceptionDetection> {
     override val key = DetectionKey.Exception
-    override fun detect(logStr: String, logIndex: Int): List<ExceptionDetectionResult> {
+    override fun detect(logStr: String, logIndex: Int): List<ExceptionDetection> {
         val lines = logStr.split("\n")
         val stackStartLine = lines.indexOfFirst { isStackTrace(it) }
             .takeIf { it != -1 } ?: return emptyList()
@@ -15,7 +15,7 @@ class ExceptionDetection : Detection<ExceptionDetectionResult> {
         val words = exceptionLines.joinToString(separator = " ").split(',', '.', ' ', '\n', '$', ':', ';')
         val exception = words.firstOrNull { it.contains("exception", ignoreCase = true) || it.contains("error", ignoreCase = true) }
 
-        val result = ExceptionDetectionResult(logStr.indices, logIndex, exception ?: "")
+        val result = ExceptionDetection(logStr.indices, logIndex, exception ?: "")
         return listOf(result)
     }
 
@@ -44,11 +44,11 @@ class ExceptionDetection : Detection<ExceptionDetectionResult> {
     }
 }
 
-class ExceptionDetectionResult(
+class ExceptionDetection(
     override val range: IntRange,
     override val logIndex: Int,
     val exception: String,
-) : DetectionResult {
+) : Detection {
 
     override val id: String = UUID.randomUUID().toString()
 

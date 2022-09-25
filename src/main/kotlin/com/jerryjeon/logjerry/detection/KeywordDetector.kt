@@ -4,9 +4,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import java.util.UUID
 
-class KeywordDetection(private val keyword: String) : Detection<DetectionResult> {
+class KeywordDetector(private val keyword: String) : Detector<Detection> {
     override val key: DetectionKey = DetectionKey.Keyword
-    override fun detect(logStr: String, logIndex: Int): List<DetectionResult> {
+    override fun detect(logStr: String, logIndex: Int): List<Detection> {
         if (keyword.isBlank()) return emptyList()
         val orKeywords = keyword.split("|")
             .filter { it.isNotBlank() }
@@ -22,11 +22,11 @@ class KeywordDetection(private val keyword: String) : Detection<DetectionResult>
             }
         }
 
-        return indexRanges.map { KeywordDetectionResult(it, logIndex) }
+        return indexRanges.map { KeywordDetection(it, logIndex) }
     }
 }
 
-class KeywordDetectionResult(override val range: IntRange, override val logIndex: Int) : DetectionResult {
+class KeywordDetection(override val range: IntRange, override val logIndex: Int) : Detection {
     override val id: String = UUID.randomUUID().toString()
     override val key: DetectionKey = DetectionKey.Keyword
     override val style: SpanStyle

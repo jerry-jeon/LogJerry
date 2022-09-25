@@ -2,9 +2,9 @@ package com.jerryjeon.logjerry.detection
 
 import org.junit.jupiter.api.Test
 
-internal class ExceptionDetectionTest {
+internal class ExceptionDetectorTest {
 
-    private val detection = ExceptionDetection()
+    private val detection = ExceptionDetector()
     private val originalExceptionLog = """
         2022-08-20 11:39:45.117 5923-5944/com.sendbird.android.test E/TestRunner: java.lang.RuntimeException: asdfasdf
         at com.sendbird.android.MessageCollectionTest.test_hasNextFalse_otherUserSendMessage_OnlyMessageAddedCalledOnce(MessageCollectionTest.kt:54)

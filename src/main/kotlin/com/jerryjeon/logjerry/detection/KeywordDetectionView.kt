@@ -105,7 +105,7 @@ private fun KeywordDetectionRequestViewTurnedOn(
                     detectionFocus?.let {
                         if (it.focusing == null) {
                             Text(
-                                "${it.results.size} results",
+                                "${it.allDetections.size} results",
                                 modifier = Modifier.align(Alignment.CenterVertically)
                             )
                         } else {

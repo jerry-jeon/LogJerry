@@ -25,7 +25,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jerryjeon.logjerry.detection.DetectionFocus
-import com.jerryjeon.logjerry.detection.JsonDetectionResult
+import com.jerryjeon.logjerry.detection.JsonDetection
 
 @Composable
 fun JsonDetectionView(
@@ -41,7 +41,7 @@ fun JsonDetectionView(
             Column(Modifier.height(IntrinsicSize.Min).padding(8.dp)) {
                 val title = buildAnnotatedString {
                     append("Json ")
-                    withStyle(JsonDetectionResult.detectedStyle) {
+                    withStyle(JsonDetection.detectedStyle) {
                         append("{ \"key\" : \"value\" }")
                     }
                 }
@@ -68,7 +68,7 @@ fun JsonDetectionFocusExist(
             Row(modifier = Modifier.weight(1f).fillMaxHeight()) {
                 if (focus.focusing == null) {
                     Text(
-                        "${focus.results.size} results",
+                        "${focus.allDetections.size} results",
                         modifier = Modifier.align(Alignment.CenterVertically)
                     )
                 } else {

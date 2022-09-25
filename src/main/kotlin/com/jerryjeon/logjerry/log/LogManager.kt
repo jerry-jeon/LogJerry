@@ -6,16 +6,16 @@ import androidx.compose.ui.text.SpanStyle
 import com.jerryjeon.logjerry.detection.Detection
 import com.jerryjeon.logjerry.detection.DetectionFocus
 import com.jerryjeon.logjerry.detection.DetectionKey
-import com.jerryjeon.logjerry.detection.DetectionResult
-import com.jerryjeon.logjerry.detection.ExceptionDetection
+import com.jerryjeon.logjerry.detection.Detector
+import com.jerryjeon.logjerry.detection.ExceptionDetector
 import com.jerryjeon.logjerry.detection.JsonDetection
-import com.jerryjeon.logjerry.detection.JsonDetectionResult
-import com.jerryjeon.logjerry.detection.KeywordDetection
+import com.jerryjeon.logjerry.detection.JsonDetector
 import com.jerryjeon.logjerry.detection.KeywordDetectionRequest
+import com.jerryjeon.logjerry.detection.KeywordDetector
 import com.jerryjeon.logjerry.log.refine.DetectionFinishedLog
-import com.jerryjeon.logjerry.log.refine.DetectionResultView
-import com.jerryjeon.logjerry.log.refine.InvestigationResult
-import com.jerryjeon.logjerry.log.refine.InvestigationResultView
+import com.jerryjeon.logjerry.log.refine.DetectionView
+import com.jerryjeon.logjerry.log.refine.Investigation
+import com.jerryjeon.logjerry.log.refine.InvestigationView
 import com.jerryjeon.logjerry.log.refine.LogFilter
 import com.jerryjeon.logjerry.log.refine.PriorityFilter
 import com.jerryjeon.logjerry.log.refine.RefinedLog
@@ -38,7 +38,7 @@ class LogManager(
 ) {
     private val logScope = MainScope()
 
-    private val defaultDetections = listOf(ExceptionDetection(), JsonDetection())
+    private val defaultDetectors = listOf(ExceptionDetector(), JsonDetector())
 
     private val keywordDetectionEnabledStateFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     private val detectingKeywordFlow = MutableStateFlow("")
@@ -52,21 +52,21 @@ class LogManager(
         }.stateIn(logScope, SharingStarted.Lazily, KeywordDetectionRequest.TurnedOff)
 
     val textFiltersFlow: MutableStateFlow<List<TextFilter>> = MutableStateFlow(emptyList())
-    val priorityFilter: MutableStateFlow<PriorityFilter> = MutableStateFlow(PriorityFilter(Priority.Verbose))
-    private val filtersFlow = combine(textFiltersFlow, priorityFilter) { textFilters, priorityFilter ->
+    val priorityFilterFlow: MutableStateFlow<PriorityFilter> = MutableStateFlow(PriorityFilter(Priority.Verbose))
+    private val filtersFlow = combine(textFiltersFlow, priorityFilterFlow) { textFilters, priorityFilter ->
         textFilters + listOf(priorityFilter)
     }
     private val transformerFlow = combine(filtersFlow, keywordDetectionRequestFlow) { filters, findStatus ->
         Transformers(
             filters,
             when (findStatus) {
-                is KeywordDetectionRequest.TurnedOn -> defaultDetections + listOf(KeywordDetection(findStatus.keyword))
-                KeywordDetectionRequest.TurnedOff -> defaultDetections
+                is KeywordDetectionRequest.TurnedOn -> defaultDetectors + listOf(KeywordDetector(findStatus.keyword))
+                KeywordDetectionRequest.TurnedOff -> defaultDetectors
             }
         )
     }
 
-    private val investigationResult: StateFlow<InvestigationResult> = transformerFlow.map { transformers ->
+    private val investigationFlow: StateFlow<Investigation> = transformerFlow.map { transformers ->
         val refined = if (transformers.filters.isEmpty()) {
             originalLogs
         } else {
@@ -74,40 +74,40 @@ class LogManager(
                 .filter { log -> transformers.filters.all { it.filter(log) } }
         }
             .mapIndexed { logIndex, log ->
-                val detectionResults = transformers.detections.map { it.detect(log.log, logIndex) }
+                val detectionResults = transformers.detectors.map { it.detect(log.log, logIndex) }
                     .flatten()
                 DetectionFinishedLog(log, detectionResults.groupBy { it.key })
             }
 
-        val allDetectionResults = mutableMapOf<DetectionKey, List<DetectionResult>>()
+        val allDetectionResults = mutableMapOf<DetectionKey, List<Detection>>()
         refined.forEach {
-            it.detectionResults.forEach { (key, value) ->
+            it.detections.forEach { (key, value) ->
                 allDetectionResults[key] = (allDetectionResults[key] ?: emptyList()) + value
             }
         }
-        InvestigationResult(originalLogs, refined, allDetectionResults, transformers.detections)
-    }.stateIn(logScope, SharingStarted.Lazily, InvestigationResult(emptyList(), emptyList(), emptyMap(), emptyList()))
+        Investigation(originalLogs, refined, allDetectionResults, transformers.detectors)
+    }.stateIn(logScope, SharingStarted.Lazily, Investigation(emptyList(), emptyList(), emptyMap(), emptyList()))
 
     private val detectionExpanded = MutableStateFlow<Map<String, Boolean>>(emptyMap())
 
-    val investigationResultView: StateFlow<InvestigationResultView> = combine(investigationResult, detectionExpanded) { result, expanded ->
+    val investigationViewFlow: StateFlow<InvestigationView> = combine(investigationFlow, detectionExpanded) { investigation, expanded ->
         // Why should it be separated : make possible to change data of detectionResult
         // TODO don't want to repeat all annotate if just one log has changed. How can I achieve it
-        val refinedLogs = result.detectionFinishedLogs.map {
+        val refinedLogs = investigation.detectionFinishedLogs.map {
             val logContents =
                 separateAnnotationStrings(
                     it.log,
-                    it.detectionResults.values.flatten().map { detectionResult ->
-                        DetectionResultView(detectionResult, expanded[detectionResult.id] ?: false)
+                    it.detections.values.flatten().map { detectionResult ->
+                        DetectionView(detectionResult, expanded[detectionResult.id] ?: false)
                     }
                 )
-            RefinedLog(it, annotate(it.log, logContents, result.detections))
+            RefinedLog(it, annotate(it.log, logContents, investigation.detectors))
         }
-        val allDetectionLogs = result.allDetectionResults.mapValues { (_, v) ->
-            v.map { DetectionResultView(it, false) }
+        val allDetectionLogs = investigation.allDetections.mapValues { (_, v) ->
+            v.map { DetectionView(it, false) }
         }
-        InvestigationResultView(refinedLogs, allDetectionLogs)
-    }.stateIn(logScope, SharingStarted.Lazily, InvestigationResultView(emptyList(), emptyMap()))
+        InvestigationView(refinedLogs, allDetectionLogs)
+    }.stateIn(logScope, SharingStarted.Lazily, InvestigationView(emptyList(), emptyMap()))
 
     val keywordDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
     val exceptionDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
@@ -121,37 +121,37 @@ class LogManager(
 
     init {
         logScope.launch {
-            investigationResult.collect { result ->
-                val keywordDetections = result.allDetectionResults[DetectionKey.Keyword] ?: emptyList()
+            investigationFlow.collect { result ->
+                val keywordDetections = result.allDetections[DetectionKey.Keyword] ?: emptyList()
                 keywordDetectionFocus.value = keywordDetections.firstOrNull()?.let {
                     DetectionFocus(DetectionKey.Keyword, 0, null, keywordDetections)
                 }
 
-                val exceptionDetections = result.allDetectionResults[DetectionKey.Exception] ?: emptyList()
+                val exceptionDetections = result.allDetections[DetectionKey.Exception] ?: emptyList()
                 exceptionDetectionFocus.value = exceptionDetections.firstOrNull()?.let {
                     DetectionFocus(DetectionKey.Exception, 0, null, exceptionDetections)
                 }
 
-                val jsonDetections = result.allDetectionResults[DetectionKey.Json] ?: emptyList()
+                val jsonDetections = result.allDetections[DetectionKey.Json] ?: emptyList()
                 jsonDetectionFocus.value = jsonDetections.firstOrNull()?.let {
                     DetectionFocus(DetectionKey.Exception, 0, null, jsonDetections)
                 }
 
-                detectionExpanded.value = result.allDetectionResults.values.flatten().associate {
-                    it.id to (it is JsonDetectionResult)
+                detectionExpanded.value = result.allDetections.values.flatten().associate {
+                    it.id to (it is JsonDetection)
                 }
             }
         }
     }
 
-    val activeDetectionResultFocusFlowState =
+    val activeDetectionFocusFlowState =
         merge(keywordDetectionFocus, exceptionDetectionFocus, jsonDetectionFocus)
             .filter { it?.focusing != null }
             .stateIn(logScope, SharingStarted.Lazily, null)
 
     data class Transformers(
         val filters: List<LogFilter>,
-        val detections: List<Detection<*>>
+        val detectors: List<Detector<*>>
     )
 
     fun addFilter(textFilter: TextFilter) {
@@ -170,46 +170,46 @@ class LogManager(
         keywordDetectionEnabledStateFlow.value = enabled
     }
 
-    fun previousFindResult(key: DetectionKey, focus: DetectionFocus) {
+    fun focusPreviousDetection(key: DetectionKey, focus: DetectionFocus) {
         val previousIndex = if (focus.currentIndex <= 0) {
-            focus.results.size - 1
+            focus.allDetections.size - 1
         } else {
             focus.currentIndex - 1
         }
 
-        focuses[key]?.value = focus.copy(currentIndex = previousIndex, focusing = focus.results[previousIndex])
+        focuses[key]?.value = focus.copy(currentIndex = previousIndex, focusing = focus.allDetections[previousIndex])
     }
 
-    fun nextFindResult(key: DetectionKey, focus: DetectionFocus) {
-        val nextIndex = if (focus.currentIndex >= focus.results.size - 1) {
+    fun focusNextDetection(key: DetectionKey, focus: DetectionFocus) {
+        val nextIndex = if (focus.currentIndex >= focus.allDetections.size - 1) {
             0
         } else {
             focus.currentIndex + 1
         }
 
-        focuses[key]?.value = focus.copy(currentIndex = nextIndex, focusing = focus.results[nextIndex])
+        focuses[key]?.value = focus.copy(currentIndex = nextIndex, focusing = focus.allDetections[nextIndex])
     }
 
     fun setPriority(priorityFilter: PriorityFilter) {
-        this.priorityFilter.value = priorityFilter
+        this.priorityFilterFlow.value = priorityFilter
     }
 
     val json = Json { prettyPrint = true }
-    private fun separateAnnotationStrings(log: Log, detectionResults: List<DetectionResultView>): List<LogContent> {
-        val sorted = detectionResults.sortedBy { it.detectionResult.range.first }
+    private fun separateAnnotationStrings(log: Log, detectionResults: List<DetectionView>): List<LogContent> {
+        val sorted = detectionResults.sortedBy { it.detection.range.first }
         val originalLog = log.log
 
         var lastEnded = 0
         val logContents = mutableListOf<LogContent>()
         sorted.forEach {
-            val newStart = it.detectionResult.range.first
-            val newEnd = it.detectionResult.range.last
+            val newStart = it.detection.range.first
+            val newEnd = it.detection.range.last
             // Assume that there are no overlapping areas.
-            if (it.detectionResult is JsonDetectionResult && it.expanded) {
+            if (it.detection is JsonDetection && it.expanded) {
                 if (lastEnded != newStart) {
                     logContents.add(LogContent.Simple(originalLog.substring(lastEnded, newStart)))
                 }
-                logContents.add(LogContent.Json(json.encodeToString(JsonObject.serializer(), it.detectionResult.json), it.detectionResult))
+                logContents.add(LogContent.Json(json.encodeToString(JsonObject.serializer(), it.detection.json), it.detection))
                 lastEnded = newEnd + 1
             }
         }
@@ -219,17 +219,17 @@ class LogManager(
         return logContents
     }
 
-    private fun annotate(log: Log, logContents: List<LogContent>, detections: List<Detection<*>>): List<LogContentView> {
+    private fun annotate(log: Log, logContents: List<LogContent>, detectors: List<Detector<*>>): List<LogContentView> {
         val result = logContents.map {
             when (it) {
                 is LogContent.Json -> {
                     val simple = it
                     val initial = AnnotatedString.Builder(simple.text)
-                    val results = detections.flatMap { detection ->
+                    val newDetections = detectors.flatMap { detection ->
                         detection.detect(simple.text, log.number)
                     }
 
-                    val builder = results.fold(initial) { acc, next ->
+                    val builder = newDetections.fold(initial) { acc, next ->
                         acc.apply {
                             addStyle(
                                 SpanStyle(),
@@ -243,18 +243,18 @@ class LogManager(
                 is LogContent.Simple -> {
                     val simple = it
                     val initial = AnnotatedString.Builder(simple.text)
-                    val results = detections.flatMap { detection ->
+                    val newDetections = detectors.flatMap { detection ->
                         detection.detect(simple.text, log.number)
                     }
 
-                    val builder = results.fold(initial) { acc, next ->
+                    val builder = newDetections.fold(initial) { acc, next ->
                         acc.apply {
                             addStyle(
                                 next.style,
                                 next.range.first,
                                 next.range.last + 1
                             )
-                            if (next is JsonDetectionResult) {
+                            if (next is JsonDetection) {
                                 addStringAnnotation("Json", next.id, next.range.first, next.range.last + 1)
                             }
                         }
@@ -264,13 +264,12 @@ class LogManager(
             }
         }
 
-        // Detector 가 필요하네..
         return result
     }
 
-    fun collapse(detectionResult: DetectionResult) {
-        println("collapse: ${detectionResult.id}")
-        detectionExpanded.value = detectionExpanded.value + (detectionResult.id to false)
+    fun collapse(detection: Detection) {
+        println("collapse: ${detection.id}")
+        detectionExpanded.value = detectionExpanded.value + (detection.id to false)
     }
 
     fun expand(annotation: String) {

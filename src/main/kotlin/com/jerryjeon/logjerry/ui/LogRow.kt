@@ -43,8 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogState
-import com.jerryjeon.logjerry.detection.DetectionResult
-import com.jerryjeon.logjerry.detection.JsonDetectionResult
+import com.jerryjeon.logjerry.detection.Detection
+import com.jerryjeon.logjerry.detection.JsonDetection
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogContentView
 import com.jerryjeon.logjerry.log.refine.DetectionFinishedLog
@@ -64,7 +64,7 @@ fun LogRow(
     refinedLog: RefinedLog,
     preferences: Preferences,
     header: Header,
-    collapse: (DetectionResult) -> Unit,
+    collapse: (Detection) -> Unit,
     expand: (annotation: String) -> Unit,
     divider: @Composable RowScope.() -> Unit
 ) {
@@ -87,7 +87,7 @@ fun RowScope.CellByColumnType(
     preferences: Preferences,
     columnInfo: ColumnInfo,
     refinedLog: RefinedLog,
-    collapse: (DetectionResult) -> Unit,
+    collapse: (Detection) -> Unit,
     expand: (annotation: String) -> Unit,
 ) {
     val log = refinedLog.detectionFinishedLog.log
@@ -206,7 +206,7 @@ private fun RowScope.LogCell(
     preferences: Preferences,
     logHeader: ColumnInfo,
     refinedLog: RefinedLog,
-    collapse: (DetectionResult) -> Unit,
+    collapse: (Detection) -> Unit,
     expand: (annotation: String) -> Unit,
 ) {
     Box(modifier = this.cellDefaultModifier(logHeader.width)) {
@@ -222,7 +222,7 @@ private fun RowScope.LogCell(
     preferences: Preferences,
     logContentView: LogContentView,
     refinedLog: RefinedLog,
-    collapse: (DetectionResult) -> Unit,
+    collapse: (Detection) -> Unit,
     expand: (annotation: String) -> Unit,
 ) {
     when (logContentView) {
@@ -261,7 +261,7 @@ private fun RowScope.LogCell(
                     }
                     Spacer(Modifier.width(4.dp))
                     IconButton(
-                        onClick = { collapse(logContentView.jsonDetectionResult) },
+                        onClick = { collapse(logContentView.jsonDetection) },
                         modifier = Modifier.size(16.dp),
                     ) {
                         Icon(Icons.Default.Expand, "Collapse the json")
@@ -277,11 +277,11 @@ private fun RowScope.DetectionCell(button: ColumnInfo, detectionFinishedLog: Det
     val showPrettyJsonDialog: MutableState<JsonObject?> = remember { mutableStateOf(null) }
 
     Column(modifier = this.cellDefaultModifier(button.width)) {
-        detectionFinishedLog.detectionResults.values
+        detectionFinishedLog.detections.values
             .flatten()
-            .filterIsInstance<JsonDetectionResult>()
-            .forEachIndexed { index, result ->
-                TextButton(onClick = { showPrettyJsonDialog.value = result.json }) {
+            .filterIsInstance<JsonDetection>()
+            .forEachIndexed { index, jsonDetection ->
+                TextButton(onClick = { showPrettyJsonDialog.value = jsonDetection.json }) {
                     Row {
                         Text("{ }")
                         Text("${index + 1}", fontSize = 9.sp)

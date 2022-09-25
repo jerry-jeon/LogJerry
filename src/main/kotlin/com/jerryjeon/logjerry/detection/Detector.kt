@@ -7,12 +7,12 @@ enum class DetectionKey {
     Keyword, Exception, Json;
 }
 
-interface Detection<T : DetectionResult> {
+interface Detector<T : Detection> {
     val key: DetectionKey
     fun detect(logStr: String, logIndex: Int): List<T>
 }
 
-interface DetectionResult {
+interface Detection {
     val id: String
     val key: DetectionKey
     val range: IntRange
@@ -23,9 +23,9 @@ interface DetectionResult {
 data class DetectionFocus(
     val key: DetectionKey,
     val currentIndex: Int,
-    val focusing: DetectionResult?,
-    val results: List<DetectionResult>,
+    val focusing: Detection?,
+    val allDetections: List<Detection>,
 ) {
-    val totalCount = results.size
+    val totalCount = allDetections.size
     val currentIndexInView = currentIndex + 1
 }
