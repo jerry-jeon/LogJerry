@@ -32,7 +32,7 @@ fun RowScope.HeaderView(columnInfo: ColumnInfo, modifier: Modifier = Modifier) {
         }
         Spacer(Modifier.width(4.dp))
         Text(
-            text = columnInfo.columnType.name,
+            text = columnInfo.columnType.text,
             modifier = Modifier.align(Alignment.CenterVertically)
         )
     }
@@ -44,7 +44,9 @@ fun HeaderRow(header: Header, divider: @Composable RowScope.() -> Unit) {
         header.asColumnList.forEach {
             if (it.visible) {
                 HeaderView(it)
-                divider()
+                if (it.columnType.showDivider) {
+                    divider()
+                }
             }
         }
     }

@@ -1,3 +1,4 @@
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -35,7 +36,9 @@ fun LogRow(
         header.asColumnList.forEach { columnInfo ->
             if (columnInfo.visible) {
                 CellByColumnType(columnInfo, refinedLog)
-                divider()
+                if (columnInfo.columnType.showDivider) {
+                    divider()
+                }
             }
         }
     }
@@ -48,12 +51,12 @@ fun RowScope.CellByColumnType(columnInfo: ColumnInfo, refinedLog: RefinedLog) {
         ColumnType.Number -> NumberCell(columnInfo, log)
         ColumnType.Date -> DateCell(columnInfo, log)
         ColumnType.Time -> TimeCell(columnInfo, log)
-        ColumnType.PID -> PidCell(columnInfo, log)
-        ColumnType.TID -> TidCell(columnInfo, log)
+        ColumnType.Pid -> PidCell(columnInfo, log)
+        ColumnType.Tid -> TidCell(columnInfo, log)
         ColumnType.PackageName -> PackagerNameCell(columnInfo, log)
         ColumnType.Priority -> PriorityCell(columnInfo, log)
         ColumnType.Tag -> TagCell(columnInfo, log)
-        ColumnType.B -> ButtonCell(columnInfo, refinedLog)
+        ColumnType.Button -> ButtonCell(columnInfo, refinedLog)
         ColumnType.Log -> LogCell(columnInfo, refinedLog)
     }
 }
@@ -99,12 +102,14 @@ private fun RowScope.TagCell(tag: ColumnInfo, log: Log) {
 }
 
 @Composable
-private fun RowScope.ButtonCell(logHeader: ColumnInfo, refinedLog: RefinedLog) {
+private fun RowScope.ButtonCell(button: ColumnInfo, refinedLog: RefinedLog) {
     var showDialog by remember { mutableStateOf(false) }
 
-    if (refinedLog.detectionResults[DetectionKey.Json] != null) {
-        TextButton(onClick = { showDialog = true }) {
-            Text("{ }")
+    Box(modifier = this.cellDefaultModifier(button.width)) {
+        if (refinedLog.detectionResults[DetectionKey.Json] != null) {
+            TextButton(onClick = { showDialog = true }) {
+                Text("{ }")
+            }
         }
     }
 
@@ -128,10 +133,13 @@ private fun RowScope.ButtonCell(logHeader: ColumnInfo, refinedLog: RefinedLog) {
 @Composable
 private fun RowScope.LogCell(logHeader: ColumnInfo, refinedLog: RefinedLog) {
     val log = refinedLog.log
-    SelectionContainer {
-        // TODO make if configurable
-        val style = if (log.priority == Priority.Error) TextStyle.Default.copy(color = Color.Red) else TextStyle.Default
-        Text(refinedLog.annotatedLog, modifier = this.cellDefaultModifier(logHeader.width), style = style)
+    Box(modifier = this.cellDefaultModifier(logHeader.width)) {
+        SelectionContainer {
+            // TODO make if configurable
+            val style =
+                if (log.priority == Priority.Error) TextStyle.Default.copy(color = Color.Red) else TextStyle.Default
+            Text(refinedLog.annotatedLog, modifier = Modifier, style = style)
+        }
     }
 }
 
