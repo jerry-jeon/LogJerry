@@ -2,6 +2,7 @@
 
 package com.jerryjeon.logjerry.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -36,6 +37,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogState
 import com.jerryjeon.logjerry.detection.JsonDetectionResult
 import com.jerryjeon.logjerry.log.Log
+import com.jerryjeon.logjerry.log.refine.DetectionFinishedLog
+import com.jerryjeon.logjerry.log.refine.LogContent
 import com.jerryjeon.logjerry.log.refine.RefinedLog
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.ColumnInfo
@@ -71,7 +74,7 @@ fun LogRow(
 
 @Composable
 fun RowScope.CellByColumnType(preferences: Preferences, columnInfo: ColumnInfo, refinedLog: RefinedLog) {
-    val log = refinedLog.log
+    val log = refinedLog.detectionFinishedLog.log
     when (columnInfo.columnType) {
         ColumnType.Number -> NumberCell(preferences, columnInfo, log)
         ColumnType.Date -> DateCell(preferences, columnInfo, log)
@@ -81,7 +84,7 @@ fun RowScope.CellByColumnType(preferences: Preferences, columnInfo: ColumnInfo, 
         ColumnType.PackageName -> PackagerNameCell(preferences, columnInfo, log)
         ColumnType.Priority -> PriorityCell(preferences, columnInfo, log)
         ColumnType.Tag -> TagCell(preferences, columnInfo, log)
-        ColumnType.Detection -> DetectionCell(columnInfo, refinedLog)
+        ColumnType.Detection -> DetectionCell(columnInfo, refinedLog.detectionFinishedLog)
         ColumnType.Log -> LogCell(preferences, columnInfo, refinedLog)
     }
 }
@@ -186,24 +189,45 @@ private fun RowScope.TagCell(preferences: Preferences, tag: ColumnInfo, log: Log
 private fun RowScope.LogCell(preferences: Preferences, logHeader: ColumnInfo, refinedLog: RefinedLog) {
     Box(modifier = this.cellDefaultModifier(logHeader.width)) {
         SelectionContainer {
+            refinedLog.logContents.forEach { logContent ->
+                Column {
+                    AnnotatedLogView(preferences, logContent, refinedLog)
+                }
+            }
+        }
+    }
+}
+
+@Composable fun AnnotatedLogView(preferences: Preferences, logContent: LogContent, refinedLog: RefinedLog) {
+    when (logContent) {
+        is LogContent.Simple -> {
             Text(
-                text = refinedLog.annotatedLog,
+                text = logContent.str,
                 style = MaterialTheme.typography.body2.copy(
                     fontSize = preferences.fontSize,
-                    color = preferences.colorByPriority.getValue(refinedLog.log.priority)
+                    color = preferences.colorByPriority.getValue(refinedLog.detectionFinishedLog.log.priority)
                 ),
-                modifier = Modifier
+            )
+        }
+        is LogContent.Json -> {
+            Text(
+                text = logContent.str,
+                style = MaterialTheme.typography.body2.copy(
+                    fontSize = preferences.fontSize,
+                    color = preferences.colorByPriority.getValue(refinedLog.detectionFinishedLog.log.priority)
+                ),
+                modifier = logContent.background?.let { Modifier.background(color = it) } ?: Modifier
             )
         }
     }
 }
 
 @Composable
-private fun RowScope.DetectionCell(button: ColumnInfo, refinedLog: RefinedLog) {
+private fun RowScope.DetectionCell(button: ColumnInfo, detectionFinishedLog: DetectionFinishedLog) {
     val showPrettyJsonDialog: MutableState<JsonObject?> = remember { mutableStateOf(null) }
 
     Column(modifier = this.cellDefaultModifier(button.width)) {
-        refinedLog.detectionResults.values
+        detectionFinishedLog.detectionResults.values
             .flatten()
             .filterIsInstance<JsonDetectionResult>()
             .forEachIndexed { index, result ->

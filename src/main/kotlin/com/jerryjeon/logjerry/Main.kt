@@ -70,7 +70,7 @@ import com.jerryjeon.logjerry.detection.KeywordDetectionRequest
 import com.jerryjeon.logjerry.detection.KeywordDetectionView
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogManager
-import com.jerryjeon.logjerry.log.refine.RefinedLog
+import com.jerryjeon.logjerry.log.refine.InvestigationResultView
 import com.jerryjeon.logjerry.parse.ParseResult
 import com.jerryjeon.logjerry.parse.ParseStatus
 import com.jerryjeon.logjerry.preferences.Preferences
@@ -109,13 +109,12 @@ fun ActiveTabView(
         is ParseStatus.Completed -> {
             Column {
                 val logManager = status.logManager
-                val refinedLogs by logManager.refineResult.collectAsState()
+                val investigationResultView by logManager.investigationResultView.collectAsState()
                 val findStatus = logManager.keywordDetectionRequestFlow.collectAsState()
                 val keywordDetectionResultFocus = logManager.keywordDetectionFocus.collectAsState()
                 val exceptionDetectionResultFocus = logManager.exceptionDetectionFocus.collectAsState()
                 val jsonDetectionResultFocus = logManager.jsonDetectionFocus.collectAsState()
                 val findResult = logManager.activeDetectionResultFocusFlowState.collectAsState()
-                val refinedLogsList = refinedLogs.refined
                 val logs = logManager.originalLogs
                 ParseCompletedView(
                     logManager,
@@ -124,7 +123,7 @@ fun ActiveTabView(
                     keywordDetectionResultFocus.value,
                     exceptionDetectionResultFocus.value,
                     jsonDetectionResultFocus.value,
-                    refinedLogsList,
+                    investigationResultView,
                     logs,
                     preferences,
                     headerState,
@@ -143,7 +142,7 @@ fun ParseCompletedView(
     keywordDetectionFocus: DetectionFocus?,
     exceptionDetectionFocus: DetectionFocus?,
     jsonDetectionFocus: DetectionFocus?,
-    refinedLogsList: List<RefinedLog>,
+    investigationResultView: InvestigationResultView,
     logs: List<Log>,
     preferences: Preferences,
     headerState: MutableState<Header>,
@@ -182,8 +181,12 @@ fun ParseCompletedView(
             }
         }
     }
+    investigationResultView.refinedLogs.size
+    val filteredSize = "filteredSize " // TODO fix it
+/*
     val filteredSize =
-        (if (refinedLogsList.size != logs.size) "Filtered size : ${refinedLogsList.size}, " else "")
+        (if (detectionFinishedLogsList.size != logs.size) "Filtered size : ${detectionFinishedLogsList.size}, " else "")
+*/
     Box(modifier = Modifier.fillMaxWidth()) {
         Text(filteredSize + "Total : ${logs.size}", modifier = Modifier.padding(8.dp))
         KeywordDetectionView(
@@ -197,7 +200,7 @@ fun ParseCompletedView(
         )
     }
     Divider(color = Color.Black)
-    LogsView(preferences, headerState.value, refinedLogsList, detectionFocus)
+    LogsView(preferences, headerState.value, investigationResultView.refinedLogs, detectionFocus)
 }
 
 @Composable

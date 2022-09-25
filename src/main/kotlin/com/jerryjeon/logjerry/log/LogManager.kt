@@ -9,9 +9,12 @@ import com.jerryjeon.logjerry.detection.ExceptionDetection
 import com.jerryjeon.logjerry.detection.JsonDetection
 import com.jerryjeon.logjerry.detection.KeywordDetection
 import com.jerryjeon.logjerry.detection.KeywordDetectionRequest
+import com.jerryjeon.logjerry.log.refine.DetectionFinishedLog
+import com.jerryjeon.logjerry.log.refine.InvestigationResult
+import com.jerryjeon.logjerry.log.refine.InvestigationResultView
+import com.jerryjeon.logjerry.log.refine.LogContent
 import com.jerryjeon.logjerry.log.refine.LogFilter
 import com.jerryjeon.logjerry.log.refine.PriorityFilter
-import com.jerryjeon.logjerry.log.refine.RefineResult
 import com.jerryjeon.logjerry.log.refine.RefinedLog
 import com.jerryjeon.logjerry.log.refine.TextFilter
 import kotlinx.coroutines.MainScope
@@ -57,7 +60,7 @@ class LogManager(
             }
         )
     }
-    val refineResult: StateFlow<RefineResult> = transformerFlow.map { transformers ->
+    private val investigationResult: StateFlow<InvestigationResult> = transformerFlow.map { transformers ->
         val refined = if (transformers.filters.isEmpty()) {
             originalLogs
         } else {
@@ -67,8 +70,7 @@ class LogManager(
             .mapIndexed { logIndex, log ->
                 val detectionResults = transformers.detections.map { it.detect(log.log, logIndex) }
                     .flatten()
-                val annotatedLog = annotate(log, detectionResults)
-                RefinedLog(log, annotatedLog, detectionResults.groupBy { it.key })
+                DetectionFinishedLog(log, detectionResults.groupBy { it.key })
             }
 
         val allDetectionResults = mutableMapOf<DetectionKey, List<DetectionResult>>()
@@ -77,8 +79,18 @@ class LogManager(
                 allDetectionResults[key] = (allDetectionResults[key] ?: emptyList()) + value
             }
         }
-        RefineResult(originalLogs, refined, allDetectionResults)
-    }.stateIn(logScope, SharingStarted.Lazily, RefineResult(emptyList(), emptyList(), emptyMap()))
+        InvestigationResult(originalLogs, refined, allDetectionResults)
+    }.stateIn(logScope, SharingStarted.Lazily, InvestigationResult(emptyList(), emptyList(), emptyMap()))
+
+    val investigationResultView: StateFlow<InvestigationResultView> = investigationResult.map { investigationResult ->
+        // Why should it be separated : make possible to change data of detectionResult
+        // TODO don't want to repeat all annotate if just one log has changed. How can I achieve it
+        val refinedLogs = investigationResult.detectionFinishedLogs.map {
+            RefinedLog(it, annotate(it.log, it.detectionResults.values.flatten()))
+        }
+        val allDetectionLogs = investigationResult.allDetectionResults
+        InvestigationResultView(refinedLogs, allDetectionLogs)
+    }.stateIn(logScope, SharingStarted.Lazily, InvestigationResultView(emptyList(), emptyMap()))
 
     val keywordDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
     val exceptionDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
@@ -92,7 +104,7 @@ class LogManager(
 
     init {
         logScope.launch {
-            refineResult.collect { refinedLogs ->
+            investigationResult.collect { refinedLogs ->
                 val results = refinedLogs.allDetectionResults[DetectionKey.Keyword] ?: emptyList()
                 keywordDetectionFocus.value = results.firstOrNull()?.let {
                     DetectionFocus(DetectionKey.Keyword, 0, null, results)
@@ -161,11 +173,11 @@ class LogManager(
         this.priorityFilter.value = priorityFilter
     }
 
-    fun annotate(log: Log, detectionResults: List<DetectionResult>): AnnotatedString {
+    private fun annotate(log: Log, detectionResults: List<DetectionResult>): List<LogContent> {
         // Assume that there are no overlapping areas.
         // TODO: Support overlapping detection
         val initial = DetectionResult.AnnotationResult(AnnotatedString.Builder(log.log), 0)
         val annotationResult = detectionResults.fold(initial) { acc, next -> next.annotate(acc) }
-        return annotationResult.builder.toAnnotatedString()
+        return listOf(LogContent.Simple(annotationResult.builder.toAnnotatedString()))
     }
 }
