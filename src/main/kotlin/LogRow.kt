@@ -72,7 +72,7 @@ private fun RowScope.PackagerNameCell(packageName: ColumnInfo, log: Log) {
 
 @Composable
 private fun RowScope.PriorityCell(priority: ColumnInfo, log: Log) {
-    Text(log.priority, modifier = this.cellDefaultModifier(priority.width))
+    Text(log.priority.text, modifier = this.cellDefaultModifier(priority.width))
 }
 
 @Composable
@@ -83,7 +83,7 @@ private fun RowScope.TagCell(tag: ColumnInfo, log: Log) {
 @Composable
 private fun RowScope.LogCell(logHeader: ColumnInfo, log: Log) {
     // TODO make if configurable
-    val style = if (log.priority == "E") TextStyle.Default.copy(color = Color.Red) else TextStyle.Default
+    val style = if (log.priority == Priority.Error) TextStyle.Default.copy(color = Color.Red) else TextStyle.Default
     Text(log.log, modifier = this.cellDefaultModifier(logHeader.width), style = style)
 }
 

@@ -91,15 +91,18 @@ fun ParseCompletedView(
     parseResult: ParseResult
 ) {
     InvalidSentences(parseResult)
-    KeywordFindView(
-        keywordFindRequest,
-        detectionResultFocus,
-        logManager::find,
-        logManager::setKeywordFindEnabled,
-        logManager::previousFindResult,
-        logManager::nextFindResult
-    )
-    FilterView(logManager.filtersFlow.value, logManager::addFilter, logManager::removeFilter)
+    Row {
+        FilterView(logManager.filtersFlow.value, logManager::addFilter, logManager::removeFilter)
+        Spacer(Modifier.width(16.dp))
+        KeywordFindView(
+            keywordFindRequest,
+            detectionResultFocus,
+            logManager::find,
+            logManager::setKeywordFindEnabled,
+            logManager::previousFindResult,
+            logManager::nextFindResult
+        )
+    }
     val filteredSize =
         (if (refinedLogsList.size != logs.size) "Filtered size : ${refinedLogsList.size}, " else "")
     Text(filteredSize + "Total : ${logs.size}")
