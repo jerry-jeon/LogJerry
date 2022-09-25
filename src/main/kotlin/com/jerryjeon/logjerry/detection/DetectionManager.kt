@@ -5,7 +5,8 @@ import com.jerryjeon.logjerry.detector.DetectionFocus
 import com.jerryjeon.logjerry.detector.Detector
 import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.log.Log
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -20,7 +21,7 @@ class DetectionManager(
     logsFlow: Flow<List<Log>>,
     detectorsFlow: Flow<List<Detector<*>>>
 ) {
-    private val detectionScope = MainScope()
+    private val detectionScope = CoroutineScope(Dispatchers.Default)
 
     val detectionFinishedFlow: StateFlow<DetectionFinished> = combine(logsFlow, detectorsFlow) { filteredLogs, detectors ->
         val detectionFinishedLogs = filteredLogs

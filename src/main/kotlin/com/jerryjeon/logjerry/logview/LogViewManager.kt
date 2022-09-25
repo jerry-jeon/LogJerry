@@ -11,7 +11,8 @@ import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogContent
 import com.jerryjeon.logjerry.log.LogContentView
 import com.jerryjeon.logjerry.preferences.Preferences
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,7 +28,7 @@ class LogViewManager(
     detectionFinishedFlow: Flow<DetectionFinished>,
     preferences: Preferences
 ) {
-    private val logViewScope = MainScope()
+    private val logViewScope = CoroutineScope(Dispatchers.Default)
     val json = Json { prettyPrint = true }
 
     private val detectionExpandedFlow = MutableStateFlow<Map<String, Boolean>>(emptyMap())

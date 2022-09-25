@@ -5,7 +5,8 @@ import com.jerryjeon.logjerry.log.LogManager
 import com.jerryjeon.logjerry.parse.DefaultParser
 import com.jerryjeon.logjerry.parse.ParseStatus
 import com.jerryjeon.logjerry.preferences.Preferences
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +14,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class SourceManager(private val preferences: Preferences) {
-    private val sourceScope = MainScope()
+    private val sourceScope = CoroutineScope(Dispatchers.Default)
     private val parser = DefaultParser()
     val sourceFlow: MutableStateFlow<Source> = MutableStateFlow(Source.None)
     val parseStatusFlow: StateFlow<ParseStatus> = sourceFlow.map {

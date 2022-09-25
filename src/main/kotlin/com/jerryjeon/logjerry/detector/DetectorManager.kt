@@ -1,6 +1,7 @@
 package com.jerryjeon.logjerry.detector
 
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -8,7 +9,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class DetectorManager {
-    private val detectionScope = MainScope()
+    private val detectionScope = CoroutineScope(Dispatchers.Default)
 
     private val defaultDetectors = listOf(ExceptionDetector(), JsonDetector())
     private val keywordDetectorEnabledStateFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)

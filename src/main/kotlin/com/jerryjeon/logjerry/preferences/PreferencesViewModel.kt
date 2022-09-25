@@ -5,7 +5,8 @@ package com.jerryjeon.logjerry.preferences
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.jerryjeon.logjerry.log.Priority
-import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -16,7 +17,7 @@ import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 
 class PreferencesViewModel {
-    private val preferenceScope = MainScope()
+    private val preferenceScope = CoroutineScope(Dispatchers.Default)
 
     // TODO not to read on the main thread
     val preferencesFlow = MutableStateFlow(
