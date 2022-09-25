@@ -1,8 +1,8 @@
 package com.jerryjeon.logjerry.log.refine
 
-import com.jerryjeon.logjerry.detection.Detection
-import com.jerryjeon.logjerry.detection.DetectionKey
-import com.jerryjeon.logjerry.detection.Detector
+import com.jerryjeon.logjerry.detector.Detection
+import com.jerryjeon.logjerry.detector.DetectionKey
+import com.jerryjeon.logjerry.detector.Detector
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogContentView
 

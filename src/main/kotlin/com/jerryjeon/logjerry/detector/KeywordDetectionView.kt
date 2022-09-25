@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalComposeUiApi::class, ExperimentalComposeUiApi::class)
 
-package com.jerryjeon.logjerry.detection
+package com.jerryjeon.logjerry.detector
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Box

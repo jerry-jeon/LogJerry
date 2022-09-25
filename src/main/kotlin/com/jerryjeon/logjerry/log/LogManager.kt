@@ -3,17 +3,18 @@ package com.jerryjeon.logjerry.log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
-import com.jerryjeon.logjerry.detection.Detection
-import com.jerryjeon.logjerry.detection.DetectionFocus
-import com.jerryjeon.logjerry.detection.DetectionKey
-import com.jerryjeon.logjerry.detection.Detector
-import com.jerryjeon.logjerry.detection.JsonDetection
+import com.jerryjeon.logjerry.detector.Detection
+import com.jerryjeon.logjerry.detector.DetectionFocus
+import com.jerryjeon.logjerry.detector.DetectionKey
+import com.jerryjeon.logjerry.detector.Detector
+import com.jerryjeon.logjerry.detector.DetectorManager
+import com.jerryjeon.logjerry.detector.JsonDetection
+import com.jerryjeon.logjerry.filter.FilterManager
 import com.jerryjeon.logjerry.log.refine.DetectionFinishedLog
 import com.jerryjeon.logjerry.log.refine.DetectionView
 import com.jerryjeon.logjerry.log.refine.Investigation
 import com.jerryjeon.logjerry.log.refine.InvestigationView
 import com.jerryjeon.logjerry.log.refine.RefinedLog
-import com.jerryjeon.logjerry.transformation.TransformationManager
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -29,11 +30,12 @@ import kotlinx.serialization.json.JsonObject
 
 class LogManager(
     val originalLogs: List<Log>,
-    transformationManager: TransformationManager
+    filterManager: FilterManager,
+    detectorManager: DetectorManager
 ) {
     private val logScope = MainScope()
 
-    private val filteredLogsFlow = transformationManager.filtersFlow.map { filters ->
+    private val filteredLogsFlow = filterManager.filtersFlow.map { filters ->
         if (filters.isEmpty()) {
             originalLogs
         } else {
@@ -42,7 +44,7 @@ class LogManager(
         }
     }
 
-    private val investigationFlow: StateFlow<Investigation> = combine(filteredLogsFlow, transformationManager.detectorsFlow) { filteredLogs, detectors ->
+    private val investigationFlow: StateFlow<Investigation> = combine(filteredLogsFlow, detectorManager.detectorsFlow) { filteredLogs, detectors ->
         val detectionFinishedLogs = filteredLogs
             .mapIndexed { logIndex, log ->
                 val detectionResults = detectors.map { it.detect(log.log, logIndex) }

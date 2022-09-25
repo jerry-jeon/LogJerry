@@ -1,9 +1,9 @@
 package com.jerryjeon.logjerry.source
 
+import com.jerryjeon.logjerry.filter.FilterManager
 import com.jerryjeon.logjerry.log.LogManager
 import com.jerryjeon.logjerry.parse.DefaultParser
 import com.jerryjeon.logjerry.parse.ParseStatus
-import com.jerryjeon.logjerry.transformation.TransformationManager
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,14 +19,14 @@ class SourceManager {
         when (it) {
             is Source.File -> {
                 val parseResult = parser.parse(it.file.readLines())
-                val transformationManager = TransformationManager()
-                ParseStatus.Completed(parseResult, transformationManager, LogManager(parseResult.logs, transformationManager))
+                val filterManager = FilterManager()
+                ParseStatus.Completed(parseResult, filterManager, LogManager(parseResult.logs, filterManager))
             }
 
             is Source.Text -> {
                 val parseResult = parser.parse(it.text.split("\n"))
-                val transformationManager = TransformationManager()
-                ParseStatus.Completed(parseResult, transformationManager, LogManager(parseResult.logs, transformationManager))
+                val filterManager = FilterManager()
+                ParseStatus.Completed(parseResult, filterManager, LogManager(parseResult.logs, filterManager))
             }
             Source.None -> {
                 ParseStatus.NotStarted
@@ -41,7 +41,7 @@ class SourceManager {
     fun turnOnKeywordDetection() {
         when (val value = parseStatusFlow.value) {
             is ParseStatus.Completed -> {
-                value.transformationManager.setKeywordDetectionEnabled(true)
+                value.filterManager.setKeywordDetectionEnabled(true)
             }
             ParseStatus.NotStarted -> {}
             is ParseStatus.Proceeding -> {}

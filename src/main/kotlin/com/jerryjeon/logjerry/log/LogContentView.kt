@@ -2,7 +2,7 @@ package com.jerryjeon.logjerry.log
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
-import com.jerryjeon.logjerry.detection.JsonDetection
+import com.jerryjeon.logjerry.detector.JsonDetection
 
 sealed class LogContentView {
 

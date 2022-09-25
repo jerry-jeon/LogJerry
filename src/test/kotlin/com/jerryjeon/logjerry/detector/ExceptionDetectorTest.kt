@@ -1,4 +1,4 @@
-package com.jerryjeon.logjerry.detection
+package com.jerryjeon.logjerry.detector
 
 import org.junit.jupiter.api.Test
 

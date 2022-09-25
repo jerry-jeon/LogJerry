@@ -1,4 +1,4 @@
-package com.jerryjeon.logjerry.detection
+package com.jerryjeon.logjerry.detector
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle

@@ -23,8 +23,8 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jerryjeon.logjerry.detection.DetectionFocus
-import com.jerryjeon.logjerry.detection.ExceptionDetection
+import com.jerryjeon.logjerry.detector.DetectionFocus
+import com.jerryjeon.logjerry.detector.ExceptionDetection
 
 @Composable
 fun ExceptionDetectionView(

@@ -1,4 +1,4 @@
-package com.jerryjeon.logjerry.log.refine
+package com.jerryjeon.logjerry.filter
 
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.Priority

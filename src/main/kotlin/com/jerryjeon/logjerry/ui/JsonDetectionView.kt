@@ -24,8 +24,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jerryjeon.logjerry.detection.DetectionFocus
-import com.jerryjeon.logjerry.detection.JsonDetection
+import com.jerryjeon.logjerry.detector.DetectionFocus
+import com.jerryjeon.logjerry.detector.JsonDetection
 
 @Composable
 fun JsonDetectionView(

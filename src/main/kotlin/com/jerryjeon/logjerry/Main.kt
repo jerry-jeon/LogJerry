@@ -63,15 +63,15 @@ import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
-import com.jerryjeon.logjerry.detection.Detection
-import com.jerryjeon.logjerry.detection.DetectionFocus
-import com.jerryjeon.logjerry.detection.DetectionKey
-import com.jerryjeon.logjerry.detection.KeywordDetectionRequest
-import com.jerryjeon.logjerry.detection.KeywordDetectionView
+import com.jerryjeon.logjerry.detector.Detection
+import com.jerryjeon.logjerry.detector.DetectionFocus
+import com.jerryjeon.logjerry.detector.DetectionKey
+import com.jerryjeon.logjerry.detector.KeywordDetectionRequest
+import com.jerryjeon.logjerry.detector.KeywordDetectionView
+import com.jerryjeon.logjerry.filter.PriorityFilter
+import com.jerryjeon.logjerry.filter.TextFilter
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.refine.InvestigationView
-import com.jerryjeon.logjerry.log.refine.PriorityFilter
-import com.jerryjeon.logjerry.log.refine.TextFilter
 import com.jerryjeon.logjerry.parse.ParseResult
 import com.jerryjeon.logjerry.parse.ParseStatus
 import com.jerryjeon.logjerry.preferences.Preferences
@@ -110,7 +110,7 @@ fun ActiveTabView(
         is ParseStatus.Completed -> {
             Column {
                 val logManager = status.logManager
-                val transformationManager = status.transformationManager
+                val transformationManager = status.filterManager
                 val investigationView by logManager.investigationViewFlow.collectAsState()
                 val keywordDetectionRequest by transformationManager.keywordDetectionRequestFlow.collectAsState()
                 val keywordDetectionFocus by logManager.keywordDetectionFocus.collectAsState()

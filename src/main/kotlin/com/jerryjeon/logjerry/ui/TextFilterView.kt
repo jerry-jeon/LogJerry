@@ -50,7 +50,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jerryjeon.logjerry.log.refine.TextFilter
+import com.jerryjeon.logjerry.filter.TextFilter
 import com.jerryjeon.logjerry.table.ColumnType
 
 @Composable
