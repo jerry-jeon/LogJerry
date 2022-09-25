@@ -37,6 +37,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import parse.DefaultParser
+import java.awt.FileDialog
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.io.File
@@ -49,10 +50,11 @@ fun App(sourceState: MutableState<Source>) {
     // Flow would be better
 
     LaunchedEffect(sourceState.value) {
-        when(val source = sourceState.value) {
+        when (val source = sourceState.value) {
             is Source.File -> {
                 logs = parser.parse(source.file.readLines())
             }
+
             is Source.Text -> {
                 logs = parser.parse(source.text.split("\n"))
             }
@@ -61,34 +63,38 @@ fun App(sourceState: MutableState<Source>) {
         }
     }
 
-    MyTheme {
-        val headerState = remember { mutableStateOf(Header.default) }
-        val header by headerState
+    val headerState = remember { mutableStateOf(Header.default) }
+    Column {
+        ColumnVisibility(headerState)
+        ChooseFileButton(sourceState)
 
-        Column {
-            ColumnVisibility(headerState)
-            Button(onClick = {
-                val fileDialog = java.awt.FileDialog(ComposeWindow())
-                fileDialog.isVisible = true
-                fileDialog.file?.let {
-                    val file = File(File(fileDialog.directory), it)
-                    sourceState.value = Source.File(file)
-                }
-            }) {
-                Text("File Picker")
-            }
+        LogsView(headerState.value, logs)
+    }
+}
 
-            val divider: @Composable RowScope.() -> Unit = { ColumnDivider() }
-
-            LazyColumn(Modifier.padding(10.dp)) {
-                item { HeaderRow(header, divider) }
-                item { HeaderDivider() }
-                logs.forEach {
-                    item { LogRow(it, header, divider = divider) }
-                }
-            }
+@Composable
+private fun LogsView(header: Header, logs: List<Log>) {
+    val divider: @Composable RowScope.() -> Unit = { ColumnDivider() }
+    LazyColumn(Modifier.padding(10.dp)) {
+        item { HeaderRow(header, divider) }
+        item { HeaderDivider() }
+        logs.forEach {
+            item { LogRow(it, header, divider = divider) }
         }
+    }
+}
 
+@Composable
+fun ChooseFileButton(sourceState: MutableState<Source>) {
+    Button(onClick = {
+        val fileDialog = FileDialog(ComposeWindow())
+        fileDialog.isVisible = true
+        fileDialog.file?.let {
+            val file = File(File(fileDialog.directory), it)
+            sourceState.value = Source.File(file)
+        }
+    }) {
+        Text("File Picker")
     }
 }
 
@@ -143,7 +149,7 @@ fun main() = application {
         state = WindowState(width = 1600.dp, height = 800.dp),
         onCloseRequest = ::exitApplication,
         onPreviewKeyEvent = { keyEvent ->
-            if(keyEvent.isMetaPressed && keyEvent.key == Key.V && keyEvent.type == KeyEventType.KeyUp) {
+            if (keyEvent.isMetaPressed && keyEvent.key == Key.V && keyEvent.type == KeyEventType.KeyUp) {
                 Toolkit.getDefaultToolkit()
                     .systemClipboard
                     .getData(DataFlavor.stringFlavor)
@@ -153,6 +159,8 @@ fun main() = application {
             false
         }
     ) {
-        App(sourceState)
+        MyTheme {
+            App(sourceState)
+        }
     }
 }
