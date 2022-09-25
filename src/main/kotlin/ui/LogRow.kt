@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
@@ -75,42 +76,42 @@ fun RowScope.CellByColumnType(columnInfo: ColumnInfo, refinedLog: RefinedLog) {
 
 @Composable
 private fun RowScope.NumberCell(number: ColumnInfo, log: Log) {
-    Text(text = log.number.toString(), modifier = this.cellDefaultModifier(number.width))
+    Text(text = log.number.toString(), style = MaterialTheme.typography.body2, modifier = this.cellDefaultModifier(number.width))
 }
 
 @Composable
 private fun RowScope.DateCell(date: ColumnInfo, log: Log) {
-    Text(text = log.date, modifier = this.cellDefaultModifier(date.width))
+    Text(text = log.date, style = MaterialTheme.typography.body2, modifier = this.cellDefaultModifier(date.width))
 }
 
 @Composable
 private fun RowScope.TimeCell(time: ColumnInfo, log: Log) {
-    Text(log.time, modifier = this.cellDefaultModifier(time.width))
+    Text(log.time, style = MaterialTheme.typography.body2, modifier = this.cellDefaultModifier(time.width))
 }
 
 @Composable
 private fun RowScope.PidCell(pid: ColumnInfo, log: Log) {
-    Text(log.pid.toString(), modifier = this.cellDefaultModifier(pid.width))
+    Text(log.pid.toString(), style = MaterialTheme.typography.body2, modifier = this.cellDefaultModifier(pid.width))
 }
 
 @Composable
 private fun RowScope.TidCell(tid: ColumnInfo, log: Log) {
-    Text(log.tid.toString(), modifier = this.cellDefaultModifier(tid.width))
+    Text(log.tid.toString(), style = MaterialTheme.typography.body2, modifier = this.cellDefaultModifier(tid.width))
 }
 
 @Composable
 private fun RowScope.PackagerNameCell(packageName: ColumnInfo, log: Log) {
-    Text(log.packageName ?: "?", modifier = this.cellDefaultModifier(packageName.width))
+    Text(log.packageName ?: "?", style = MaterialTheme.typography.body2, modifier = this.cellDefaultModifier(packageName.width))
 }
 
 @Composable
 private fun RowScope.PriorityCell(priority: ColumnInfo, log: Log) {
-    Text(log.priority.text, modifier = this.cellDefaultModifier(priority.width))
+    Text(log.priority.text, style = MaterialTheme.typography.body2, modifier = this.cellDefaultModifier(priority.width))
 }
 
 @Composable
 private fun RowScope.TagCell(tag: ColumnInfo, log: Log) {
-    Text(log.tag, modifier = this.cellDefaultModifier(tag.width))
+    Text(log.tag, style = MaterialTheme.typography.body2, modifier = this.cellDefaultModifier(tag.width))
 }
 
 @Composable

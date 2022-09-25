@@ -49,12 +49,12 @@ fun TextFilterView(
     addFilter: (TextFilter) -> Unit,
     removeFilter: (TextFilter) -> Unit
 ) {
-    CompositionLocalProvider(
-        LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp)
-    ) {
-        Box(Modifier.border(1.dp, Color.LightGray, RoundedCornerShape(4.dp)).padding(8.dp)) {
-            Column {
-                Text("Filter")
+    Box(Modifier.border(1.dp, Color.LightGray, RoundedCornerShape(4.dp)).padding(8.dp)) {
+        Column {
+            Text("Filter")
+            CompositionLocalProvider(
+                LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp)
+            ) {
                 Spacer(Modifier.height(8.dp))
                 AddTextFilterView(addFilter)
 
