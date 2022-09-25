@@ -9,7 +9,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint-idea") version "10.2.0"
 }
 
-group = "me.jeongyeongju"
+group = "com.jerryjeon"
 version = "1.0"
 
 repositories {
@@ -39,7 +39,7 @@ compose.desktop {
         mainClass = "MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "LogcatViewer"
+            packageName = "LogJerry"
             packageVersion = "1.0.0"
         }
     }
