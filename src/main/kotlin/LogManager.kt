@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 
 class LogManager(
@@ -16,25 +17,26 @@ class LogManager(
 
     private val findEnabledStateFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     private val findKeywordFlow = MutableStateFlow("")
-    val findStatusFlow = combine(findEnabledStateFlow, findKeywordFlow) { enabled, keyword ->
+    val findRequestFlow = combine(findEnabledStateFlow, findKeywordFlow) { enabled, keyword ->
         if (enabled) {
-            FindStatus.TurnedOn(keyword, 0, 0)
+            FindRequest.TurnedOn(keyword)
         } else {
-            FindStatus.TurnedOff
+            FindRequest.TurnedOff
         }
-    }.stateIn(logScope, SharingStarted.Lazily, FindStatus.TurnedOff)
+    }.stateIn(logScope, SharingStarted.Lazily, FindRequest.TurnedOff)
 
     val filtersFlow: MutableStateFlow<List<Filter>> = MutableStateFlow(emptyList())
-    private val transformerFlow = combine(filtersFlow, findStatusFlow) { filters, findStatus ->
+    private val transformerFlow = combine(filtersFlow, findRequestFlow) { filters, findStatus ->
         Transformers(
             filters.map { filter ->
                 { log ->
+                    // TODO use filter.columnType
                     filter.text in log.log
                 }
             },
             when (findStatus) {
-                is FindStatus.TurnedOn -> listOf(KeywordDetection(findStatus.keyword))
-                FindStatus.TurnedOff -> emptyList()
+                is FindRequest.TurnedOn -> listOf(KeywordDetection(findStatus.keyword))
+                FindRequest.TurnedOff -> emptyList()
             }
         )
     }
@@ -46,12 +48,13 @@ class LogManager(
             originalLogs
                 .filter { log -> transformers.filters.any { it(log) } }
         }
-            .mapIndexed { index, log ->
+            .mapIndexed { logIndex, log ->
                 transformers.detections.fold(log) { acc, detection ->
                     val (changed, changedLog) = doDetection(detection, acc)
                     if (changed) {
-                        (detectionResults.getOrPut(detection.key) { mutableListOf() })
-                            .add(DetectionResult(detection.key, index))
+                        val resultList = detectionResults.getOrPut(detection.key) { mutableListOf() }
+                        resultList
+                            .add(DetectionResult(detection.key, resultList.size, logIndex))
                     }
                     changedLog
                 }
@@ -59,9 +62,17 @@ class LogManager(
         RefinedLogs(originalLogs, refined, detectionResults)
     }.stateIn(logScope, SharingStarted.Lazily, RefinedLogs(emptyList(), emptyList(), emptyMap()))
 
-    val findResult = refinedLogs.map {
+    private val keywordDetections = refinedLogs.map {
         it.detectionResults["keyword"] ?: emptyList()
     }.stateIn(logScope, SharingStarted.Lazily, emptyList())
+
+    private val refreshedFindResult = keywordDetections
+        .map { results -> results.firstOrNull()?.let { FindResult(it, results) } }
+
+    private val findResultChangeFromUser = MutableStateFlow<FindResult?>(null)
+
+    val findResultFlowState = merge(refreshedFindResult, findResultChangeFromUser)
+        .stateIn(logScope, SharingStarted.Lazily, null)
 
     data class Transformers(
         val filters: List<(Log) -> Boolean>,
@@ -117,5 +128,27 @@ class LogManager(
 
     fun findEnabled(enabled: Boolean) {
         findEnabledStateFlow.value = enabled
+    }
+
+    fun previousFindResult(findResult: FindResult) {
+        val results = findResult.detectionResults
+        val previousIndex = if (findResult.focusingResult.detectionIndex <= 0) {
+            results.size - 1
+        } else {
+            findResult.focusingResult.detectionIndex - 1
+        }
+
+        findResultChangeFromUser.value = FindResult(results[previousIndex], results)
+    }
+
+    fun nextFindResult(findResult: FindResult) {
+        val results = findResult.detectionResults
+        val nextIndex = if (findResult.focusingResult.detectionIndex >= results.size - 1) {
+            0
+        } else {
+            findResult.focusingResult.detectionIndex + 1
+        }
+
+        findResultChangeFromUser.value = FindResult(results[nextIndex], results)
     }
 }

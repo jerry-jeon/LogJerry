@@ -2,16 +2,26 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun LogsView(header: Header, logs: List<Log>) {
+fun LogsView(header: Header, logs: List<Log>, findResult: FindResult?) {
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(findResult) {
+        findResult?.let {
+            listState.scrollToItem(it.focusingResult.logIndex)
+        }
+    }
+
     val divider: @Composable RowScope.() -> Unit = { ColumnDivider() }
-    LazyColumn(Modifier.padding(10.dp)) {
+    LazyColumn(modifier = Modifier.padding(10.dp), state = listState) {
         item { HeaderRow(header, divider) }
         item { HeaderDivider() }
         logs.forEach {

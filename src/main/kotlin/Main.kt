@@ -63,8 +63,8 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
             Column {
                 val logManager = status.logManager
                 val refinedLogs by logManager.refinedLogs.collectAsState()
-                val findStatus = logManager.findStatusFlow.collectAsState()
-                val findResult = logManager.findResult.collectAsState()
+                val findStatus = logManager.findRequestFlow.collectAsState()
+                val findResult = logManager.findResultFlowState.collectAsState()
                 val refinedLogsList = refinedLogs.refined
                 val logs = logManager.originalLogs
                 ParseCompletedView(
@@ -74,7 +74,7 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
                     refinedLogsList,
                     logs,
                     headerState,
-                    status.parseResult
+                    status.parseResult,
                 )
             }
         }
@@ -83,8 +83,8 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
 
 @Composable
 fun ParseCompletedView(
-    findStatus: State<FindStatus>,
-    findResult: State<List<DetectionResult>>,
+    findRequest: State<FindRequest>,
+    findResult: State<FindResult?>,
     logManager: LogManager,
     refinedLogsList: List<Log>,
     logs: List<Log>,
@@ -92,12 +92,19 @@ fun ParseCompletedView(
     parseResult: ParseResult
 ) {
     InvalidSentences(parseResult)
-    FindView(findStatus.value, findResult.value, logManager::find, logManager::findEnabled)
+    FindView(
+        findRequest.value,
+        findResult.value,
+        logManager::find,
+        logManager::findEnabled,
+        logManager::previousFindResult,
+        logManager::nextFindResult
+    )
     FilterView(logManager.filtersFlow.value, logManager::addFilter, logManager::removeFilter)
     val filteredSize =
         (if (refinedLogsList.size != logs.size) "Filtered size : ${refinedLogsList.size}, " else "")
     Text(filteredSize + "Total : ${logs.size}")
-    LogsView(headerState.value, refinedLogsList)
+    LogsView(headerState.value, refinedLogsList, findResult.value)
 }
 
 @Composable
