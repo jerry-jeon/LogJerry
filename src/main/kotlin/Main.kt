@@ -45,6 +45,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import parse.ParseResult
+import ui.ExceptionDetectionView
 import java.awt.FileDialog
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -64,13 +65,17 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
                 val logManager = status.logManager
                 val refinedLogs by logManager.refinedLogs.collectAsState()
                 val findStatus = logManager.keywordFindRequestFlow.collectAsState()
-                val findResult = logManager.dectectionResultFocusFlowState.collectAsState()
+                val keywordDetectionResultFocus = logManager.keywordDetectionResultFocus.collectAsState()
+                val exceptionDetectionResultFocus = logManager.exceptionDetectionResultFocus.collectAsState()
+                val findResult = logManager.activeDetectionResultFocusFlowState.collectAsState()
                 val refinedLogsList = refinedLogs.refined
                 val logs = logManager.originalLogs
                 ParseCompletedView(
                     logManager,
                     findStatus.value,
                     findResult.value,
+                    keywordDetectionResultFocus.value,
+                    exceptionDetectionResultFocus.value,
                     refinedLogsList,
                     logs,
                     headerState,
@@ -86,6 +91,8 @@ fun ParseCompletedView(
     logManager: LogManager,
     keywordFindRequest: KeywordFindRequest,
     detectionResultFocus: DetectionResultFocus?,
+    keywordDetectionResultFocus: DetectionResultFocus?,
+    exceptionDetectionResultFocus: DetectionResultFocus?,
     refinedLogsList: List<Log>,
     logs: List<Log>,
     headerState: MutableState<Header>,
@@ -97,11 +104,16 @@ fun ParseCompletedView(
         Spacer(Modifier.width(16.dp))
         KeywordFindView(
             keywordFindRequest,
-            detectionResultFocus,
+            keywordDetectionResultFocus,
             logManager::find,
             logManager::setKeywordFindEnabled,
-            logManager::previousFindResult,
-            logManager::nextFindResult
+            { logManager.previousFindResult(true, it) },
+            { logManager.nextFindResult(true, it) },
+        )
+        ExceptionDetectionView(
+            exceptionDetectionResultFocus,
+            { logManager.previousFindResult(false, it) },
+            { logManager.nextFindResult(false, it) },
         )
     }
     val filteredSize =
@@ -117,11 +129,21 @@ private fun GettingStartedView() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Getting Started", modifier = Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.h3)
+        Text(
+            "Getting Started",
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            style = MaterialTheme.typography.h3
+        )
         Spacer(Modifier.height(8.dp))
-        Text("1. File - Open file (Cmd + O), and choose the android log file", modifier = Modifier.align(Alignment.CenterHorizontally))
+        Text(
+            "1. File - Open file (Cmd + O), and choose the android log file",
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
         Spacer(Modifier.height(8.dp))
-        Text("2. Copy the android log, and paste (Cmd + V) to this window", modifier = Modifier.align(Alignment.CenterHorizontally))
+        Text(
+            "2. Copy the android log, and paste (Cmd + V) to this window",
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
     }
 }
 

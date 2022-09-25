@@ -1,6 +1,7 @@
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import detection.ExceptionDetection
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -9,11 +10,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class LogManager(
     val originalLogs: List<Log>
 ) {
     private val logScope = MainScope()
+
+    val defaultDetections = listOf<Detection>(ExceptionDetection())
 
     private val keywordFindEnabledStateFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     private val findKeywordFlow = MutableStateFlow("")
@@ -39,8 +43,8 @@ class LogManager(
                 }
             },
             when (findStatus) {
-                is KeywordFindRequest.TurnedOn -> listOf(KeywordDetection(findStatus.keyword))
-                KeywordFindRequest.TurnedOff -> emptyList()
+                is KeywordFindRequest.TurnedOn -> defaultDetections + listOf(KeywordDetection(findStatus.keyword))
+                KeywordFindRequest.TurnedOff -> defaultDetections
             }
         )
     }
@@ -66,17 +70,27 @@ class LogManager(
         RefinedLogs(originalLogs, refined, detectionResults)
     }.stateIn(logScope, SharingStarted.Lazily, RefinedLogs(emptyList(), emptyList(), emptyMap()))
 
-    private val keywordDetections = refinedLogs.map {
-        it.detectionResults["keyword"] ?: emptyList()
-    }.stateIn(logScope, SharingStarted.Lazily, emptyList())
+    val keywordDetectionResultFocus = MutableStateFlow<DetectionResultFocus?>(null)
+    val exceptionDetectionResultFocus = MutableStateFlow<DetectionResultFocus?>(null)
 
-    private val refreshedDetectionResultFocus = keywordDetections
-        .map { results -> results.firstOrNull()?.let { DetectionResultFocus(it, results) } }
-
+    // When user press the next
     private val detectionResultFocusChangeFromUser = MutableStateFlow<DetectionResultFocus?>(null)
 
-    val dectectionResultFocusFlowState = merge(refreshedDetectionResultFocus, detectionResultFocusChangeFromUser)
-        .stateIn(logScope, SharingStarted.Lazily, null)
+    init {
+        logScope.launch {
+            refinedLogs.collect {
+                val results = it.detectionResults["keyword"] ?: emptyList()
+                keywordDetectionResultFocus.value = results.firstOrNull()?.let { DetectionResultFocus(it, results) }
+
+                val results2 = it.detectionResults["exception"] ?: emptyList()
+                exceptionDetectionResultFocus.value = results2.firstOrNull()?.let { DetectionResultFocus(it, results2) }
+            }
+        }
+    }
+
+    val activeDetectionResultFocusFlowState =
+        merge(keywordDetectionResultFocus, exceptionDetectionResultFocus, detectionResultFocusChangeFromUser)
+            .stateIn(logScope, SharingStarted.Lazily, null)
 
     data class Transformers(
         val filters: List<(Log) -> Boolean>,
@@ -134,7 +148,7 @@ class LogManager(
         keywordFindEnabledStateFlow.value = enabled
     }
 
-    fun previousFindResult(detectionResultFocus: DetectionResultFocus) {
+    fun previousFindResult(keyword: Boolean, detectionResultFocus: DetectionResultFocus) {
         val results = detectionResultFocus.detectionResults
         val previousIndex = if (detectionResultFocus.focusingResult.detectionIndex <= 0) {
             results.size - 1
@@ -142,10 +156,14 @@ class LogManager(
             detectionResultFocus.focusingResult.detectionIndex - 1
         }
 
-        detectionResultFocusChangeFromUser.value = DetectionResultFocus(results[previousIndex], results)
+        if (keyword) {
+            keywordDetectionResultFocus.value = DetectionResultFocus(results[previousIndex], results)
+        } else {
+            exceptionDetectionResultFocus.value = DetectionResultFocus(results[previousIndex], results)
+        }
     }
 
-    fun nextFindResult(detectionResultFocus: DetectionResultFocus) {
+    fun nextFindResult(keyword: Boolean, detectionResultFocus: DetectionResultFocus) {
         val results = detectionResultFocus.detectionResults
         val nextIndex = if (detectionResultFocus.focusingResult.detectionIndex >= results.size - 1) {
             0
@@ -153,6 +171,10 @@ class LogManager(
             detectionResultFocus.focusingResult.detectionIndex + 1
         }
 
-        detectionResultFocusChangeFromUser.value = DetectionResultFocus(results[nextIndex], results)
+        if (keyword) {
+            keywordDetectionResultFocus.value = DetectionResultFocus(results[nextIndex], results)
+        } else {
+            exceptionDetectionResultFocus.value = DetectionResultFocus(results[nextIndex], results)
+        }
     }
 }
