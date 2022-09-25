@@ -3,12 +3,9 @@
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,24 +13,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Divider
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,9 +39,7 @@ import androidx.compose.ui.input.key.KeyShortcut
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
@@ -74,32 +61,48 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
         is ParseStatus.Proceeding -> Text("Proceeding.... ${status.percent}")
         is ParseStatus.Completed -> {
             Column {
-                InvalidSentences(status.parseResult)
-                FilterAndLogs(headerState, status.logManager)
+                val logManager = status.logManager
+                val refinedLogs by logManager.refinedLogs.collectAsState()
+                val findStatus = logManager.findStatusFlow.collectAsState()
+                val findResult = logManager.findResult.collectAsState()
+                val refinedLogsList = refinedLogs.refined
+                val logs = logManager.originalLogs
+                ParseCompletedView(
+                    findStatus,
+                    findResult,
+                    logManager,
+                    refinedLogsList,
+                    logs,
+                    headerState,
+                    status.parseResult
+                )
             }
         }
     }
 }
 
 @Composable
-private fun GettingStartedView() {
-    Text("File - Load or Paste")
+fun ParseCompletedView(
+    findStatus: State<FindStatus>,
+    findResult: State<List<DetectionResult>>,
+    logManager: LogManager,
+    refinedLogsList: List<Log>,
+    logs: List<Log>,
+    headerState: MutableState<Header>,
+    parseResult: ParseResult
+) {
+    InvalidSentences(parseResult)
+    FindView(findStatus.value, findResult.value, logManager::find, logManager::findEnabled)
+    FilterView(logManager.filtersFlow.value, logManager::addFilter, logManager::removeFilter)
+    val filteredSize =
+        (if (refinedLogsList.size != logs.size) "Filtered size : ${refinedLogsList.size}, " else "")
+    Text(filteredSize + "Total : ${logs.size}")
+    LogsView(headerState.value, refinedLogsList)
 }
 
 @Composable
-private fun FilterAndLogs(headerState: MutableState<Header>, logManager: LogManager) {
-    val refinedLogs by logManager.refinedLogs.collectAsState()
-    val refinedLogsList = refinedLogs.refined
-    val logs = logManager.originalLogs
-    val fsState = logManager.findStatusFlow.collectAsState()
-    val findResult = logManager.findResult.collectAsState()
-    Column {
-        FindView(logManager, fsState.value, findResult.value)
-        FilterView(logManager)
-        val filteredSize = (if (refinedLogsList.size != logs.size) "Filtered size : ${refinedLogsList.size}, " else "")
-        Text(filteredSize + "Total : ${logs.size}")
-        LogsView(headerState.value, refinedLogsList)
-    }
+private fun GettingStartedView() {
+    Text("File - Load or Paste")
 }
 
 @Composable
@@ -125,137 +128,6 @@ private fun InvalidSentences(parseResult: ParseResult) {
             Spacer(Modifier.height(8.dp))
             invalidSentences.forEach { (index, s) ->
                 Text("L#${index + 1} : $s")
-            }
-        }
-    }
-}
-
-@Composable
-private fun FindView(logManager: LogManager, findStatus: FindStatus, findResult: List<DetectionResult>) {
-    when (findStatus) {
-        is FindStatus.TurnedOn -> {
-            Row {
-                TextField(
-                    value = findStatus.keyword,
-                    onValueChange = {
-                        logManager.find(it)
-                    }
-                )
-                Spacer(Modifier.width(8.dp))
-                IconButton(onClick = {
-                    logManager.findEnabled(false)
-                }) {
-                    Icon(Icons.Default.Close, "Close find")
-                }
-
-                Text("0 / ${findResult.size}")
-            }
-        }
-        FindStatus.TurnedOff -> {}
-    }
-}
-
-@Composable
-private fun FilterView(logManager: LogManager) {
-    val filters = logManager.filtersFlow.value
-    // TODO take filters as flow
-    // Provide only useful column types
-    var columnType by remember { mutableStateOf(ColumnType.Log) }
-    val items = listOf(ColumnType.Log, ColumnType.PackageName)
-    var text by remember { mutableStateOf("Text") }
-    var expanded by remember { mutableStateOf(false) }
-
-    Column(Modifier.padding(8.dp)) {
-        Row(modifier = Modifier.padding(8.dp)) {
-            Box(modifier = Modifier.border(1.dp, Color.Black, RoundedCornerShape(1.dp)).align(Alignment.CenterVertically)) {
-                Row(modifier = Modifier.clickable(onClick = { expanded = true }).padding(8.dp)) {
-                    Text(
-                        columnType.name,
-                        modifier = Modifier.width(80.dp).align(Alignment.CenterVertically),
-                    )
-                    Icon(Icons.Default.ArrowDropDown, "Column types")
-                }
-                DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
-                    items.forEach {
-                        DropdownMenuItem(onClick = {
-                            columnType = it
-                            expanded = false
-                        }) {
-                            Text(text = it.name)
-                        }
-                    }
-                }
-            }
-            Spacer(Modifier.width(8.dp))
-            TextField(
-                value = text,
-                onValueChange = {
-                    text = it
-                }
-            )
-            Spacer(Modifier.width(8.dp))
-            Button(onClick = {
-                logManager.addFilter(Filter(columnType, text))
-                text = ""
-            }) {
-                Text("Add filter")
-            }
-        }
-
-        Row {
-            filters.forEach { filter ->
-
-                Box(
-                    Modifier
-                        .height(50.dp)
-                        .background(Color.LightGray, RoundedCornerShape(25.dp))
-                ) {
-                    Row(modifier = Modifier.fillMaxHeight().padding(horizontal = 8.dp)) {
-                        if (filter.columnType.icon != null) {
-                            Icon(
-                                filter.columnType.icon,
-                                contentDescription = "Remove a filter",
-                                modifier = Modifier.size(ButtonDefaults.IconSize).align(Alignment.CenterVertically)
-                            )
-                        } else {
-                            Text("${filter.columnType}", modifier = Modifier.align(Alignment.CenterVertically), style = TextStyle.Default.copy(fontSize = 12.sp))
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        Text(filter.text, modifier = Modifier.align(Alignment.CenterVertically))
-                        Spacer(Modifier.width(8.dp))
-                        Box(
-                            Modifier
-                                .background(Color.Gray, CircleShape)
-                                .clickable { logManager.removeFilter(filter) }
-                                .padding(4.dp)
-                                .align(Alignment.CenterVertically)
-                        ) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = "Remove a filter",
-                                modifier = Modifier.size(ButtonDefaults.IconSize).align(Alignment.Center)
-                            )
-                        }
-                    }
-                }
-                Spacer(Modifier.width(8.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun LogsView(header: Header, logs: List<Log>) {
-    val divider: @Composable RowScope.() -> Unit = { ColumnDivider() }
-    LazyColumn(Modifier.padding(10.dp)) {
-        item { HeaderRow(header, divider) }
-        item { HeaderDivider() }
-        logs.forEach {
-            item {
-                Column {
-                    LogRow(it, header, divider = divider)
-                    Divider(color = Color(0xFFE5E7E9))
-                }
             }
         }
     }
