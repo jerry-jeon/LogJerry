@@ -2,6 +2,7 @@
 @file:OptIn(ExperimentalComposeUiApi::class)
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,9 +10,11 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -108,11 +111,41 @@ fun ParseCompletedView(
     parseResult: ParseResult
 ) {
     InvalidSentences(parseResult)
-    Row {
-        TextFilterView(logManager.textFiltersFlow.value, logManager::addFilter, logManager::removeFilter)
-        PriorityFilterView(logManager.priorityFilter.value, logManager::setPriority)
+    Row(modifier = Modifier.padding(16.dp)) {
+        Box(modifier = Modifier.weight(0.5f).border(1.dp, Color.LightGray, RoundedCornerShape(4.dp)).padding(16.dp)) {
+            Column {
+                Text("Filter")
+                Row {
+                    TextFilterView(logManager.textFiltersFlow.value, logManager::addFilter, logManager::removeFilter)
+                    PriorityFilterView(logManager.priorityFilter.value, logManager::setPriority)
+                }
+            }
+        }
         Spacer(Modifier.width(16.dp))
+        Box(modifier = Modifier.weight(0.5f).border(1.dp, Color.LightGray, RoundedCornerShape(4.dp)).padding(16.dp)) {
+            Column {
+                Text("Auto-detection")
+                Row {
+                    ExceptionDetectionView(
+                        exceptionDetectionResultFocus,
+                        { logManager.previousFindResult(DetectionKey.Exception, it) },
+                        { logManager.nextFindResult(DetectionKey.Exception, it) },
+                    )
+                    JsonDetectionView(
+                        jsonDetectionResultFocus,
+                        { logManager.previousFindResult(DetectionKey.Json, it) },
+                        { logManager.nextFindResult(DetectionKey.Json, it) },
+                    )
+                }
+            }
+        }
+    }
+    val filteredSize =
+        (if (refinedLogsList.size != logs.size) "Filtered size : ${refinedLogsList.size}, " else "")
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Text(filteredSize + "Total : ${logs.size}", modifier = Modifier.padding(8.dp))
         KeywordDetectionView(
+            Modifier.align(Alignment.BottomEnd),
             keywordDetectionRequest,
             keywordDetectionResultFocus,
             logManager::find,
@@ -120,20 +153,8 @@ fun ParseCompletedView(
             { logManager.previousFindResult(DetectionKey.Keyword, it) },
             { logManager.nextFindResult(DetectionKey.Keyword, it) },
         )
-        ExceptionDetectionView(
-            exceptionDetectionResultFocus,
-            { logManager.previousFindResult(DetectionKey.Exception, it) },
-            { logManager.nextFindResult(DetectionKey.Exception, it) },
-        )
-        JsonDetectionView(
-            jsonDetectionResultFocus,
-            { logManager.previousFindResult(DetectionKey.Json, it) },
-            { logManager.nextFindResult(DetectionKey.Json, it) },
-        )
     }
-    val filteredSize =
-        (if (refinedLogsList.size != logs.size) "Filtered size : ${refinedLogsList.size}, " else "")
-    Text(filteredSize + "Total : ${logs.size}", modifier = Modifier.padding(8.dp))
+    Divider(color = Color.Black)
     LogsView(headerState.value, refinedLogsList, detectionResultFocus)
 }
 

@@ -29,6 +29,7 @@ import log.SampleData
 
 @Composable
 fun KeywordDetectionView(
+    modifier: Modifier = Modifier,
     keywordDetectionRequest: KeywordDetectionRequest,
     detectionResultFocus: DetectionResultFocus?,
     find: (String) -> Unit,
@@ -42,6 +43,7 @@ fun KeywordDetectionView(
         when (keywordDetectionRequest) {
             is KeywordDetectionRequest.TurnedOn -> {
                 KeywordDetectionRequestViewTurnedOn(
+                    modifier,
                     keywordDetectionRequest,
                     find,
                     setFindEnabled,
@@ -57,6 +59,7 @@ fun KeywordDetectionView(
 
 @Composable
 private fun KeywordDetectionRequestViewTurnedOn(
+    modifier: Modifier,
     keywordDetectionRequest: KeywordDetectionRequest.TurnedOn,
     find: (String) -> Unit,
     setFindEnabled: (Boolean) -> Unit,
@@ -64,7 +67,7 @@ private fun KeywordDetectionRequestViewTurnedOn(
     moveToPreviousOccurrence: (DetectionResultFocus) -> Unit,
     moveToNextOccurrence: (DetectionResultFocus) -> Unit
 ) {
-    Box(Modifier.padding(8.dp)) {
+    Box(modifier.padding(8.dp)) {
         OutlinedTextField(
             value = keywordDetectionRequest.keyword,
             onValueChange = { find(it) },
@@ -106,6 +109,7 @@ private fun KeywordDetectionViewPreview() {
     MyTheme {
         val results = listOf(DetectionResult(DetectionKey.Keyword, SpanStyle(), listOf(0..3), SampleData.log, 0))
         KeywordDetectionView(
+            Modifier,
             KeywordDetectionRequest.TurnedOn("Searching keyword"),
             DetectionResultFocus(DetectionKey.Keyword, 0, results[0], results),
             {},
