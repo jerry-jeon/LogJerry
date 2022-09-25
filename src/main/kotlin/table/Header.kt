@@ -9,10 +9,11 @@ data class Header(
     val packageName: ColumnInfo,
     val priority: ColumnInfo,
     val tag: ColumnInfo,
+    val button: ColumnInfo,
     val log: ColumnInfo,
 ) {
 
-    val asColumnList: List<ColumnInfo> = listOf(number, date, time, pid, tid, packageName, priority, tag, log)
+    val asColumnList: List<ColumnInfo> = listOf(number, date, time, pid, tid, packageName, priority, tag, button, log)
 
     operator fun get(columnType: ColumnType): ColumnInfo {
         return when (columnType) {
@@ -24,6 +25,7 @@ data class Header(
             ColumnType.PackageName -> packageName
             ColumnType.Priority -> priority
             ColumnType.Tag -> tag
+            ColumnType.B -> button
             ColumnType.Log -> log
         }
     }
@@ -38,6 +40,7 @@ data class Header(
             ColumnType.PackageName -> copy(packageName = columnInfo)
             ColumnType.Priority -> copy(priority = columnInfo)
             ColumnType.Tag -> copy(tag = columnInfo)
+            ColumnType.B -> copy(button = columnInfo)
             ColumnType.Log -> copy(log = columnInfo)
         }
     }
@@ -52,7 +55,8 @@ data class Header(
             packageName = ColumnInfo(ColumnType.PackageName, 130, true),
             priority = ColumnInfo(ColumnType.Priority, 70, true),
             tag = ColumnInfo(ColumnType.Tag, 200, true),
-            log = ColumnInfo(ColumnType.Log, null, true),
+            button = ColumnInfo(ColumnType.B, 50, true),
+            log = ColumnInfo(ColumnType.Log, null, true)
         )
     }
 }

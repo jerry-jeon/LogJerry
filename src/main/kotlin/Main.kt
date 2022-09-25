@@ -47,6 +47,7 @@ import androidx.compose.ui.window.application
 import detection.KeywordDetectionRequest
 import detection.KeywordDetectionView
 import log.LogManager
+import log.refine.RefinedLog
 import parse.ParseResult
 import parse.ParseStatus
 import source.Source
@@ -72,7 +73,7 @@ fun App(headerState: MutableState<Header>, sourceManager: SourceManager) {
         is ParseStatus.Completed -> {
             Column {
                 val logManager = status.logManager
-                val refinedLogs by logManager.refinedLogs.collectAsState()
+                val refinedLogs by logManager.refineResult.collectAsState()
                 val findStatus = logManager.keywordDetectionRequestFlow.collectAsState()
                 val keywordDetectionResultFocus = logManager.keywordDetectionResultFocus.collectAsState()
                 val exceptionDetectionResultFocus = logManager.exceptionDetectionResultFocus.collectAsState()
@@ -105,7 +106,7 @@ fun ParseCompletedView(
     keywordDetectionResultFocus: DetectionResultFocus?,
     exceptionDetectionResultFocus: DetectionResultFocus?,
     jsonDetectionResultFocus: DetectionResultFocus?,
-    refinedLogsList: List<Log>,
+    refinedLogsList: List<RefinedLog>,
     logs: List<Log>,
     headerState: MutableState<Header>,
     parseResult: ParseResult

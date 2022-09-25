@@ -23,7 +23,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import log.refine.LogFilter
 import log.refine.PriorityFilter
-import log.refine.RefinedLogs
+import log.refine.RefineResult
+import log.refine.RefinedLog
 import log.refine.TextFilter
 
 class LogManager(
@@ -57,8 +58,8 @@ class LogManager(
             }
         )
     }
-    val refinedLogs: StateFlow<RefinedLogs> = transformerFlow.map { transformers ->
-        val detectionResults = mutableMapOf<DetectionKey, MutableList<DetectionResult>>()
+    val refineResult: StateFlow<RefineResult> = transformerFlow.map { transformers ->
+        val allDetectionResults = mutableMapOf<DetectionKey, List<DetectionResult>>()
         val refined = if (transformers.filters.isEmpty()) {
             originalLogs
         } else {
@@ -66,7 +67,8 @@ class LogManager(
                 .filter { log -> transformers.filters.all { it.filter(log) } }
         }
             .mapIndexed { logIndex, log ->
-                transformers.detections.fold(log) { acc, detection ->
+                val detectionResults = mutableMapOf<DetectionKey, MutableList<DetectionResult>>()
+                val refined = transformers.detections.fold(log) { acc, detection ->
                     val (detectionResult, changedLog) = doDetection(detection, acc, logIndex)
                     if (detectionResult != null) {
                         val resultList = detectionResults.getOrPut(detection.key) { mutableListOf() }
@@ -74,9 +76,19 @@ class LogManager(
                     }
                     changedLog
                 }
+                // TODO cleanup codes
+                detectionResults.forEach { (k, v) ->
+                    val exist = allDetectionResults[k]
+                    if(exist != null) {
+                        allDetectionResults[k] = exist + v
+                    } else {
+                        allDetectionResults[k] = v
+                    }
+                }
+                RefinedLog(log, refined, detectionResults)
             }
-        RefinedLogs(originalLogs, refined, detectionResults)
-    }.stateIn(logScope, SharingStarted.Lazily, RefinedLogs(emptyList(), emptyList(), emptyMap()))
+        RefineResult(originalLogs, refined, allDetectionResults)
+    }.stateIn(logScope, SharingStarted.Lazily, RefineResult(emptyList(), emptyList(), emptyMap()))
 
     val keywordDetectionResultFocus = MutableStateFlow<DetectionResultFocus?>(null)
     val exceptionDetectionResultFocus = MutableStateFlow<DetectionResultFocus?>(null)
@@ -90,18 +102,18 @@ class LogManager(
 
     init {
         logScope.launch {
-            refinedLogs.collect { refinedLogs ->
-                val results = refinedLogs.detectionResults[DetectionKey.Keyword] ?: emptyList()
+            refineResult.collect { refinedLogs ->
+                val results = refinedLogs.allDetectionResults[DetectionKey.Keyword] ?: emptyList()
                 keywordDetectionResultFocus.value = results.firstOrNull()?.let {
                     DetectionResultFocus(DetectionKey.Keyword, 0, null, results)
                 }
 
-                val results2 = refinedLogs.detectionResults[DetectionKey.Exception] ?: emptyList()
+                val results2 = refinedLogs.allDetectionResults[DetectionKey.Exception] ?: emptyList()
                 exceptionDetectionResultFocus.value = results2.firstOrNull()?.let {
                     DetectionResultFocus(DetectionKey.Exception, 0, null, results2)
                 }
 
-                val results3 = refinedLogs.detectionResults[DetectionKey.Json] ?: emptyList()
+                val results3 = refinedLogs.allDetectionResults[DetectionKey.Json] ?: emptyList()
                 jsonDetectionResultFocus.value = results3.firstOrNull()?.let {
                     DetectionResultFocus(DetectionKey.Exception, 0, null, results3)
                 }

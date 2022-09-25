@@ -22,5 +22,6 @@ enum class ColumnType(val shortcut: KeyShortcut, val icon: ImageVector?) {
     PackageName(KeyShortcut(Key.Five, meta = true), null),
     Priority(KeyShortcut(Key.Six, meta = true), null),
     Tag(KeyShortcut(Key.Seven, meta = true), Icons.Default.Info),
-    Log(KeyShortcut(Key.Eight, meta = true), Icons.Default.List);
+    Log(KeyShortcut(Key.Eight, meta = true), Icons.Default.List),
+    B(KeyShortcut(Key.Nine, meta = true), null); // button
 }
