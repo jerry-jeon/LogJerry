@@ -1,6 +1,7 @@
 package parse
 
 import Log
+import java.lang.Exception
 
 class DefaultParser : LogParser {
     override fun canParse(raw: String): Boolean {
@@ -8,7 +9,22 @@ class DefaultParser : LogParser {
         return true
     }
 
-    override fun parse(raw: String): Log {
+    override fun parse(rawLines: List<String>): List<Log> {
+        val logs = mutableListOf<Log>()
+        var lastLog: Log? = null
+        rawLines.forEach { s ->
+            lastLog = try {
+                val log = parseSingleLineLog(s)
+                lastLog?.let { logs.add(it) }
+                log
+            } catch (e: Exception) {
+                val continuedLog = lastLog ?: throw IllegalArgumentException("Invalid sentence: $s", e)
+                continuedLog.copy(log = continuedLog.log + s)
+            }
+        }
+        return logs.toList()
+    }
+    private fun parseSingleLineLog(raw: String): Log {
         val split = raw.split(" ")
 
         val date = split[0]
