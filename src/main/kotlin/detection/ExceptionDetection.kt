@@ -1,25 +1,30 @@
 package detection
 
 import Detection
+import DetectionKey
+import DetectionResult
 import Log
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 
 class ExceptionDetection : Detection {
-    override val key: String = "exception"
+    override val key = DetectionKey.Exception
     override val detectedStyle: SpanStyle
         get() = SpanStyle(background = Color(0x40EEEEA5))
 
-    override fun detect(log: Log): List<IntRange> {
+    override fun detect(log: Log): ExceptionDetectionResult? {
         val lines = log.originalLog.split("\n")
-        val isException = lines.any {
-            isStackTrace(it)
-        }
-        return if (isException) {
-            listOf(0 until log.originalLog.length)
-        } else {
-            emptyList()
-        }
+        val stackStartLine = lines.indexOfFirst { isStackTrace(it) }
+            .takeIf { it != -1 } ?: return null
+
+        val exceptionLines = lines.subList(0, (stackStartLine - 1).coerceAtLeast(0))
+        val words = exceptionLines.joinToString(separator = " ").split(',', '.', ' ', '\n', '$', ':', ';')
+        val exception = words.firstOrNull { it.contains("exception", ignoreCase = true) || it.contains("error", ignoreCase = true) }
+
+        return ExceptionDetectionResult(
+            0 until log.originalLog.length,
+            exception ?: ""
+        )
     }
 
     /**
@@ -46,3 +51,8 @@ class ExceptionDetection : Detection {
         return true
     }
 }
+
+class ExceptionDetectionResult(
+    range: IntRange,
+    val exception: String,
+) : DetectionResult(listOf(range))

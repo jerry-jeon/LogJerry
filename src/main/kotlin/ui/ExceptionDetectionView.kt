@@ -1,9 +1,11 @@
 package ui
 
-import DetectionResult
+import DetectionKey
 import DetectionResultFocus
+import IndexedDetectionResult
 import MyTheme
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Icon
@@ -11,15 +13,16 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import detection.ExceptionDetectionResult
 
 @Composable
 fun ExceptionDetectionView(
@@ -45,19 +48,26 @@ private fun ExceptionDetectionRequestViewTurnedOn(
     moveToNextOccurrence: (DetectionResultFocus) -> Unit
 ) {
     Row(Modifier.padding(8.dp)) {
-        Icon(Icons.Default.Search, "Search")
-        Row {
-            detectionResultFocus?.let {
-                Text(
-                    "${it.focusingResult.detectionIndexInView}/ ${detectionResultFocus.totalCount}",
-                    modifier = Modifier.align(Alignment.CenterVertically)
-                )
-                IconButton(onClick = { moveToPreviousOccurrence(it) }) {
-                    Icon(Icons.Default.KeyboardArrowUp, "Previous Occurrence")
+        Text("Exceptions")
+        Icon(Icons.Default.Close, "Search", Modifier.align(Alignment.CenterVertically))
+        detectionResultFocus?.let {
+            Column {
+                Row {
+                    Text(
+                        "${it.focusingResult.detectionIndexInView}/ ${detectionResultFocus.totalCount}",
+                        modifier = Modifier.align(Alignment.CenterVertically)
+                    )
+                    IconButton(onClick = { moveToPreviousOccurrence(it) }) {
+                        Icon(Icons.Default.KeyboardArrowUp, "Previous Occurrence")
+                    }
+                    IconButton(onClick = { moveToNextOccurrence(it) }) {
+                        Icon(Icons.Default.KeyboardArrowDown, "Next Occurrence")
+                    }
                 }
-                IconButton(onClick = { moveToNextOccurrence(it) }) {
-                    Icon(Icons.Default.KeyboardArrowDown, "Next Occurrence")
-                }
+
+                // TODO cleanup ; don't cast
+                val dr = it.focusingResult.detectionResult as ExceptionDetectionResult
+                Text(dr.exception)
             }
         }
     }
@@ -68,11 +78,7 @@ private fun ExceptionDetectionRequestViewTurnedOn(
 private fun ExceptionDetectionViewPreview() {
     MyTheme {
         val results = listOf(
-            DetectionResult("keyword", 0, 1),
-            DetectionResult("keyword", 1, 1),
-            DetectionResult("keyword", 2, 1),
-            DetectionResult("keyword", 3, 1),
-            DetectionResult("keyword", 4, 1),
+            IndexedDetectionResult(DetectionKey.Exception, ExceptionDetectionResult(0..1, ""), 1, 1),
         )
         ExceptionDetectionView(
             DetectionResultFocus(results[2], results),

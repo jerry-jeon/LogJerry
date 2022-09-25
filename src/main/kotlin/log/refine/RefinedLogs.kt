@@ -1,10 +1,11 @@
 package log.refine
 
-import DetectionResult
+import DetectionKey
+import IndexedDetectionResult
 import Log
 
 data class RefinedLogs(
     val originalLogs: List<Log>,
     val refined: List<Log>,
-    val detectionResults: Map<String, List<DetectionResult>>,
+    val detectionResults: Map<DetectionKey, List<IndexedDetectionResult>>,
 )

@@ -1,22 +1,32 @@
 import androidx.compose.ui.text.SpanStyle
 
-interface Detection {
-    val key: String
-    val detectedStyle: SpanStyle
-    fun detect(log: Log): List<IntRange> // Detected ranges
+// When we support custom detection, then key should be String
+enum class DetectionKey {
+    Keyword, Exception
 }
 
-class DetectionResult(
-    val detectionKey: String,
+interface Detection {
+    val key: DetectionKey
+    val detectedStyle: SpanStyle
+    fun detect(log: Log): DetectionResult?
+}
+
+open class DetectionResult(
+    val ranges: List<IntRange> // Detected ranges
+)
+
+class IndexedDetectionResult(
+    val detectionKey: DetectionKey,
+    val detectionResult: DetectionResult,
     val detectionIndex: Int,
     val logIndex: Int
 ) {
     val detectionIndexInView = detectionIndex + 1
-}
+} // IndexedDectionResult
 
 class DetectionResultFocus(
-    val focusingResult: DetectionResult,
-    val detectionResults: List<DetectionResult>,
+    val focusingResult: IndexedDetectionResult,
+    val detectionResults: List<IndexedDetectionResult>,
 ) {
     val totalCount = detectionResults.size
 }

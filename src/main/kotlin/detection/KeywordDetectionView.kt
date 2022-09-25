@@ -1,7 +1,9 @@
 package detection
 
+import DetectionKey
 import DetectionResult
 import DetectionResultFocus
+import IndexedDetectionResult
 import MyTheme
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Box
@@ -95,11 +97,7 @@ private fun KeywordDetectionRequestViewTurnedOn(
 private fun KeywordDetectionViewPreview() {
     MyTheme {
         val results = listOf(
-            DetectionResult("keyword", 0, 1),
-            DetectionResult("keyword", 1, 1),
-            DetectionResult("keyword", 2, 1),
-            DetectionResult("keyword", 3, 1),
-            DetectionResult("keyword", 4, 1),
+            IndexedDetectionResult(DetectionKey.Keyword, DetectionResult((listOf(0..3))), 0, 1),
         )
         KeywordDetectionView(
             KeywordDetectionRequest.TurnedOn("Searching keyword"),

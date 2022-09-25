@@ -1,8 +1,10 @@
 package log
 
 import Detection
+import DetectionKey
 import DetectionResult
 import DetectionResultFocus
+import IndexedDetectionResult
 import Log
 import androidx.compose.ui.text.AnnotatedString
 import detection.ExceptionDetection
@@ -58,7 +60,7 @@ class LogManager(
         )
     }
     val refinedLogs: StateFlow<RefinedLogs> = transformerFlow.map { transformers ->
-        val detectionResults = mutableMapOf<String, MutableList<DetectionResult>>()
+        val detectionResults = mutableMapOf<DetectionKey, MutableList<IndexedDetectionResult>>()
         val refined = if (transformers.filters.isEmpty()) {
             originalLogs
         } else {
@@ -67,11 +69,11 @@ class LogManager(
         }
             .mapIndexed { logIndex, log ->
                 transformers.detections.fold(log) { acc, detection ->
-                    val (changed, changedLog) = doDetection(detection, acc)
-                    if (changed) {
+                    val (detectionResult, changedLog) = doDetection(detection, acc)
+                    if (detectionResult != null) {
                         val resultList = detectionResults.getOrPut(detection.key) { mutableListOf() }
                         resultList
-                            .add(DetectionResult(detection.key, resultList.size, logIndex))
+                            .add(IndexedDetectionResult(detection.key, detectionResult, resultList.size, logIndex))
                     }
                     changedLog
                 }
@@ -88,10 +90,10 @@ class LogManager(
     init {
         logScope.launch {
             refinedLogs.collect {
-                val results = it.detectionResults["keyword"] ?: emptyList()
+                val results = it.detectionResults[DetectionKey.Keyword] ?: emptyList()
                 keywordDetectionResultFocus.value = results.firstOrNull()?.let { DetectionResultFocus(it, results) }
 
-                val results2 = it.detectionResults["exception"] ?: emptyList()
+                val results2 = it.detectionResults[DetectionKey.Exception] ?: emptyList()
                 exceptionDetectionResultFocus.value = results2.firstOrNull()?.let { DetectionResultFocus(it, results2) }
             }
         }
@@ -106,20 +108,15 @@ class LogManager(
         val detections: List<Detection>
     )
 
-    private fun doDetection(detection: Detection, log: Log): Pair<Boolean, Log> {
-        val indexRanges = detection.detect(log)
-
-        return if (indexRanges.isEmpty()) {
-            false to log
-        } else {
-            true to log.copy(
-                log = indexRanges.fold(AnnotatedString.Builder(log.originalLog)) { builder, range ->
-                    builder.apply {
-                        addStyle(detection.detectedStyle, range.first, range.last)
-                    }
-                }.toAnnotatedString()
-            )
-        }
+    private fun doDetection(detection: Detection, log: Log): Pair<DetectionResult?, Log> {
+        val detectionResult = detection.detect(log) ?: return (null to log)
+        return detectionResult to log.copy(
+            log = detectionResult.ranges.fold(AnnotatedString.Builder(log.originalLog)) { builder, range ->
+                builder.apply {
+                    addStyle(detection.detectedStyle, range.first, range.last)
+                }
+            }.toAnnotatedString()
+        )
     }
 
     fun addFilter(filter: Filter) {
