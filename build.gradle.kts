@@ -1,6 +1,8 @@
 import org.jetbrains.compose.compose
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.io.FileInputStream
+import java.util.Properties
 
 plugins {
     kotlin("jvm") version "1.6.10"
@@ -35,13 +37,34 @@ tasks.test {
     useJUnitPlatform()
 }
 
+val signingProperties = Properties().apply {
+    load(FileInputStream(File(rootProject.rootDir, "signing.properties")))
+}
+
 compose.desktop {
     application {
+        javaHome = System.getenv("JDK_!8")
         mainClass = "com.jerryjeon.logjerry.MainKt"
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Dmg)
             packageName = "LogJerry"
             packageVersion = "1.0.0"
+
+            macOS {
+                iconFile.set(project.file("LogJerry.icns"))
+                bundleID = "com.jerryjeon.logjerry"
+                signing {
+                    sign.set(signingProperties.getProperty("compose.desktop.mac.sign").toBoolean())
+                    identity.set(signingProperties.getProperty("compose.desktop.mac.signing.identity"))
+                }
+                notarization {
+                    appleID.set(signingProperties.getProperty("compose.desktop.mac.notarization.appleID"))
+                    appleID.set(signingProperties.getProperty("compose.desktop.mac.notarization.password"))
+                }
+                appStore = signingProperties.getProperty("compose.desktop.mac.appStore").toBoolean()
+                provisioningProfile.set(project.file(signingProperties.getProperty("compose.desktop.mac.provisionProfile")))
+                runtimeProvisioningProfile.set(project.file(signingProperties.getProperty("compose.desktop.mac.runtimeProvisionProfile")))
+            }
         }
     }
 }
