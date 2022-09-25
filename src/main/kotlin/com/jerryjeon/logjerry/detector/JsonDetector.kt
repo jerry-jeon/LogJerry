@@ -56,7 +56,7 @@ class JsonDetection(
         get() = detectedStyle
 
     companion object {
-        val detectedStyle = SpanStyle(background = Color(0x40777777))
+        val detectedStyle = SpanStyle(background = Color(0x40D3D3D3))
     }
 
     fun move(index: Int): JsonDetection {

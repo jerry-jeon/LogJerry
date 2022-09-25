@@ -1,6 +1,5 @@
 package com.jerryjeon.logjerry.logview
 
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import com.jerryjeon.logjerry.detection.DetectionFinished
@@ -109,7 +108,7 @@ class LogViewManager(
                             )
                         }
                     }
-                    LogContentView.Json(builder.toAnnotatedString(), Color(0x40D3D3D3), logContent.jsonDetection)
+                    LogContentView.Json(builder.toAnnotatedString(), JsonDetection.detectedStyle.background, logContent.jsonDetection)
                 }
                 is LogContent.Text -> {
                     val initial = AnnotatedString.Builder(logContent.text)
