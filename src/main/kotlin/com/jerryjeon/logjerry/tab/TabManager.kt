@@ -19,7 +19,11 @@ class TabManager(
 
     fun onNewFileSelected(file: File) {
         val newActiveTab = Tab(file.name, SourceManager(preferences))
-        newActiveTab.sourceManager.changeSource(Source.File(file))
+        if (file.extension.equals("zip", true)) {
+            newActiveTab.sourceManager.changeSource(Source.ZipFile(file))
+        } else {
+            newActiveTab.sourceManager.changeSource(Source.File(file))
+        }
 
         val (tabList, active) = tabs.value
 

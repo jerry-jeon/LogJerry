@@ -12,6 +12,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import okio.FileSystem
+import okio.Path.Companion.toOkioPath
+import okio.Path.Companion.toPath
+import okio.openZip
 
 class SourceManager(private val preferences: Preferences) {
     private val sourceScope = CoroutineScope(Dispatchers.Default)
@@ -19,6 +23,15 @@ class SourceManager(private val preferences: Preferences) {
     val sourceFlow: MutableStateFlow<Source> = MutableStateFlow(Source.None)
     val parseStatusFlow: StateFlow<ParseStatus> = sourceFlow.map {
         when (it) {
+            is Source.ZipFile -> {
+                val fileSystem =  FileSystem.SYSTEM
+                val zipFileSystem = fileSystem.openZip(it.file.toOkioPath())
+                val files = zipFileSystem.listOrNull("/".toPath()) ?: return@map ParseStatus.NotStarted
+                val content = zipFileSystem.read(files.first()) { readUtf8() }.split("\n")
+                val parseResult = parser.parse(content)
+                ParseStatus.Completed(parseResult, LogManager(parseResult.logs, preferences))
+            }
+
             is Source.File -> {
                 val parseResult = parser.parse(it.file.readLines())
                 ParseStatus.Completed(parseResult, LogManager(parseResult.logs, preferences))
