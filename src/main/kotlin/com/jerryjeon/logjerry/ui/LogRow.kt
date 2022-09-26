@@ -35,7 +35,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
@@ -304,11 +304,11 @@ private fun JsonPrettyDialog(
             state = DialogState(width = 800.dp, height = 600.dp),
             onPreviewKeyEvent = { keyEvent ->
                 when {
-                    keyEvent.isMetaPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown -> {
+                    keyEvent.isCtrlPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown -> {
                         showPrettyJsonDialogState.value = null
                         true
                     }
-                    keyEvent.isMetaPressed && keyEvent.key == Key.C && keyEvent.type == KeyEventType.KeyDown -> {
+                    keyEvent.isCtrlPressed && keyEvent.key == Key.C && keyEvent.type == KeyEventType.KeyDown -> {
                         copyToClipboard(prettyJson)
                         true
                     }
