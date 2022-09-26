@@ -21,7 +21,7 @@ repositories {
 }
 
 dependencies {
-    implementation(compose.desktop.macos_arm64)
+    implementation(compose.desktop.currentOs)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
@@ -44,7 +44,7 @@ val signingProperties = Properties().apply {
 
 compose.desktop {
     application {
-        javaHome = System.getenv("JDK_!8")
+        javaHome = System.getenv("JDK_18")
         mainClass = "com.jerryjeon.logjerry.MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg)
@@ -63,8 +63,8 @@ compose.desktop {
                     password.set(signingProperties.getProperty("compose.desktop.mac.notarization.password"))
                 }
                 appStore = signingProperties.getProperty("compose.desktop.mac.appStore").toBoolean()
-                provisioningProfile.set(project.file(signingProperties.getProperty("compose.desktop.mac.provisionProfile")))
-                runtimeProvisioningProfile.set(project.file(signingProperties.getProperty("compose.desktop.mac.runtimeProvisionProfile")))
+                // provisioningProfile.set(project.file(signingProperties.getProperty("compose.desktop.mac.provisionProfile")))
+                // runtimeProvisioningProfile.set(project.file(signingProperties.getProperty("compose.desktop.mac.runtimeProvisionProfile")))
             }
         }
     }
