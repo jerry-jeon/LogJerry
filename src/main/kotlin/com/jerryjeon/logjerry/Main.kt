@@ -49,7 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.KeyShortcut
-import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -235,7 +235,7 @@ private fun GettingStartedView(notStarted: ParseStatus.NotStarted, changeSource:
         modifier = Modifier.fillMaxSize().padding(50.dp)
             .onPreviewKeyEvent { keyEvent ->
                 when {
-                    keyEvent.isMetaPressed && keyEvent.key == Key.V && keyEvent.type == KeyEventType.KeyDown -> {
+                    keyEvent.isCtrlPressed && keyEvent.key == Key.V && keyEvent.type == KeyEventType.KeyDown -> {
                         Toolkit.getDefaultToolkit()
                             .systemClipboard
                             .getData(DataFlavor.stringFlavor)
@@ -290,7 +290,7 @@ private fun InvalidSentences(parseResult: ParseResult) {
             title = "Invalid sentences",
             state = DialogState(width = 800.dp, height = 600.dp),
             onPreviewKeyEvent = { keyEvent ->
-                if (keyEvent.isMetaPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown) {
+                if (keyEvent.isCtrlPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown) {
                     showInvalidSentence = false
                 }
                 false
@@ -352,7 +352,7 @@ fun main() = application {
         state = WindowState(width = Dp.Unspecified, height = Dp.Unspecified),
         onCloseRequest = ::exitApplication,
         onPreviewKeyEvent = { keyEvent ->
-            if (keyEvent.isMetaPressed && keyEvent.key == Key.F && keyEvent.type == KeyEventType.KeyDown) {
+            if (keyEvent.isCtrlPressed && keyEvent.key == Key.F && keyEvent.type == KeyEventType.KeyDown) {
                 tabManager.findShortcutPressed()
                 true
             } else {

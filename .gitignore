@@ -114,3 +114,4 @@ gradle-app.setting
 hs_err_pid*
 
 signing.properties
+/local.properties

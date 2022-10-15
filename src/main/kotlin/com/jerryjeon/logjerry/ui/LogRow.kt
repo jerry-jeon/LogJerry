@@ -5,12 +5,10 @@ package com.jerryjeon.logjerry.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -35,7 +33,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
@@ -66,7 +64,7 @@ fun LogRow(
     expandJsonDetection: (annotation: String) -> Unit,
     divider: @Composable RowScope.() -> Unit
 ) {
-    Row(Modifier.height(IntrinsicSize.Min)) {
+    Row(Modifier) {
         Spacer(Modifier.width(8.dp))
         header.asColumnList.forEach { columnInfo ->
             if (columnInfo.visible) {
@@ -304,11 +302,11 @@ private fun JsonPrettyDialog(
             state = DialogState(width = 800.dp, height = 600.dp),
             onPreviewKeyEvent = { keyEvent ->
                 when {
-                    keyEvent.isMetaPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown -> {
+                    keyEvent.isCtrlPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown -> {
                         showPrettyJsonDialogState.value = null
                         true
                     }
-                    keyEvent.isMetaPressed && keyEvent.key == Key.C && keyEvent.type == KeyEventType.KeyDown -> {
+                    keyEvent.isCtrlPressed && keyEvent.key == Key.C && keyEvent.type == KeyEventType.KeyDown -> {
                         copyToClipboard(prettyJson)
                         true
                     }

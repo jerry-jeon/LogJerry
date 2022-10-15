@@ -5,6 +5,7 @@ import com.jerryjeon.logjerry.detector.DetectorManager
 import com.jerryjeon.logjerry.filter.FilterManager
 import com.jerryjeon.logjerry.logview.LogViewManager
 import com.jerryjeon.logjerry.preferences.Preferences
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 
 class LogManager(
@@ -23,7 +24,7 @@ class LogManager(
         }
     }
 
-    val detectionManager = DetectionManager(filteredLogsFlow, detectorManager.detectorsFlow)
+    val detectionManager = DetectionManager(filteredLogsFlow, detectorManager.detectorsFlow.debounce(250))
 
     val logViewManager = LogViewManager(detectionManager.detectionFinishedFlow, preferences)
 }
