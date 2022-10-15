@@ -4,41 +4,13 @@
 package com.jerryjeon.logjerry
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Divider
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -46,28 +18,13 @@ import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.KeyShortcut
-import androidx.compose.ui.input.key.isCtrlPressed
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogState
-import androidx.compose.ui.window.MenuBar
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.WindowState
-import androidx.compose.ui.window.application
-import com.jerryjeon.logjerry.detector.DetectionFocus
-import com.jerryjeon.logjerry.detector.DetectorKey
-import com.jerryjeon.logjerry.detector.JsonDetection
-import com.jerryjeon.logjerry.detector.KeywordDetectionRequest
-import com.jerryjeon.logjerry.detector.KeywordDetectionView
+import androidx.compose.ui.window.*
+import com.jerryjeon.logjerry.detector.*
 import com.jerryjeon.logjerry.filter.PriorityFilter
 import com.jerryjeon.logjerry.filter.TextFilter
 import com.jerryjeon.logjerry.log.Log
@@ -82,12 +39,7 @@ import com.jerryjeon.logjerry.tab.Tab
 import com.jerryjeon.logjerry.tab.TabManager
 import com.jerryjeon.logjerry.tab.Tabs
 import com.jerryjeon.logjerry.table.Header
-import com.jerryjeon.logjerry.ui.ExceptionDetectionView
-import com.jerryjeon.logjerry.ui.JsonDetectionView
-import com.jerryjeon.logjerry.ui.LogsView
-import com.jerryjeon.logjerry.ui.PriorityFilterView
-import com.jerryjeon.logjerry.ui.TextFilterView
-import com.jerryjeon.logjerry.ui.columnCheckboxItem
+import com.jerryjeon.logjerry.ui.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import java.awt.FileDialog
 import java.awt.Toolkit
@@ -363,21 +315,21 @@ fun main() = application {
         MyTheme {
             MenuBar {
                 Menu("File") {
-                    Item("New Tab", shortcut = KeyShortcut(Key.N, meta = true)) {
+                    Item("New Tab", shortcut = KeyShortcut(Key.N, ctrl = true)) {
                         tabManager.newTab()
                     }
-                    Item("Open file", shortcut = KeyShortcut(Key.O, meta = true)) {
+                    Item("Open file", shortcut = KeyShortcut(Key.O, ctrl = true)) {
                         openFileDialog {
                             tabManager.onNewFileSelected(it)
                         }
                     }
-                    Item("Previous Tab", shortcut = KeyShortcut(Key.LeftBracket, meta = true, shift = true)) {
+                    Item("Previous Tab", shortcut = KeyShortcut(Key.LeftBracket, ctrl = true, shift = true)) {
                         tabManager.moveToPreviousTab()
                     }
-                    Item("Next Tab", shortcut = KeyShortcut(Key.RightBracket, meta = true, shift = true)) {
+                    Item("Next Tab", shortcut = KeyShortcut(Key.RightBracket, ctrl = true, shift = true)) {
                         tabManager.moveToNextTab()
                     }
-                    Item("Close Tab", shortcut = KeyShortcut(Key.W, meta = true)) {
+                    Item("Close Tab", shortcut = KeyShortcut(Key.W, ctrl = true)) {
                         tabManager.closeActiveTab()
                     }
                 }
@@ -387,7 +339,7 @@ fun main() = application {
                     }
                 }
                 Menu("Preferences") {
-                    Item("preferences.Preferences", shortcut = KeyShortcut(Key.Comma, meta = true)) {
+                    Item("preferences.Preferences", shortcut = KeyShortcut(Key.Comma, ctrl = true)) {
                         preferenceOpen.value = true
                     }
                 }
