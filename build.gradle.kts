@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "com.jerryjeon"
-version = "1.0"
+version = "1.0.1"
 
 repositories {
     google()
@@ -48,9 +48,9 @@ compose.desktop {
         javaHome = System.getenv("JDK_18")
         mainClass = "com.jerryjeon.logjerry.MainKt"
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg)
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "LogJerry"
-            packageVersion = "1.0.0"
+            packageVersion = "1.0.1"
 
             macOS {
                 iconFile.set(project.file("LogJerry.icns"))
