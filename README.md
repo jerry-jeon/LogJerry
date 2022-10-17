@@ -19,13 +19,12 @@ So that's why I am making this project. Any feedbacks are welcome!
     
 ### Download
 
-Currently mac is the only supported platform.
+Only Mac ARM64 package is provided in the Release tab. However, you can build it for your own platform by yourself.
 You can download a .dmg file in the [releases](https://github.com/jkj8790/LogJerry/releases).
 
 ### Next features
 
 - More color configurations
-- Support dark mode
 - Easy scroll like VS code Map Mode
 - Merge cells
 - Make possible to change the column size
