@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "com.jerryjeon"
-version = "1.0.1"
+version = "1.1.0"
 
 repositories {
     google()
@@ -50,7 +50,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "LogJerry"
-            packageVersion = "1.0.1"
+            packageVersion = "1.1.0"
 
             macOS {
                 iconFile.set(project.file("LogJerry.icns"))
