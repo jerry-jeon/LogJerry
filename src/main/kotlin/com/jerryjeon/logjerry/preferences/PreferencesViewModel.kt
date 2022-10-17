@@ -28,8 +28,8 @@ class PreferencesViewModel {
         }
     )
 
-    var colorStrings = MutableStateFlow(preferencesFlow.value.colorByPriority.toColorStrings())
-    var validColorsByPriority = colorStrings.map {
+    val colorStrings = MutableStateFlow(preferencesFlow.value.colorByPriority.toColorStrings())
+    val validColorsByPriority = colorStrings.map {
         it.mapValues { (_, color) ->
             try {
                 Color(parseColor(color))
@@ -40,6 +40,16 @@ class PreferencesViewModel {
     }
         .stateIn(preferenceScope, SharingStarted.Lazily, Priority.values().associateWith { Color.Black })
 
+    val backgroundColorString = MutableStateFlow(preferencesFlow.value.backgroundColor.toColorString())
+    val backgroundValidColor = backgroundColorString.map {
+        try {
+            Color(parseColor(it))
+        } catch (e: Exception) {
+            null
+        }
+    }
+        .stateIn(preferenceScope, SharingStarted.Lazily, Preferences.default.backgroundColor)
+
     val expandJsonWhenLoadFlow = MutableStateFlow(preferencesFlow.value.expandJsonWhenLoad)
 
     var saveEnabled = validColorsByPriority.map { map -> map.values.all { it != null } }
@@ -48,6 +58,10 @@ class PreferencesViewModel {
     fun changeColorString(priority: Priority, colorString: String) {
         colorStrings.value = colorStrings.value + (priority to colorString)
     }
+
+    fun changeBackgroundColor(colorString: String) {
+        backgroundColorString.value = colorString
+    }
     
     fun changeExpandJsonWhenLoad(expandJsonWhenLoad: Boolean) {
         expandJsonWhenLoadFlow.value = expandJsonWhenLoad
@@ -55,11 +69,13 @@ class PreferencesViewModel {
 
     fun save() {
         val saving = validColorsByPriority.value
-        if (saving.any { (_, color) -> color == null }) {
+        val savingBackgroundColor = backgroundValidColor.value
+        if (saving.any { (_, color) -> color == null } || savingBackgroundColor == null) {
             return
         }
         preferencesFlow.value = preferencesFlow.value.copy(
             colorByPriority = saving.mapValues { (_, color) -> color!! },
+            backgroundColor = savingBackgroundColor,
             expandJsonWhenLoad = expandJsonWhenLoadFlow.value
         )
 
@@ -73,7 +89,9 @@ class PreferencesViewModel {
         expandJsonWhenLoadFlow.value = Preferences.default.expandJsonWhenLoad
     }
 
-    private fun Map<Priority, Color>.toColorStrings() = mapValues { (_, c) -> String.format("#%x", c.toArgb()) }
+    private fun Color.toColorString() = String.format("#%x", this.toArgb())
+
+    private fun Map<Priority, Color>.toColorStrings() = mapValues { (_, c) -> c.toColorString() }
     private fun parseColor(colorString: String): Int {
         if (colorString[0] == '#') { // Use a long to avoid rollovers on #ffXXXXXX
             var color = colorString.substring(1).toLong(16)

@@ -312,7 +312,7 @@ fun main() = application {
             }
         }
     ) {
-        MyTheme {
+        MyTheme(preferences = preferences) {
             MenuBar {
                 Menu("File") {
                     Item("New Tab", shortcut = KeyShortcut(Key.N, ctrl = true)) {
@@ -344,11 +344,16 @@ fun main() = application {
                     }
                 }
             }
-            Column {
-                TabView(tabsState.value, tabManager::activate, tabManager::close)
-                Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
-                ActiveTabView(preferences, headerState.value, tabsState.value.active)
-                PreferencesView(preferenceOpen, preferencesViewModel)
+            Surface(
+                color = preferences.backgroundColor,
+                contentColor = MaterialTheme.colors.onSurface
+            ) {
+                Column {
+                    TabView(tabsState.value, tabManager::activate, tabManager::close)
+                    Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
+                    ActiveTabView(preferences, headerState.value, tabsState.value.active)
+                    PreferencesView(preferenceOpen, preferencesViewModel)
+                }
             }
         }
     }
@@ -362,7 +367,7 @@ private fun TabView(tabs: Tabs, activate: (Tab) -> Unit, close: (Tab) -> Unit) {
         tabList.forEach { tab ->
             Row(
                 modifier = Modifier
-                    .background(if (tab === activated) Color.LightGray else Color.Transparent)
+                    .background(if (tab === activated) MaterialTheme.colors.secondary else Color.Transparent)
                     .clickable { activate(tab) }
                     .padding(8.dp)
             ) {
