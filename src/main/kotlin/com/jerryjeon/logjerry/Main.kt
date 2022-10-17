@@ -31,6 +31,7 @@ import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.logview.InvestigationView
 import com.jerryjeon.logjerry.parse.ParseResult
 import com.jerryjeon.logjerry.parse.ParseStatus
+import com.jerryjeon.logjerry.preferences.ColorTheme
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.preferences.PreferencesView
 import com.jerryjeon.logjerry.preferences.PreferencesViewModel
@@ -287,8 +288,45 @@ fun HeaderDivider() {
 }
 
 @Composable
-fun MyTheme(content: @Composable () -> Unit) {
-    MaterialTheme(content = content)
+fun MyTheme(
+    preferences: Preferences,
+    content: @Composable () -> Unit
+) {
+    when (preferences.colorTheme) {
+        ColorTheme.Light -> LightTheme(preferences, content)
+        ColorTheme.Dark -> DarkTheme(preferences, content)
+        ColorTheme.System -> {
+            if (isSystemInDarkTheme()) {
+                DarkTheme(preferences, content)
+            } else {
+                LightTheme(preferences, content)
+            }
+        }
+    }
+}
+
+@Composable
+fun DarkTheme(preferences: Preferences, content: @Composable () -> Unit) {
+    MaterialTheme(
+        colors = darkColors(
+            primary = Color(0xFFCE93D8),
+            secondary = Color(0xFF81C784),
+            background = preferences.darkBackgroundColor,
+            surface = preferences.darkBackgroundColor),
+        content = content
+    )
+}
+
+@Composable
+fun LightTheme(preferences: Preferences, content: @Composable () -> Unit) {
+    MaterialTheme(
+        colors = lightColors(
+            primary = Color(0xFFCE93D8),
+            secondary = Color(0xFF81C784),
+            background = preferences.lightBackgroundColor,
+            surface = preferences.lightBackgroundColor),
+        content = content
+    )
 }
 
 fun main() = application {
@@ -345,7 +383,7 @@ fun main() = application {
                 }
             }
             Surface(
-                color = preferences.backgroundColor,
+                color = MaterialTheme.colors.surface,
                 contentColor = MaterialTheme.colors.onSurface
             ) {
                 Column {

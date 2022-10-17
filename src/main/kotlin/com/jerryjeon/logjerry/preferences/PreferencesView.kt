@@ -12,9 +12,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
+import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.RadioButton
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
@@ -32,8 +36,12 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowState
+import com.jerryjeon.logjerry.DarkTheme
+import com.jerryjeon.logjerry.LightTheme
 import com.jerryjeon.logjerry.log.Priority
 
 @Composable
@@ -41,17 +49,13 @@ fun PreferencesView(
     isOpen: MutableState<Boolean>,
     viewModel: PreferencesViewModel,
 ) {
-    val colorStrings by viewModel.colorStrings.collectAsState()
-    val validColorsByPriority by viewModel.validColorsByPriority.collectAsState()
     val saveEnabled by viewModel.saveEnabled.collectAsState()
+    val colorTheme by viewModel.colorThemeFlow.collectAsState()
     val expandJsonWhenLoad by viewModel.expandJsonWhenLoadFlow.collectAsState()
-
-    val defaultBackgroundColor = Preferences.default.backgroundColor
-    val backgroundColor by viewModel.backgroundValidColor.collectAsState()
-    val backgroundColorString by viewModel.backgroundColorString.collectAsState()
 
     if (isOpen.value) {
         Window(
+            state = WindowState(width = 1200.dp, height = 1200.dp),
             onCloseRequest = { isOpen.value = false },
             onPreviewKeyEvent = { keyEvent ->
                 if (keyEvent.isCtrlPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown) {
@@ -60,37 +64,28 @@ fun PreferencesView(
                 false
             }
         ) {
-            Surface(color = backgroundColor ?: defaultBackgroundColor, contentColor = MaterialTheme.colors.onSurface) {
+            Surface(color = MaterialTheme.colors.surface, contentColor = MaterialTheme.colors.onSurface) {
                 Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                    Row {
-                        Column(
-                            modifier = Modifier.border(1.dp, Color.Black).padding(12.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("Colors", style = MaterialTheme.typography.h4)
-                            Spacer(Modifier.height(16.dp))
-                            Priority.values().forEach { priority ->
-                                ColorChanger(
-                                    title = priority.name,
-                                    color = validColorsByPriority.getValue(priority),
-                                    colorString = colorStrings.getValue(priority),
-                                    onColorChanged = {
-                                        viewModel.changeColorString(priority, it)
-                                    }
-                                )
-                                Spacer(Modifier.height(8.dp))
-                            }
-                            ColorChanger(
-                                title = "Background",
-                                color = MaterialTheme.colors.onSurface,
-                                colorString = backgroundColorString,
-                                onColorChanged = viewModel::changeBackgroundColor
-                            )
-                        }
-                        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column {
+                        Text("General", style = MaterialTheme.typography.h5)
+                        Spacer(Modifier.height(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("Expand all json when load the logs")
                             Spacer(Modifier.width(4.dp))
                             Checkbox(expandJsonWhenLoad, onCheckedChange = viewModel::changeExpandJsonWhenLoad)
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+                        Divider()
+                        Spacer(Modifier.height(8.dp))
+
+                        Text("Colors", style = MaterialTheme.typography.h5)
+                        Spacer(Modifier.height(16.dp))
+                        ThemeSelector(colorTheme, viewModel::changeColorTheme)
+                        Spacer(Modifier.height(8.dp))
+                        Row {
+                            WhiteThemeView(viewModel)
+                            DarkThemeView(viewModel)
                         }
                     }
                     Row(modifier = Modifier.align(Alignment.BottomEnd)) {
@@ -112,6 +107,84 @@ fun PreferencesView(
 }
 
 @Composable
+fun WhiteThemeView(viewModel: PreferencesViewModel) {
+    val lightColorStrings by viewModel.whiteColorStrings.collectAsState()
+    val lightValidColorsByPriority by viewModel.whiteValidColorsByPriority.collectAsState()
+    val lightBackgroundColor by viewModel.whiteBackgroundValidColor.collectAsState()
+    val lightBackgroundColorString by viewModel.whiteBackgroundColorString.collectAsState()
+    val defaultBackgroundColor = viewModel.preferencesFlow.value.lightBackgroundColor
+    LightTheme(viewModel.preferencesFlow.value) {
+        Surface(color = lightBackgroundColor ?: defaultBackgroundColor, contentColor = MaterialTheme.colors.onSurface) {
+            Column(
+                modifier = Modifier
+                    .width(240.dp)
+                    .border(1.dp, MaterialTheme.colors.onSurface)
+                    .padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("White theme", style = MaterialTheme.typography.h6)
+                Spacer(Modifier.height(16.dp))
+                Priority.values().forEach { priority ->
+                    ColorChanger(
+                        title = priority.name,
+                        color = lightValidColorsByPriority.getValue(priority),
+                        colorString = lightColorStrings.getValue(priority)
+                    ) {
+                        viewModel.changeWhiteColorString(priority, it)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+                ColorChanger(
+                    title = "Background",
+                    color = MaterialTheme.colors.onSurface,
+                    colorString = lightBackgroundColorString,
+                    onColorChanged = viewModel::changeWhiteBackgroundColor
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun DarkThemeView(viewModel: PreferencesViewModel) {
+    val darkColorStrings by viewModel.darkColorStrings.collectAsState()
+    val darkValidColorsByPriority by viewModel.darkValidColorsByPriority.collectAsState()
+    val darkBackgroundColor by viewModel.darkBackgroundValidColor.collectAsState()
+    val darkBackgroundColorString by viewModel.darkBackgroundColorString.collectAsState()
+    val defaultBackgroundColor = viewModel.preferencesFlow.value.darkBackgroundColor
+    DarkTheme(preferences = viewModel.preferencesFlow.value) {
+        Surface(color = darkBackgroundColor ?: defaultBackgroundColor, contentColor = MaterialTheme.colors.onSurface) {
+            Column(
+                modifier = Modifier
+                    .width(240.dp)
+                    .border(1.dp, MaterialTheme.colors.onSurface)
+                    .padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Dark theme", style = MaterialTheme.typography.h6)
+                Spacer(Modifier.height(16.dp))
+                Priority.values().forEach { priority ->
+                    ColorChanger(
+                        title = priority.name,
+                        color = darkValidColorsByPriority.getValue(priority),
+                        colorString = darkColorStrings.getValue(priority)
+                    ) {
+                        viewModel.changeDarkColorString(priority, it)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+                ColorChanger(
+                    title = "Background",
+                    color = MaterialTheme.colors.onSurface,
+                    colorString = darkBackgroundColorString,
+                    onColorChanged = viewModel::changeDarkBackgroundColor
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun ColumnScope.ColorChanger(title: String, color: Color?, colorString: String, onColorChanged: (String) -> Unit) {
     val isError = (color == null)
     val defaultStyle = MaterialTheme.typography.body1
@@ -119,8 +192,8 @@ fun ColumnScope.ColorChanger(title: String, color: Color?, colorString: String, 
     Row {
         Text(
             text = title,
-            modifier = Modifier.width(80.dp).align(Alignment.CenterVertically),
-            style = style
+            modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
+            style = style,
         )
         Column {
             TextField(
@@ -139,4 +212,35 @@ fun ColumnScope.ColorChanger(title: String, color: Color?, colorString: String, 
         modifier = Modifier.padding(start = 16.dp).alpha(if (isError) 1f else 0f)
             .align(Alignment.End),
     )
+}
+
+@Composable
+fun ThemeSelector(colorTheme: ColorTheme, onThemeSelected: (ColorTheme) -> Unit) {
+    val radioOptions = ColorTheme.values().map { it.name }
+    val selectedOption = colorTheme.name
+    Row(Modifier.selectableGroup()) {
+        radioOptions.forEach { text ->
+            Row(
+                Modifier
+                    .height(56.dp)
+                    .selectable(
+                        selected = (text == selectedOption),
+                        onClick = { onThemeSelected(ColorTheme.valueOf(text)) },
+                        role = Role.RadioButton
+                    )
+                    .padding(horizontal = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
+                    selected = (text == selectedOption),
+                    onClick = null // null recommended for accessibility with screenreaders
+                )
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.body1.merge(),
+                    modifier = Modifier.padding(start = 16.dp)
+                )
+            }
+        }
+    }
 }

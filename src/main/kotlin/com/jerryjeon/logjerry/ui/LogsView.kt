@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import com.jerryjeon.logjerry.ColumnDivider
 import com.jerryjeon.logjerry.HeaderDivider
 import com.jerryjeon.logjerry.detector.DetectionFocus
@@ -48,7 +47,7 @@ fun LogsView(
                 item {
                     Column {
                         LogRow(it, preferences, header, divider = divider, collapseJsonDetection = collapseJsonDetection, expandJsonDetection = expandJsonDetection)
-                        Divider(color = Color(0xFFE5E7E9))
+                        Divider()
                     }
                 }
             }
