@@ -18,6 +18,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.jerryjeon.logjerry.MyTheme
+import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.ColumnInfo
 import com.jerryjeon.logjerry.table.Header
 
@@ -55,7 +56,7 @@ fun HeaderRow(header: Header, divider: @Composable RowScope.() -> Unit) {
 @Preview
 @Composable
 fun HeaderPreview() {
-    MyTheme {
+    MyTheme(preferences = Preferences.default) {
         HeaderRow(Header.default) { Divider() }
     }
 }

@@ -31,6 +31,7 @@ import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.logview.InvestigationView
 import com.jerryjeon.logjerry.parse.ParseResult
 import com.jerryjeon.logjerry.parse.ParseStatus
+import com.jerryjeon.logjerry.preferences.ColorTheme
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.preferences.PreferencesView
 import com.jerryjeon.logjerry.preferences.PreferencesViewModel
@@ -287,8 +288,45 @@ fun HeaderDivider() {
 }
 
 @Composable
-fun MyTheme(content: @Composable () -> Unit) {
-    MaterialTheme(content = content)
+fun MyTheme(
+    preferences: Preferences,
+    content: @Composable () -> Unit
+) {
+    when (preferences.colorTheme) {
+        ColorTheme.Light -> LightTheme(preferences, content)
+        ColorTheme.Dark -> DarkTheme(preferences, content)
+        ColorTheme.System -> {
+            if (isSystemInDarkTheme()) {
+                DarkTheme(preferences, content)
+            } else {
+                LightTheme(preferences, content)
+            }
+        }
+    }
+}
+
+@Composable
+fun DarkTheme(preferences: Preferences, content: @Composable () -> Unit) {
+    MaterialTheme(
+        colors = darkColors(
+            primary = Color(0xFFCE93D8),
+            secondary = Color(0xFF81C784),
+            background = preferences.darkBackgroundColor,
+            surface = preferences.darkBackgroundColor),
+        content = content
+    )
+}
+
+@Composable
+fun LightTheme(preferences: Preferences, content: @Composable () -> Unit) {
+    MaterialTheme(
+        colors = lightColors(
+            primary = Color(0xFFCE93D8),
+            secondary = Color(0xFF81C784),
+            background = preferences.lightBackgroundColor,
+            surface = preferences.lightBackgroundColor),
+        content = content
+    )
 }
 
 fun main() = application {
@@ -312,7 +350,7 @@ fun main() = application {
             }
         }
     ) {
-        MyTheme {
+        MyTheme(preferences = preferences) {
             MenuBar {
                 Menu("File") {
                     Item("New Tab", shortcut = KeyShortcut(Key.N, ctrl = true)) {
@@ -344,11 +382,16 @@ fun main() = application {
                     }
                 }
             }
-            Column {
-                TabView(tabsState.value, tabManager::activate, tabManager::close)
-                Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
-                ActiveTabView(preferences, headerState.value, tabsState.value.active)
-                PreferencesView(preferenceOpen, preferencesViewModel)
+            Surface(
+                color = MaterialTheme.colors.surface,
+                contentColor = MaterialTheme.colors.onSurface
+            ) {
+                Column {
+                    TabView(tabsState.value, tabManager::activate, tabManager::close)
+                    Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
+                    ActiveTabView(preferences, headerState.value, tabsState.value.active)
+                    PreferencesView(preferenceOpen, preferencesViewModel)
+                }
             }
         }
     }
@@ -362,7 +405,7 @@ private fun TabView(tabs: Tabs, activate: (Tab) -> Unit, close: (Tab) -> Unit) {
         tabList.forEach { tab ->
             Row(
                 modifier = Modifier
-                    .background(if (tab === activated) Color.LightGray else Color.Transparent)
+                    .background(if (tab === activated) MaterialTheme.colors.secondary else Color.Transparent)
                     .clickable { activate(tab) }
                     .padding(8.dp)
             ) {

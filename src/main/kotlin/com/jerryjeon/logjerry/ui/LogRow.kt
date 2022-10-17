@@ -107,7 +107,7 @@ private fun RowScope.NumberCell(preferences: Preferences, number: ColumnInfo, lo
         text = log.number.toString(),
         style = MaterialTheme.typography.body2.copy(
             fontSize = preferences.fontSize,
-            color = preferences.colorByPriority.getValue(log.priority)
+            color = preferences.colorByPriority().getValue(log.priority)
         ),
         modifier = this.cellDefaultModifier(number.width)
     )
@@ -119,7 +119,7 @@ private fun RowScope.DateCell(preferences: Preferences, date: ColumnInfo, log: L
         text = log.date,
         style = MaterialTheme.typography.body2.copy(
             fontSize = preferences.fontSize,
-            color = preferences.colorByPriority.getValue(log.priority)
+            color = preferences.colorByPriority().getValue(log.priority)
         ),
         modifier = this.cellDefaultModifier(date.width)
     )
@@ -131,7 +131,7 @@ private fun RowScope.TimeCell(preferences: Preferences, time: ColumnInfo, log: L
         text = log.time,
         style = MaterialTheme.typography.body2.copy(
             fontSize = preferences.fontSize,
-            color = preferences.colorByPriority.getValue(log.priority)
+            color = preferences.colorByPriority().getValue(log.priority)
         ),
         modifier = this.cellDefaultModifier(time.width)
     )
@@ -143,7 +143,7 @@ private fun RowScope.PidCell(preferences: Preferences, pid: ColumnInfo, log: Log
         text = log.pid.toString(),
         style = MaterialTheme.typography.body2.copy(
             fontSize = preferences.fontSize,
-            color = preferences.colorByPriority.getValue(log.priority)
+            color = preferences.colorByPriority().getValue(log.priority)
         ),
         modifier = this.cellDefaultModifier(pid.width)
     )
@@ -155,7 +155,7 @@ private fun RowScope.TidCell(preferences: Preferences, tid: ColumnInfo, log: Log
         text = log.tid.toString(),
         style = MaterialTheme.typography.body2.copy(
             fontSize = preferences.fontSize,
-            color = preferences.colorByPriority.getValue(log.priority)
+            color = preferences.colorByPriority().getValue(log.priority)
         ),
         modifier = this.cellDefaultModifier(tid.width)
     )
@@ -167,7 +167,7 @@ private fun RowScope.PackagerNameCell(preferences: Preferences, packageName: Col
         text = log.packageName ?: "?",
         style = MaterialTheme.typography.body2.copy(
             fontSize = preferences.fontSize,
-            color = preferences.colorByPriority.getValue(log.priority)
+            color = preferences.colorByPriority().getValue(log.priority)
         ),
         modifier = this.cellDefaultModifier(packageName.width)
     )
@@ -179,7 +179,7 @@ private fun RowScope.PriorityCell(preferences: Preferences, priority: ColumnInfo
         text = log.priority.text,
         style = MaterialTheme.typography.body2.copy(
             fontSize = preferences.fontSize,
-            color = preferences.colorByPriority.getValue(log.priority)
+            color = preferences.colorByPriority().getValue(log.priority)
         ),
         modifier = this.cellDefaultModifier(priority.width)
     )
@@ -191,7 +191,7 @@ private fun RowScope.TagCell(preferences: Preferences, tag: ColumnInfo, log: Log
         text = log.tag,
         style = MaterialTheme.typography.body2.copy(
             fontSize = preferences.fontSize,
-            color = preferences.colorByPriority.getValue(log.priority)
+            color = preferences.colorByPriority().getValue(log.priority)
         ),
         modifier = this.cellDefaultModifier(tag.width)
     )
@@ -227,7 +227,7 @@ private fun RowScope.LogCell(
                 text = logContentView.str,
                 style = MaterialTheme.typography.body2.copy(
                     fontSize = preferences.fontSize,
-                    color = preferences.colorByPriority.getValue(refinedLog.detectionFinishedLog.log.priority)
+                    color = preferences.colorByPriority().getValue(refinedLog.detectionFinishedLog.log.priority)
                 ),
                 onClick = { offset ->
                     logContentView.str.getStringAnnotations(tag = "Json", start = offset, end = offset)
@@ -245,7 +245,7 @@ private fun RowScope.LogCell(
                     text = logContentView.str,
                     style = MaterialTheme.typography.body2.copy(
                         fontSize = preferences.fontSize,
-                        color = preferences.colorByPriority.getValue(refinedLog.detectionFinishedLog.log.priority)
+                        color = preferences.colorByPriority().getValue(refinedLog.detectionFinishedLog.log.priority)
                     ),
                     modifier = Modifier.padding(end = 32.dp)
                 )
