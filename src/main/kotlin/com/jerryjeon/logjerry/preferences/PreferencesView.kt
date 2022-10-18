@@ -3,25 +3,10 @@
 package com.jerryjeon.logjerry.preferences
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material.Button
-import androidx.compose.material.Checkbox
-import androidx.compose.material.Divider
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.RadioButton
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -33,7 +18,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.Role
@@ -43,6 +27,7 @@ import androidx.compose.ui.window.WindowState
 import com.jerryjeon.logjerry.DarkTheme
 import com.jerryjeon.logjerry.LightTheme
 import com.jerryjeon.logjerry.log.Priority
+import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
 
 @Composable
 fun PreferencesView(
@@ -58,7 +43,7 @@ fun PreferencesView(
             state = WindowState(width = 1200.dp, height = 1200.dp),
             onCloseRequest = { isOpen.value = false },
             onPreviewKeyEvent = { keyEvent ->
-                if (keyEvent.isCtrlPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown) {
+                if (keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown) {
                     isOpen.value = false
                 }
                 false

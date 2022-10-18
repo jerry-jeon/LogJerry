@@ -41,6 +41,8 @@ import com.jerryjeon.logjerry.tab.TabManager
 import com.jerryjeon.logjerry.tab.Tabs
 import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.ui.*
+import com.jerryjeon.logjerry.util.KeyShortcuts
+import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
 import kotlinx.serialization.ExperimentalSerializationApi
 import java.awt.FileDialog
 import java.awt.Toolkit
@@ -188,7 +190,7 @@ private fun GettingStartedView(notStarted: ParseStatus.NotStarted, changeSource:
         modifier = Modifier.fillMaxSize().padding(50.dp)
             .onPreviewKeyEvent { keyEvent ->
                 when {
-                    keyEvent.isCtrlPressed && keyEvent.key == Key.V && keyEvent.type == KeyEventType.KeyDown -> {
+                    keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.V && keyEvent.type == KeyEventType.KeyDown -> {
                         Toolkit.getDefaultToolkit()
                             .systemClipboard
                             .getData(DataFlavor.stringFlavor)
@@ -243,7 +245,7 @@ private fun InvalidSentences(parseResult: ParseResult) {
             title = "Invalid sentences",
             state = DialogState(width = 800.dp, height = 600.dp),
             onPreviewKeyEvent = { keyEvent ->
-                if (keyEvent.isCtrlPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown) {
+                if (keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown) {
                     showInvalidSentence = false
                 }
                 false
@@ -342,7 +344,7 @@ fun main() = application {
         state = WindowState(width = Dp.Unspecified, height = Dp.Unspecified),
         onCloseRequest = ::exitApplication,
         onPreviewKeyEvent = { keyEvent ->
-            if (keyEvent.isCtrlPressed && keyEvent.key == Key.F && keyEvent.type == KeyEventType.KeyDown) {
+            if (keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.F && keyEvent.type == KeyEventType.KeyDown) {
                 tabManager.findShortcutPressed()
                 true
             } else {
@@ -353,21 +355,21 @@ fun main() = application {
         MyTheme(preferences = preferences) {
             MenuBar {
                 Menu("File") {
-                    Item("New Tab", shortcut = KeyShortcut(Key.N, ctrl = true)) {
+                    Item("New Tab", shortcut = KeyShortcuts.newTab) {
                         tabManager.newTab()
                     }
-                    Item("Open file", shortcut = KeyShortcut(Key.O, ctrl = true)) {
+                    Item("Open file", shortcut = KeyShortcuts.openFile) {
                         openFileDialog {
                             tabManager.onNewFileSelected(it)
                         }
                     }
-                    Item("Previous Tab", shortcut = KeyShortcut(Key.LeftBracket, ctrl = true, shift = true)) {
+                    Item("Previous Tab", shortcut = KeyShortcuts.previousTab) {
                         tabManager.moveToPreviousTab()
                     }
-                    Item("Next Tab", shortcut = KeyShortcut(Key.RightBracket, ctrl = true, shift = true)) {
+                    Item("Next Tab", shortcut = KeyShortcuts.nextTab) {
                         tabManager.moveToNextTab()
                     }
-                    Item("Close Tab", shortcut = KeyShortcut(Key.W, ctrl = true)) {
+                    Item("Close Tab", shortcut = KeyShortcuts.closeTab) {
                         tabManager.closeActiveTab()
                     }
                 }
@@ -377,7 +379,7 @@ fun main() = application {
                     }
                 }
                 Menu("Preferences") {
-                    Item("preferences.Preferences", shortcut = KeyShortcut(Key.Comma, ctrl = true)) {
+                    Item("preferences.Preferences", shortcut = KeyShortcuts.preferences) {
                         preferenceOpen.value = true
                     }
                 }

@@ -3,24 +3,11 @@
 package com.jerryjeon.logjerry.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material.Button
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Expand
@@ -33,7 +20,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
@@ -50,6 +36,7 @@ import com.jerryjeon.logjerry.table.ColumnInfo
 import com.jerryjeon.logjerry.table.ColumnType
 import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.util.copyToClipboard
+import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 
@@ -302,11 +289,11 @@ private fun JsonPrettyDialog(
             state = DialogState(width = 800.dp, height = 600.dp),
             onPreviewKeyEvent = { keyEvent ->
                 when {
-                    keyEvent.isCtrlPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown -> {
+                    keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown -> {
                         showPrettyJsonDialogState.value = null
                         true
                     }
-                    keyEvent.isCtrlPressed && keyEvent.key == Key.C && keyEvent.type == KeyEventType.KeyDown -> {
+                    keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.C && keyEvent.type == KeyEventType.KeyDown -> {
                         copyToClipboard(prettyJson)
                         true
                     }
