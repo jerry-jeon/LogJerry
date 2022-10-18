@@ -19,8 +19,15 @@ So that's why I am making this project. Any feedbacks are welcome!
     
 ### Download
 
-Only Mac ARM64 package is provided in the Release tab. However, you can build it for your own platform by yourself.
+Only Mac ARM64 package is provided in the Release tab. 
 You can download a .dmg file in the [releases](https://github.com/jkj8790/LogJerry/releases).
+
+### Build
+
+The other platforms except Mac ARM64, you can build an application that runs on your platform by yourself.
+1. Clone this repository
+2. Execute `createDistributable` gradle task. `./gradlew createDistributable`
+3. Check `build/compose/binaries/main/app` folder
 
 ### Next features
 
