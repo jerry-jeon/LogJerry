@@ -99,11 +99,6 @@ class StudioLogcatBelowChipmunkParser(
     }
 
     private val number = AtomicInteger(1)
-    override fun canParse(raw: String): Boolean {
-        // TODO check
-        return true
-    }
-
     override fun parse(rawLines: List<String>): ParseResult {
         val logs = mutableListOf<Log>()
         val invalidSentences = mutableListOf<Pair<Int, String>>()
