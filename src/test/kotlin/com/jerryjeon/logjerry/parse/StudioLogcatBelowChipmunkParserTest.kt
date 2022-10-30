@@ -1,9 +1,8 @@
 package com.jerryjeon.logjerry.parse
 
-import io.kotest.assertions.asClue
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.params.ParameterizedTest
@@ -17,94 +16,81 @@ internal class StudioLogcatBelowChipmunkParserTest {
     inner class FactoryTest {
 
         @ParameterizedTest
-        @MethodSource("logAndIncludeSettings")
-        fun `Factory can be created for all include settings`(input: String, expected: IncludeSettings) {
+        @MethodSource("logAndStudioLogcatBelowChipmunkParser")
+        fun `Factory can be created for all include settings`(input: String, expected: StudioLogcatBelowChipmunkParser) {
             val parser = StudioLogcatBelowChipmunkParser.create(input)
-            parser.shouldBeInstanceOf<StudioLogcatBelowChipmunkParser>()
-                .asClue {
-                    it.includeDateTime shouldBe expected.includeDateTime
-                    it.includePidTid shouldBe expected.includePidTid
-                    it.includePackageName shouldBe expected.includePackageName
-                    it.includeTag shouldBe expected.includeTag
-                }
+            parser.shouldNotBeNull() shouldBe expected
 
             parser.parse(listOf(input)).invalidSentences.shouldBeEmpty()
         }
 
-        private fun logAndIncludeSettings(): Stream<Arguments> {
+        private fun logAndStudioLogcatBelowChipmunkParser(): Stream<Arguments> {
             return Stream.of(
                 Arguments.of(
                     "I: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = false, includePidTid = false, includePackageName = false, includeTag = false)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = false, includePidTid = false, includePackageName = false, includeTag = false)
                 ),
                 Arguments.of(
                     "I/servicemanager: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = false, includePidTid = false, includePackageName = false, includeTag = true)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = false, includePidTid = false, includePackageName = false, includeTag = true)
                 ),
                 Arguments.of(
                     "? I: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = false, includePidTid = false, includePackageName = true, includeTag = false)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = false, includePidTid = false, includePackageName = true, includeTag = false)
                 ),
                 Arguments.of(
                     "? I/servicemanager: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = false, includePidTid = false, includePackageName = true, includeTag = true)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = false, includePidTid = false, includePackageName = true, includeTag = true)
                 ),
                 Arguments.of(
                     "178-178 I: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = false, includePidTid = true, includePackageName = false, includeTag = false)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = false, includePidTid = true, includePackageName = false, includeTag = false)
                 ),
                 Arguments.of(
                     "178-178 I/servicemanager: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = false, includePidTid = true, includePackageName = false, includeTag = true)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = false, includePidTid = true, includePackageName = false, includeTag = true)
                 ),
                 Arguments.of(
                     "178-178/? I: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = false, includePidTid = true, includePackageName = true, includeTag = false)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = false, includePidTid = true, includePackageName = true, includeTag = false)
                 ),
                 Arguments.of(
                     "178-178/? I/servicemanager: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = false, includePidTid = true, includePackageName = true, includeTag = true)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = false, includePidTid = true, includePackageName = true, includeTag = true)
                 ),
                 Arguments.of(
                     "2022-10-24 08:50:35.786 I: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = true, includePidTid = false, includePackageName = false, includeTag = false)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = true, includePidTid = false, includePackageName = false, includeTag = false)
                 ),
                 Arguments.of(
                     "2022-10-24 08:50:35.786 I/servicemanager: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = true, includePidTid = false, includePackageName = false, includeTag = true)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = true, includePidTid = false, includePackageName = false, includeTag = true)
                 ),
                 Arguments.of(
                     "2022-10-24 09:31:55.786 ? I: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = true, includePidTid = false, includePackageName = true, includeTag = false)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = true, includePidTid = false, includePackageName = true, includeTag = false)
                 ),
                 Arguments.of(
                     "2022-10-24 09:31:55.786 ? I/servicemanager: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = true, includePidTid = false, includePackageName = true, includeTag = true)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = true, includePidTid = false, includePackageName = true, includeTag = true)
                 ),
                 Arguments.of(
                     "2022-10-24 09:31:55.786 178-178 I: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = true, includePidTid = true, includePackageName = false, includeTag = false)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = true, includePidTid = true, includePackageName = false, includeTag = false)
                 ),
                 Arguments.of(
                     "2022-10-24 09:31:55.786 178-178 I/servicemanager: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = true, includePidTid = true, includePackageName = false, includeTag = true)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = true, includePidTid = true, includePackageName = false, includeTag = true)
                 ),
                 Arguments.of(
                     "2022-10-24 09:31:55.786 178-178/? I: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = true, includePidTid = true, includePackageName = true, includeTag = false)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = true, includePidTid = true, includePackageName = true, includeTag = false)
                 ),
                 Arguments.of(
                     "2022-10-24 09:31:55.786 178-178/? I/servicemanager: Tried to unregister apexservice, but there is about to be a client.",
-                    IncludeSettings(includeDateTime = true, includePidTid = true, includePackageName = true, includeTag = true)
+                    StudioLogcatBelowChipmunkParser(includeDateTime = true, includePidTid = true, includePackageName = true, includeTag = true)
                 ),
             )
         }
     }
-
-    data class IncludeSettings(
-        val includeDateTime: Boolean,
-        val includePidTid: Boolean,
-        val includePackageName: Boolean,
-        val includeTag: Boolean,
-    )
 }

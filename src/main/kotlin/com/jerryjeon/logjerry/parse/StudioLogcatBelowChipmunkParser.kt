@@ -5,102 +5,13 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.util.concurrent.atomic.AtomicInteger
 
-class StudioLogcatBelowChipmunkParser(
+data class StudioLogcatBelowChipmunkParser(
     // Log format configuration before AS Chipmunk version
     val includeDateTime: Boolean,
     val includePidTid: Boolean,
     val includePackageName: Boolean,
     val includeTag: Boolean
 ) : LogParser {
-
-    companion object : ParserFactory {
-
-        private val priorityChars = setOf('V', 'D', 'I', 'W', 'E', 'A')
-
-        private fun String.isPriority(): Boolean {
-            return length == 1 && first() in priorityChars
-        }
-        override fun create(sample: String): LogParser? {
-            try {
-                val split = sample.split(" ", limit = 5)
-                val iterator = split.listIterator()
-
-                var currentToken = iterator.next()
-
-                val includeDate = try {
-                    LocalDate.parse(currentToken)
-                    currentToken = iterator.next()
-                    true
-                } catch (e: Exception) {
-                    false
-                }
-
-                val includeTime = try {
-                    LocalTime.parse(currentToken)
-                    currentToken = iterator.next()
-                    true
-                } catch (e: Exception) {
-                    false
-                }
-
-                // Only supports both exist or not exist at all
-                if (includeDate xor includeTime) return null
-
-                val pidTidRegex = Regex("\\d*[-/]\\d*")
-                val packageNameRegex = Regex("^([A-Za-z][A-Za-z\\d_]*\\.)+[A-Za-z][A-Za-z\\d_]*$")
-
-                // pit-tid/packageName
-                var includePidTid: Boolean = false
-                var includePackageName: Boolean = false
-                if (currentToken.contains("/")) {
-                    // both exist
-                    val tokens = currentToken.split("/")
-                    if (tokens[0].matches(pidTidRegex) && (tokens[1] == "?" || tokens[1].matches(packageNameRegex))) {
-                        includePidTid = true
-                        includePackageName = true
-                        currentToken = iterator.next()
-                    }
-                } else {
-                    if (currentToken.matches(pidTidRegex)) {
-                        includePidTid = true
-                        includePackageName = false
-                        currentToken = iterator.next()
-                    } else if (currentToken == "?" || currentToken.matches(packageNameRegex)) {
-                        includePidTid = false
-                        includePackageName = true
-                        currentToken = iterator.next()
-                    }
-                }
-
-                var includeTag = false
-                if (currentToken.contains("/")) {
-                    // both exist
-                    val tokens = currentToken.split("/")
-                    // Check what's faster: list and regex
-                    if (tokens[0].isPriority()) {
-                        includeTag = true
-                    } else {
-                        // invalid
-                        return null
-                    }
-                } else if (currentToken.isPriority()) {
-                    includeTag = false
-                }
-
-                if (currentToken.last() != ':') {
-                    return null
-                }
-
-                if (!iterator.hasNext()) {
-                    return null
-                }
-
-                return StudioLogcatBelowChipmunkParser(includeDate, includePidTid, includePackageName, includeTag)
-            } catch (e: Exception) {
-                return null
-            }
-        }
-    }
 
     private val number = AtomicInteger(1)
     override fun parse(rawLines: List<String>): ParseResult {
@@ -198,5 +109,93 @@ class StudioLogcatBelowChipmunkParser(
 
     override fun toString(): String {
         return "DefaultParser(includeDateTime=$includeDateTime, includePidTid=$includePidTid, includePackageName=$includePackageName, includeTag=$includeTag)"
+    }
+    companion object : ParserFactory {
+
+        private val priorityChars = setOf('V', 'D', 'I', 'W', 'E', 'A')
+
+        private fun String.isPriority(): Boolean {
+            return length == 1 && first() in priorityChars
+        }
+        override fun create(sample: String): LogParser? {
+            try {
+                val split = sample.split(" ", limit = 5)
+                val iterator = split.listIterator()
+
+                var currentToken = iterator.next()
+
+                val includeDate = try {
+                    LocalDate.parse(currentToken)
+                    currentToken = iterator.next()
+                    true
+                } catch (e: Exception) {
+                    false
+                }
+
+                val includeTime = try {
+                    LocalTime.parse(currentToken)
+                    currentToken = iterator.next()
+                    true
+                } catch (e: Exception) {
+                    false
+                }
+
+                // Only supports both exist or not exist at all
+                if (includeDate xor includeTime) return null
+
+                val pidTidRegex = Regex("\\d*[-/]\\d*")
+                val packageNameRegex = Regex("^([A-Za-z][A-Za-z\\d_]*\\.)+[A-Za-z][A-Za-z\\d_]*$")
+
+                // pit-tid/packageName
+                var includePidTid: Boolean = false
+                var includePackageName: Boolean = false
+                if (currentToken.contains("/")) {
+                    // both exist
+                    val tokens = currentToken.split("/")
+                    if (tokens[0].matches(pidTidRegex) && (tokens[1] == "?" || tokens[1].matches(packageNameRegex))) {
+                        includePidTid = true
+                        includePackageName = true
+                        currentToken = iterator.next()
+                    }
+                } else {
+                    if (currentToken.matches(pidTidRegex)) {
+                        includePidTid = true
+                        includePackageName = false
+                        currentToken = iterator.next()
+                    } else if (currentToken == "?" || currentToken.matches(packageNameRegex)) {
+                        includePidTid = false
+                        includePackageName = true
+                        currentToken = iterator.next()
+                    }
+                }
+
+                var includeTag = false
+                if (currentToken.contains("/")) {
+                    // both exist
+                    val tokens = currentToken.split("/")
+                    // Check what's faster: list and regex
+                    if (tokens[0].isPriority()) {
+                        includeTag = true
+                    } else {
+                        // invalid
+                        return null
+                    }
+                } else if (currentToken.isPriority()) {
+                    includeTag = false
+                }
+
+                if (currentToken.last() != ':') {
+                    return null
+                }
+
+                if (!iterator.hasNext()) {
+                    return null
+                }
+
+                return StudioLogcatBelowChipmunkParser(includeDate, includePidTid, includePackageName, includeTag)
+            } catch (e: Exception) {
+                return null
+            }
+        }
     }
 }

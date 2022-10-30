@@ -1,8 +1,8 @@
 package com.jerryjeon.logjerry.parse
 
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.params.ParameterizedTest
@@ -19,7 +19,7 @@ internal class StudioLogcatAboveDolphinParserTest {
         @MethodSource("logAndIncludeSettings")
         fun `Factory can be created for all include settings`(input: String, expected: StudioLogcatAboveDolphinParser) {
             val parser = StudioLogcatAboveDolphinParser.create(input)
-            parser.shouldBeInstanceOf<StudioLogcatAboveDolphinParser>() shouldBe expected
+            parser.shouldNotBeNull() shouldBe expected
 
             parser.parse(listOf(input)).invalidSentences.shouldBeEmpty()
         }

@@ -15,11 +15,103 @@ data class StudioLogcatAboveDolphinParser(
     val includePackageName: Boolean
 ) : LogParser {
 
+    private val number = AtomicInteger(1)
+
+    override fun parse(rawLines: List<String>): ParseResult {
+        val logs = mutableListOf<Log>()
+        val invalidSentences = mutableListOf<Pair<Int, String>>()
+        var lastLog: Log? = null
+        rawLines.forEachIndexed { index, s ->
+            lastLog = try {
+                val log = parseSingleLineLog(s)
+
+                // Custom continuation
+                if (log.log.startsWith("Cont(")) {
+                    lastLog?.let {
+                        it.copy(log = "${it.log}${log.log.substringAfter(") ")}")
+                    } ?: log
+                } else {
+                    lastLog?.let { logs.add(it) }
+                    log
+                }
+            } catch (e: Exception) {
+                val continuedLog = if (lastLog == null) {
+                    invalidSentences.add(index to s)
+                    return@forEachIndexed
+                } else {
+                    lastLog!!
+                }
+                continuedLog.copy(log = "${continuedLog.log}\n$s")
+            }
+        }
+        lastLog?.let { logs.add(it) }
+        return ParseResult(logs, invalidSentences)
+    }
+
+    // The algorithm is inefficient. From my machine it's ok for 5000 lines. Improve later if there's an issue
+    private fun parseSingleLineLog(raw: String): Log {
+        val split = raw.split(" ").filter { it.isNotBlank() }
+
+        var currentIndex = 0
+
+        val date = if (includeDate) {
+            split[currentIndex++]
+        } else {
+            null
+        }
+
+        val time = if(includeTime) {
+            split[currentIndex++]
+        } else {
+            null
+        }
+
+        val pid: Long?
+        val tid: Long?
+        when {
+            includePid && includeTid -> {
+                val ids = split[currentIndex++].split("-")
+                pid = ids[0].toLong()
+                tid = ids[1].toLong()
+            }
+            includePid -> {
+                pid = split[currentIndex++].toLong()
+                tid = null
+            }
+            else -> {
+                pid = null
+                tid = null
+            }
+        }
+
+        val tag = if (includeTag) {
+            split[currentIndex++]
+        } else {
+            null
+        }
+
+        val packageName = if(includePackageName) {
+            split[currentIndex++]
+        } else {
+            null
+        }
+
+        val priorityText = split[currentIndex++]
+
+        val originalLog = split.drop(currentIndex).joinToString(separator = " ")
+
+        return Log(number.getAndIncrement(), date, time, pid, tid, packageName, priorityText, tag, originalLog)
+    }
+
+    override fun toString(): String {
+        return "StudioLogcatAboveDolphinParser(includeDate=$includeDate, includeTime=$includeTime, includePid=$includePid, includeTid=$includeTid, includeTag=$includeTag, includePackageName=$includePackageName, number=$number)"
+    }
+
     companion object : ParserFactory {
 
-        private val packageNameRegex2 = Regex("^pid-\\d*$")
-        private val packageNameRegex = Regex("^([A-Za-z][A-Za-z\\d_]*\\.)+[A-Za-z][A-Za-z\\d_]*$")
         private val priorityChars = setOf('V', 'D', 'I', 'W', 'E', 'A')
+        private val packageNameRegex = Regex("^([A-Za-z][A-Za-z\\d_]*\\.)+[A-Za-z][A-Za-z\\d_]*$")
+        private val packageNameRegex2 = Regex("^pid-\\d*$")
 
         private fun String.isPriority(): Boolean {
             return length == 1 && first() in priorityChars
@@ -112,96 +204,5 @@ data class StudioLogcatAboveDolphinParser(
         }
     }
 
-    private val number = AtomicInteger(1)
-
-    override fun parse(rawLines: List<String>): ParseResult {
-        val logs = mutableListOf<Log>()
-        val invalidSentences = mutableListOf<Pair<Int, String>>()
-        var lastLog: Log? = null
-        rawLines.forEachIndexed { index, s ->
-            lastLog = try {
-                val log = parseSingleLineLog(s)
-
-                // Custom continuation
-                if (log.log.startsWith("Cont(")) {
-                    lastLog?.let {
-                        it.copy(log = "${it.log}${log.log.substringAfter(") ")}")
-                    } ?: log
-                } else {
-                    lastLog?.let { logs.add(it) }
-                    log
-                }
-            } catch (e: Exception) {
-                val continuedLog = if (lastLog == null) {
-                    invalidSentences.add(index to s)
-                    return@forEachIndexed
-                } else {
-                    lastLog!!
-                }
-                continuedLog.copy(log = "${continuedLog.log}\n$s")
-            }
-        }
-        lastLog?.let { logs.add(it) }
-        return ParseResult(logs, invalidSentences)
-    }
-
-    // The algorithm is inefficient. From my machine it's ok for 5000 lines. Improve later if there's an issue
-    private fun parseSingleLineLog(raw: String): Log {
-        val split = raw.split(" ").filter { it.isNotBlank() }
-
-        var currentIndex = 0
-
-        val date = if (includeDate) {
-            split[currentIndex++]
-        } else {
-            null
-        }
-
-        val time = if(includeTime) {
-            split[currentIndex++]
-        } else {
-            null
-        }
-
-        val pid: Long?
-        val tid: Long?
-        when {
-            includePid && includeTid -> {
-                val ids = split[currentIndex++].split("-")
-                pid = ids[0].toLong()
-                tid = ids[1].toLong()
-            }
-            includePid -> {
-                pid = split[currentIndex++].toLong()
-                tid = null
-            }
-            else -> {
-                pid = null
-                tid = null
-            }
-        }
-
-        val tag = if (includeTag) {
-            split[currentIndex++]
-        } else {
-            null
-        }
-
-        val packageName = if(includePackageName) {
-            split[currentIndex++]
-        } else {
-            null
-        }
-
-        val priorityText = split[currentIndex++]
-
-        val originalLog = split.drop(currentIndex).joinToString(separator = " ")
-
-        return Log(number.getAndIncrement(), date, time, pid, tid, packageName, priorityText, tag, originalLog)
-    }
-
-    override fun toString(): String {
-        return "StudioLogcatAboveDolphinParser(includeDate=$includeDate, includeTime=$includeTime, includePid=$includePid, includeTid=$includeTid, includeTag=$includeTag, includePackageName=$includePackageName, number=$number)"
-    }
 }
 
