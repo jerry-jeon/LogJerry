@@ -1,8 +1,8 @@
 package com.jerryjeon.logjerry.source
 
 import com.jerryjeon.logjerry.log.LogManager
-import com.jerryjeon.logjerry.parse.DefaultParser
 import com.jerryjeon.logjerry.parse.ParseStatus
+import com.jerryjeon.logjerry.parse.StudioLogcatBelowChipmunkParser
 import com.jerryjeon.logjerry.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +14,7 @@ import okio.openZip
 
 class SourceManager(private val preferences: Preferences) {
     private val sourceScope = CoroutineScope(Dispatchers.Default)
-    private val defaultParser = DefaultParser(
+    private val studioLogcatBelowChipmunkParser = StudioLogcatBelowChipmunkParser(
         includeDateTime = true,
         includePidTid = true,
         includePackageName = true,
@@ -30,7 +30,7 @@ class SourceManager(private val preferences: Preferences) {
                 val content = zipFileSystem.read(files.first()) { readUtf8() }.split("\n")
                 // Prefer second line because the first line breaks often because of the buffer
                 val sample = content.getOrNull(1) ?: content.first()
-                val parser = DefaultParser.create(sample) ?: defaultParser
+                val parser = StudioLogcatBelowChipmunkParser.create(sample) ?: studioLogcatBelowChipmunkParser
                 val parseResult = parser.parse(content)
                 ParseStatus.Completed(parseResult, LogManager(parseResult.logs, preferences))
             }
@@ -39,7 +39,7 @@ class SourceManager(private val preferences: Preferences) {
                 val lines = it.file.readLines()
                 // Prefer second line because the first line breaks often because of the buffer
                 val sample = lines.getOrNull(1) ?: lines.first()
-                val parser = DefaultParser.create(sample) ?: defaultParser
+                val parser = StudioLogcatBelowChipmunkParser.create(sample) ?: studioLogcatBelowChipmunkParser
                 val parseResult = parser.parse(it.file.readLines())
                 ParseStatus.Completed(parseResult, LogManager(parseResult.logs, preferences))
             }
@@ -48,7 +48,7 @@ class SourceManager(private val preferences: Preferences) {
                 val lines = it.text.split("\n")
                 // Prefer second line because the first line breaks often because of the buffer
                 val sample = lines.getOrNull(1) ?: lines.first()
-                val parser = DefaultParser.create(sample) ?: defaultParser
+                val parser = StudioLogcatBelowChipmunkParser.create(sample) ?: studioLogcatBelowChipmunkParser
                 val parseResult = parser.parse(lines)
                 ParseStatus.Completed(parseResult, LogManager(parseResult.logs, preferences))
             }

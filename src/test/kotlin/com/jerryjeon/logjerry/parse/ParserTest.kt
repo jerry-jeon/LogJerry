@@ -9,7 +9,7 @@ internal class ParserTest {
 
     @Test
     fun `Given raw login, parse well`() {
-        val parseResult = DefaultParser(
+        val parseResult = StudioLogcatBelowChipmunkParser(
             includeDateTime = true,
             includePidTid = true,
             includePackageName = true,

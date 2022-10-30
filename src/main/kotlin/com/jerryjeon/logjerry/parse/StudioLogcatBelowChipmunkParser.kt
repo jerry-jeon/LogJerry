@@ -5,7 +5,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.util.concurrent.atomic.AtomicInteger
 
-class DefaultParser(
+class StudioLogcatBelowChipmunkParser(
     // Log format configuration before AS Chipmunk version
     val includeDateTime: Boolean,
     val includePidTid: Boolean,
@@ -91,7 +91,7 @@ class DefaultParser(
                     return null
                 }
 
-                return DefaultParser(includeDate, includePidTid, includePackageName, includeTag)
+                return StudioLogcatBelowChipmunkParser(includeDate, includePidTid, includePackageName, includeTag)
             } catch (e: Exception) {
                 return null
             }

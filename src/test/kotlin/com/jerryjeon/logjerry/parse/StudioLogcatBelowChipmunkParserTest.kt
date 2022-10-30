@@ -11,7 +11,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 
-internal class DefaultParserTest {
+internal class StudioLogcatBelowChipmunkParserTest {
 
     @Nested
     inner class FactoryTest {
@@ -19,8 +19,8 @@ internal class DefaultParserTest {
         @ParameterizedTest
         @MethodSource("logAndIncludeSettings")
         fun `Factory can be created for all include settings`(input: String, expected: IncludeSettings) {
-            val parser = DefaultParser.create(input)
-            parser.shouldBeInstanceOf<DefaultParser>()
+            val parser = StudioLogcatBelowChipmunkParser.create(input)
+            parser.shouldBeInstanceOf<StudioLogcatBelowChipmunkParser>()
                 .asClue {
                     it.includeDateTime shouldBe expected.includeDateTime
                     it.includePidTid shouldBe expected.includePidTid
