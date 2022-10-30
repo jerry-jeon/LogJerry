@@ -16,6 +16,10 @@ class StudioLogcatBelowChipmunkParser(
     companion object : ParserFactory {
 
         private val priorityChars = setOf('V', 'D', 'I', 'W', 'E', 'A')
+
+        private fun String.isPriority(): Boolean {
+            return length == 1 && first() in priorityChars
+        }
         override fun create(sample: String): LogParser? {
             try {
                 val split = sample.split(" ", limit = 5)
@@ -73,13 +77,13 @@ class StudioLogcatBelowChipmunkParser(
                     // both exist
                     val tokens = currentToken.split("/")
                     // Check what's faster: list and regex
-                    if (tokens[0].length == 1 && tokens[0][0] in priorityChars) {
+                    if (tokens[0].isPriority()) {
                         includeTag = true
                     } else {
                         // invalid
                         return null
                     }
-                } else if (currentToken.length == 1 && currentToken[0] in priorityChars) {
+                } else if (currentToken.isPriority()) {
                     includeTag = false
                 }
 
@@ -138,20 +142,18 @@ class StudioLogcatBelowChipmunkParser(
 
         var currentIndex = 0
 
-        // TODO Change these to nullable
-        val date: String
-        val time: String
+        val date: String?
+        val time: String?
         if (includeDateTime) {
             date = split[currentIndex++]
             time = split[currentIndex++]
         } else {
-            date = ""
-            time = ""
+            date = null
+            time = null
         }
 
-        // TODO Change these to nullable
-        val pid: Long
-        val tid: Long
+        val pid: Long?
+        val tid: Long?
         val packageName: String?
         when {
             includePidTid && includePackageName -> {
@@ -167,26 +169,26 @@ class StudioLogcatBelowChipmunkParser(
                 packageName = null
             }
             includePackageName -> {
-                pid = 0L
-                tid = 0L
+                pid = null
+                tid = null
                 packageName = split[currentIndex++]
             }
             else -> {
-                pid = 0L
-                tid = 0L
+                pid = null
+                tid = null
                 packageName = null
             }
         }
 
         val priorityText: String
-        val tag: String
+        val tag: String?
         if (includeTag) {
             val fourthSegment = split[currentIndex++].split("/")
             priorityText = fourthSegment[0]
             tag = fourthSegment[1].removeSuffix(":")
         } else {
             priorityText = split[currentIndex++].removeSuffix(":")
-            tag = ""
+            tag = null
         }
 
         val originalLog = split[currentIndex]
