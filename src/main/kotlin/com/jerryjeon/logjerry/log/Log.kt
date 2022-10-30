@@ -1,13 +1,13 @@
 package com.jerryjeon.logjerry.log
 data class Log(
     val number: Int,
-    val date: String,
-    val time: String,
-    val pid: Long,
-    val tid: Long,
+    val date: String?,
+    val time: String?,
+    val pid: Long?,
+    val tid: Long?,
     val packageName: String?,
     val priorityText: String,
-    val tag: String,
+    val tag: String?,
     val log: String
 ) {
     val priority = Priority.find(priorityText)

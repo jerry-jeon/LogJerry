@@ -10,7 +10,7 @@ data class TextFilter(
     override fun filter(log: Log): Boolean {
         return when (columnType) {
             ColumnType.PackageName -> text in (log.packageName ?: "")
-            ColumnType.Tag -> text in log.tag
+            ColumnType.Tag -> if (log.tag == null) true else text in log.tag
             ColumnType.Log -> text in log.log
             else -> throw NotImplementedError("Not supported filter : $columnType")
         }

@@ -103,7 +103,7 @@ private fun RowScope.NumberCell(preferences: Preferences, number: ColumnInfo, lo
 @Composable
 private fun RowScope.DateCell(preferences: Preferences, date: ColumnInfo, log: Log) {
     Text(
-        text = log.date,
+        text = log.date ?: "",
         style = MaterialTheme.typography.body2.copy(
             fontSize = preferences.fontSize,
             color = preferences.colorByPriority().getValue(log.priority)
@@ -115,7 +115,7 @@ private fun RowScope.DateCell(preferences: Preferences, date: ColumnInfo, log: L
 @Composable
 private fun RowScope.TimeCell(preferences: Preferences, time: ColumnInfo, log: Log) {
     Text(
-        text = log.time,
+        text = log.time ?: "",
         style = MaterialTheme.typography.body2.copy(
             fontSize = preferences.fontSize,
             color = preferences.colorByPriority().getValue(log.priority)
@@ -175,7 +175,7 @@ private fun RowScope.PriorityCell(preferences: Preferences, priority: ColumnInfo
 @Composable
 private fun RowScope.TagCell(preferences: Preferences, tag: ColumnInfo, log: Log) {
     Text(
-        text = log.tag,
+        text = log.tag ?: "",
         style = MaterialTheme.typography.body2.copy(
             fontSize = preferences.fontSize,
             color = preferences.colorByPriority().getValue(log.priority)
