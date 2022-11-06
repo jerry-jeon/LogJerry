@@ -46,8 +46,12 @@ class TabManager(
         tabs.value = tabs.value.copy(active = tab)
     }
 
-    fun newTab() {
-        val newActiveTab = Tab.gettingStarted(preferences)
+    fun newTab(name: String = "New tab", source: Source? = null) {
+        val newActiveTab = if (source == null) {
+            Tab.gettingStarted(preferences)
+        } else {
+            Tab(name, SourceManager(preferences, source))
+        }
         val (tabList, _) = tabs.value
         tabs.value = tabs.value.copy(
             tabList = tabList + newActiveTab,
@@ -95,7 +99,7 @@ class TabManager(
                         )
                     }
                     else -> {
-                        val nexIndex = if(closingTabIndex <= 0) tabList.size - 1 else closingTabIndex - 1
+                        val nexIndex = if (closingTabIndex <= 0) tabList.size - 1 else closingTabIndex - 1
                         val newActiveTab = tabList[nexIndex]
                         tabs.value = tabs.value.copy(
                             tabList = (tabList - tab),

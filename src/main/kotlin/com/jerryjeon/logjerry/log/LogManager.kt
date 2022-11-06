@@ -5,17 +5,17 @@ import com.jerryjeon.logjerry.detector.DetectorManager
 import com.jerryjeon.logjerry.filter.FilterManager
 import com.jerryjeon.logjerry.logview.LogViewManager
 import com.jerryjeon.logjerry.preferences.Preferences
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 
 class LogManager(
-    val originalLogs: List<Log>,
+    val originalLogsFlow: StateFlow<List<Log>>,
     preferences: Preferences
 ) {
     val filterManager = FilterManager()
     val detectorManager = DetectorManager()
 
-    private val filteredLogsFlow = filterManager.filtersFlow.map { filters ->
+    private val filteredLogsFlow = combine(originalLogsFlow, filterManager.filtersFlow) { originalLogs, filters ->
         if (filters.isEmpty()) {
             originalLogs
         } else {
@@ -24,7 +24,7 @@ class LogManager(
         }
     }
 
-    val detectionManager = DetectionManager(filteredLogsFlow, detectorManager.detectorsFlow.debounce(250))
+    val detectionManager = DetectionManager(filteredLogsFlow, detectorManager.detectorsFlow)
 
     val logViewManager = LogViewManager(detectionManager.detectionFinishedFlow, preferences)
 }

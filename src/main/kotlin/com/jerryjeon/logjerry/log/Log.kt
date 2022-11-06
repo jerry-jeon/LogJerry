@@ -10,6 +10,7 @@ data class Log(
     val tag: String?,
     val log: String
 ) {
+    val index = number - 1
     val priority = Priority.find(priorityText)
 }
 
