@@ -2,12 +2,10 @@ package com.jerryjeon.logjerry.detector
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.*
 
+@OptIn(FlowPreview::class)
 class DetectorManager {
     private val detectionScope = CoroutineScope(Dispatchers.Default)
 
@@ -21,7 +19,10 @@ class DetectorManager {
             } else {
                 KeywordDetectionRequest.TurnedOff
             }
-        }.stateIn(detectionScope, SharingStarted.Lazily, KeywordDetectionRequest.TurnedOff)
+        }
+            .debounce(250)
+            .stateIn(detectionScope, SharingStarted.Lazily, KeywordDetectionRequest.TurnedOff)
+
     val detectorsFlow = keywordDetectionRequestFlow.map {
         when (it) {
             is KeywordDetectionRequest.TurnedOn -> defaultDetectors + listOf(KeywordDetector(it.keyword))
