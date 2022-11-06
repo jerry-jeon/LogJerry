@@ -25,43 +25,27 @@ class SourceManager(private val preferences: Preferences) {
 
     val sourceFlow: MutableStateFlow<Source> = MutableStateFlow(Source.None)
     val parseStatusFlow: StateFlow<ParseStatus> = sourceFlow.map {
-        when (it) {
+        val lines = when (it) {
             is Source.ZipFile -> {
-                val fileSystem =  FileSystem.SYSTEM
-                val zipFileSystem = fileSystem.openZip(it.file.toOkioPath())
+                val zipFileSystem = FileSystem.SYSTEM.openZip(it.file.toOkioPath())
                 val files = zipFileSystem.listOrNull("/".toPath()) ?: return@map ParseStatus.NotStarted
-                val content = zipFileSystem.read(files.first()) { readUtf8() }.split("\n")
-                val parser = chooseParser(content)
-                val parseResult = parser.parse(content)
-                ParseStatus.Completed(parseResult, LogManager(parseResult.logs, preferences))
+                zipFileSystem.read(files.first()) { readUtf8() }.split("\n")
             }
 
-            is Source.File -> {
-                val lines = it.file.readLines()
-                val parser = chooseParser(lines)
-                val parseResult = parser.parse(it.file.readLines())
-                ParseStatus.Completed(parseResult, LogManager(parseResult.logs, preferences))
-            }
-
-            is Source.Text -> {
-                val lines = it.text.split("\n")
-                val parser = chooseParser(lines)
-                val parseResult = parser.parse(lines)
-                ParseStatus.Completed(parseResult, LogManager(parseResult.logs, preferences))
-            }
-            Source.None -> {
-                ParseStatus.NotStarted
-            }
+            is Source.File -> it.file.readLines()
+            is Source.Text -> it.text.split("\n")
+            Source.None -> return@map ParseStatus.NotStarted
         }
+        val parser = chooseParser(lines)
+        val parseResult = parser.parse(lines)
+        ParseStatus.Completed(parseResult, LogManager(parseResult.logs, preferences))
     }.stateIn(sourceScope, SharingStarted.Lazily, ParseStatus.NotStarted)
 
     private fun chooseParser(lines: List<String>): LogParser {
-        // Prefer second line because the first line breaks often because of the buffer
-        val sample = lines.getOrNull(1) ?: lines.first()
-
-        return StudioLogcatBelowChipmunkParser.create(sample)
-            ?: StudioLogcatAboveDolphinParser.create(sample)
-            ?: studioLogcatBelowChipmunkParser
+        return lines.firstNotNullOfOrNull {
+            StudioLogcatBelowChipmunkParser.create(it)
+                ?: StudioLogcatAboveDolphinParser.create(it)
+        } ?: studioLogcatBelowChipmunkParser // TODO would be better if show failure message that the parser doesn't exist that can parse the content
     }
 
     fun changeSource(source: Source) {
