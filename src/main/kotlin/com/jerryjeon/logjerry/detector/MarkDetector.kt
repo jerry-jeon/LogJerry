@@ -5,15 +5,16 @@ import com.jerryjeon.logjerry.log.Log
 import java.util.UUID
 
 class MarkDetector(
-    private val logIndices: Set<Int>
+    val logs: Set<Log>
 ) : Detector<MarkDetection> {
+    private val logIndices = logs.map { it.index }.toSet()
     override val key = DetectorKey.Mark
 
     fun toggleMark(log: Log?): MarkDetector {
-        return when {
-            log == null -> return this
-            log.index in logIndices -> MarkDetector(logIndices - log.index)
-            else -> MarkDetector(logIndices + log.index)
+        return when (log) {
+            null -> return this
+            in logs -> MarkDetector(logs - log)
+            else -> MarkDetector(logs + log)
         }
     }
 

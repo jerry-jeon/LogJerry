@@ -1,10 +1,11 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
 package com.jerryjeon.logjerry.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.LocalTextStyle
-import androidx.compose.material.Text
+import androidx.compose.foundation.onClick
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -23,13 +24,18 @@ fun MarkDetectionView(
     detectionFocus: DetectionFocus?,
     moveToPreviousOccurrence: (DetectionFocus) -> Unit,
     moveToNextOccurrence: (DetectionFocus) -> Unit,
+    openMarkedRowsTab: () -> Unit
 ) {
     CompositionLocalProvider(
         LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp),
     ) {
         Box(modifier = modifier) {
-            Column(Modifier.height(IntrinsicSize.Min).padding(8.dp)) {
-                Text("Marked rows")
+            Column(Modifier.height(IntrinsicSize.Min).padding(start = 8.dp, top = 8.dp, bottom = 8.dp, end = 0.dp)) {
+                Row {
+                    Text("Marked rows")
+                    Spacer(Modifier.width(16.dp))
+                    Text("Open as a tab", modifier = Modifier.onClick { openMarkedRowsTab() }, color = MaterialTheme.colors.secondary)
+                }
                 if (detectionFocus == null) {
                     Spacer(Modifier.height(16.dp))
                     Text("No results", textAlign = TextAlign.Center)

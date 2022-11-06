@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
+import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.parse.ParseResult
 import com.jerryjeon.logjerry.parse.ParseStatus
 import com.jerryjeon.logjerry.preferences.ColorTheme
@@ -38,6 +39,7 @@ import com.jerryjeon.logjerry.ui.LogManagerView
 import com.jerryjeon.logjerry.ui.columnCheckboxItem
 import com.jerryjeon.logjerry.util.KeyShortcuts
 import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.ExperimentalSerializationApi
 import java.awt.FileDialog
 import java.awt.Toolkit
@@ -50,6 +52,7 @@ fun ActiveTabView(
     preferences: Preferences,
     header: Header,
     activeTab: Tab,
+    openNewTab: (StateFlow<List<Log>>) -> Unit,
 ) {
     val parseStatus by activeTab.sourceManager.parseStatusFlow.collectAsState(ParseStatus.NotStarted)
     // Flow would be better
@@ -61,7 +64,8 @@ fun ActiveTabView(
                 LogManagerView(
                     preferences,
                     header,
-                    status.logManager
+                    status.logManager,
+                    openNewTab
                 ) { InvalidSentences(status.parseResult) }
             }
         }
@@ -278,7 +282,14 @@ fun main() = application {
                 Column {
                     TabView(tabsState.value, tabManager::activate, tabManager::close)
                     Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
-                    ActiveTabView(preferences, headerState.value, tabsState.value.active)
+                    ActiveTabView(
+                        preferences,
+                        headerState.value,
+                        tabsState.value.active,
+                        openNewTab = { logsFlow: StateFlow<List<Log>> ->
+                            tabManager.newTab("Marked rows", Source.LogsFlow(logsFlow))
+                        }
+                    )
                     PreferencesView(preferenceOpen, preferencesViewModel)
                 }
             }

@@ -28,6 +28,9 @@ class DetectorManager {
     private val markDetectorFlow = toggleMarkLogRequestFlow.scan(MarkDetector(emptySet())) { detector, toggleRequestedLog ->
         detector.toggleMark(toggleRequestedLog)
     }
+    val markedRowsFlow = markDetectorFlow.map { it.logs }
+        .map { it.sortedBy { log -> log.index } } // TODO find cleaner way
+        .stateIn(detectionScope, SharingStarted.Lazily, emptyList())
 
     val detectorsFlow = combine(keywordDetectionRequestFlow, markDetectorFlow) { keywordDetectionRequest, markDetector ->
         when (keywordDetectionRequest) {

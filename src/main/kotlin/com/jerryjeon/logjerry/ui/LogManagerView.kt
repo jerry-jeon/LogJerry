@@ -14,9 +14,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.detector.KeywordDetectionView
+import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogManager
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header
+import kotlinx.coroutines.flow.StateFlow
 
 // TODO Consider intuitive name
 @Composable
@@ -24,16 +26,19 @@ fun LogManagerView(
     preferences: Preferences,
     header: Header,
     logManager: LogManager,
+    openNewTab: (StateFlow<List<Log>>) -> Unit,
     InvalidSentences: @Composable () -> Unit
 ) {
     val filterManager = logManager.filterManager
-    val detectorManager = logManager.detectorManager
-    val detectionManager = logManager.detectionManager
+
     val logViewManager = logManager.logViewManager
     val investigationView by logViewManager.investigationViewFlow.collectAsState()
+
+    val detectorManager = logManager.detectorManager
     val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
 
     // TODO Find way to abstract these
+    val detectionManager = logManager.detectionManager
     val keywordDetectionFocus by detectionManager.keywordDetectionFocus.collectAsState()
     val exceptionDetectionFocus by detectionManager.exceptionDetectionFocus.collectAsState()
     val jsonDetectionFocus by detectionManager.jsonDetectionFocus.collectAsState()
@@ -81,6 +86,7 @@ fun LogManagerView(
                         markDetectionFocus,
                         { detectionManager.focusPreviousDetection(DetectorKey.Mark, it) },
                         { detectionManager.focusNextDetection(DetectorKey.Mark, it) },
+                        { openNewTab(detectorManager.markedRowsFlow) }
                     )
 
                     Spacer(Modifier.width(8.dp))

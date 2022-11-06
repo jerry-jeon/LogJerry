@@ -5,11 +5,11 @@ import com.jerryjeon.logjerry.detector.DetectorManager
 import com.jerryjeon.logjerry.filter.FilterManager
 import com.jerryjeon.logjerry.logview.LogViewManager
 import com.jerryjeon.logjerry.preferences.Preferences
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 
 class LogManager(
-    val originalLogsFlow: MutableStateFlow<List<Log>>,
+    val originalLogsFlow: StateFlow<List<Log>>,
     preferences: Preferences
 ) {
     val filterManager = FilterManager()
