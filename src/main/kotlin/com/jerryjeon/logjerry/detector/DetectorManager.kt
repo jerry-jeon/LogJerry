@@ -1,5 +1,6 @@
 package com.jerryjeon.logjerry.detector
 
+import com.jerryjeon.logjerry.log.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -23,10 +24,15 @@ class DetectorManager {
             .debounce(250)
             .stateIn(detectionScope, SharingStarted.Lazily, KeywordDetectionRequest.TurnedOff)
 
-    val detectorsFlow = keywordDetectionRequestFlow.map {
-        when (it) {
-            is KeywordDetectionRequest.TurnedOn -> defaultDetectors + listOf(KeywordDetector(it.keyword))
-            KeywordDetectionRequest.TurnedOff -> defaultDetectors
+    private val toggleMarkLogRequestFlow = MutableStateFlow<Log?>(null)
+    private val markDetectorFlow = toggleMarkLogRequestFlow.scan(MarkDetector(emptySet())) { detector, toggleRequestedLog ->
+        detector.toggleMark(toggleRequestedLog)
+    }
+
+    val detectorsFlow = combine(keywordDetectionRequestFlow, markDetectorFlow) { keywordDetectionRequest, markDetector ->
+        when (keywordDetectionRequest) {
+            is KeywordDetectionRequest.TurnedOn -> defaultDetectors + listOf(KeywordDetector(keywordDetectionRequest.keyword)) + markDetector
+            KeywordDetectionRequest.TurnedOff -> defaultDetectors + markDetector
         }
     }
 
@@ -36,5 +42,9 @@ class DetectorManager {
 
     fun setKeywordDetectionEnabled(enabled: Boolean) {
         keywordDetectorEnabledStateFlow.value = enabled
+    }
+
+    fun toggleMark(log: Log) {
+        toggleMarkLogRequestFlow.value = log
     }
 }

@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalComposeUiApi::class)
+@file:OptIn(ExperimentalComposeUiApi::class, ExperimentalComposeUiApi::class)
 
 package com.jerryjeon.logjerry.ui
 
@@ -11,22 +11,24 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Expand
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogState
 import com.jerryjeon.logjerry.detection.DetectionFinishedLog
+import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.detector.JsonDetection
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogContentView
@@ -49,9 +51,17 @@ fun LogRow(
     header: Header,
     collapseJsonDetection: (JsonDetection) -> Unit,
     expandJsonDetection: (annotation: String) -> Unit,
+    toggleMark: (Log) -> Unit,
     divider: @Composable RowScope.() -> Unit
 ) {
-    Row(Modifier) {
+    var active by remember { mutableStateOf(false) }
+
+    Row(
+        Modifier
+            .onPointerEvent(PointerEventType.Enter) { active = true }
+            .onPointerEvent(PointerEventType.Exit) { active = false }
+            .background(if (active) Color(0x20CCCCCC) else Color.Transparent)
+    ) {
         Spacer(Modifier.width(8.dp))
         header.asColumnList.forEach { columnInfo ->
             if (columnInfo.visible) {
@@ -61,7 +71,9 @@ fun LogRow(
                 }
             }
         }
+
         Spacer(Modifier.width(8.dp))
+        MarkCheckbox(active, refinedLog, toggleMark)
     }
 }
 
@@ -318,6 +330,12 @@ private fun JsonPrettyDialog(
             }
         }
     }
+}
+
+@Composable
+private fun MarkCheckbox(active: Boolean, refinedLog: RefinedLog, toggleMark: (Log) -> Unit) {
+    val marked = DetectorKey.Mark in refinedLog.detectionFinishedLog.detections.keys
+    Checkbox(marked, onCheckedChange = { toggleMark(refinedLog.detectionFinishedLog.log) }, Modifier.alpha(if (active || marked) 1f else 0f))
 }
 
 /*

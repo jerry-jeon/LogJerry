@@ -7,14 +7,7 @@ import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.log.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class DetectionManager(
@@ -43,15 +36,17 @@ class DetectionManager(
     val keywordDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
     val exceptionDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
     val jsonDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
+    val markDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
 
     private val focuses = mapOf(
         DetectorKey.Keyword to keywordDetectionFocus,
         DetectorKey.Exception to exceptionDetectionFocus,
         DetectorKey.Json to jsonDetectionFocus,
+        DetectorKey.Mark to markDetectionFocus,
     )
 
     val activeDetectionFocusFlowState =
-        merge(keywordDetectionFocus, exceptionDetectionFocus, jsonDetectionFocus)
+        merge(keywordDetectionFocus, exceptionDetectionFocus, jsonDetectionFocus, markDetectionFocus)
             .filter { it?.focusing != null }
             .stateIn(detectionScope, SharingStarted.Lazily, null)
 
@@ -71,6 +66,11 @@ class DetectionManager(
                 val jsonDetections = result.allDetections[DetectorKey.Json] ?: emptyList()
                 jsonDetectionFocus.value = jsonDetections.firstOrNull()?.let {
                     DetectionFocus(DetectorKey.Exception, 0, null, jsonDetections)
+                }
+
+                val markDetections = result.allDetections[DetectorKey.Mark] ?: emptyList()
+                markDetectionFocus.value = markDetections.firstOrNull()?.let {
+                    DetectionFocus(DetectorKey.Exception, 0, null, markDetections)
                 }
             }
         }

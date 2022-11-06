@@ -70,10 +70,14 @@ fun ActiveTabView(
                 val logViewManager = logManager.logViewManager
                 val investigationView by logViewManager.investigationViewFlow.collectAsState()
                 val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
+
+                // TODO Find way to abstract these
                 val keywordDetectionFocus by detectionManager.keywordDetectionFocus.collectAsState()
                 val exceptionDetectionFocus by detectionManager.exceptionDetectionFocus.collectAsState()
                 val jsonDetectionFocus by detectionManager.jsonDetectionFocus.collectAsState()
+                val markDetectionFocus by detectionManager.markDetectionFocus.collectAsState()
                 val activeDetectionFocus by detectionManager.activeDetectionFocusFlowState.collectAsState()
+
                 val textFilters by filterManager.textFiltersFlow.collectAsState()
                 val priorityFilters by filterManager.priorityFilterFlow.collectAsState()
                 ParseCompletedView(
@@ -82,6 +86,7 @@ fun ActiveTabView(
                     keywordDetectionFocus,
                     exceptionDetectionFocus,
                     jsonDetectionFocus,
+                    markDetectionFocus,
                     investigationView,
                     logManager.originalLogs,
                     preferences,
@@ -97,7 +102,8 @@ fun ActiveTabView(
                     detectorManager::findKeyword,
                     detectorManager::setKeywordDetectionEnabled,
                     logViewManager::collapseJsonDetection,
-                    logViewManager::expandJsonDetection
+                    logViewManager::expandJsonDetection,
+                    detectorManager::toggleMark
                 )
             }
         }
@@ -111,6 +117,7 @@ fun ParseCompletedView(
     keywordDetectionFocus: DetectionFocus?,
     exceptionDetectionFocus: DetectionFocus?,
     jsonDetectionFocus: DetectionFocus?,
+    markDetectionFocus: DetectionFocus?,
     investigationView: InvestigationView,
     logs: List<Log>,
     preferences: Preferences,
@@ -126,7 +133,8 @@ fun ParseCompletedView(
     findKeyword: (String) -> Unit,
     setKeywordDetectionEnabled: (Boolean) -> Unit,
     collapseJsonDetection: (JsonDetection) -> Unit,
-    expandJsonDetection: (String) -> Unit
+    expandJsonDetection: (String) -> Unit,
+    toggleMark: (Log) -> Unit
 ) {
     InvalidSentences(parseResult)
     Row(modifier = Modifier.padding(16.dp)) {
@@ -145,18 +153,31 @@ fun ParseCompletedView(
                         { focusPreviousDetection(DetectorKey.Exception, it) },
                         { focusNextDetection(DetectorKey.Exception, it) },
                     )
+
                     Spacer(Modifier.width(8.dp))
                     Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
                     Spacer(Modifier.width(8.dp))
+
                     JsonDetectionView(
                         Modifier.width(200.dp).wrapContentHeight(),
                         jsonDetectionFocus,
                         { focusPreviousDetection(DetectorKey.Json, it) },
                         { focusNextDetection(DetectorKey.Json, it) },
                     )
+
                     Spacer(Modifier.width(8.dp))
                     Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
                     Spacer(Modifier.width(8.dp))
+
+                    MarkDetectionView(
+                        Modifier.width(200.dp).wrapContentHeight(),
+                        markDetectionFocus,
+                        { focusPreviousDetection(DetectorKey.Mark, it) },
+                        { focusNextDetection(DetectorKey.Mark, it) },
+                    )
+
+                    Spacer(Modifier.width(8.dp))
+                    Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
                 }
             }
         }
@@ -180,7 +201,15 @@ fun ParseCompletedView(
         )
     }
     Divider(color = Color.Black)
-    LogsView(preferences, header, investigationView.refinedLogs, detectionFocus, collapseJsonDetection, expandJsonDetection)
+    LogsView(
+        preferences,
+        header,
+        investigationView.refinedLogs,
+        detectionFocus,
+        collapseJsonDetection,
+        expandJsonDetection,
+        toggleMark
+    )
 }
 
 @Composable
@@ -314,7 +343,8 @@ fun DarkTheme(preferences: Preferences, content: @Composable () -> Unit) {
             primary = Color(0xFFCE93D8),
             secondary = Color(0xFF81C784),
             background = preferences.darkBackgroundColor,
-            surface = preferences.darkBackgroundColor),
+            surface = preferences.darkBackgroundColor
+        ),
         content = content
     )
 }
@@ -326,7 +356,8 @@ fun LightTheme(preferences: Preferences, content: @Composable () -> Unit) {
             primary = Color(0xFFCE93D8),
             secondary = Color(0xFF81C784),
             background = preferences.lightBackgroundColor,
-            surface = preferences.lightBackgroundColor),
+            surface = preferences.lightBackgroundColor
+        ),
         content = content
     )
 }

@@ -13,12 +13,7 @@ import com.jerryjeon.logjerry.log.LogContentView
 import com.jerryjeon.logjerry.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -97,7 +92,7 @@ class LogViewManager(
                 is LogContent.ExpandedJson -> {
                     val initial = AnnotatedString.Builder(logContent.text)
                     val newDetections = detectors.filter { it !is JsonDetector }.flatMap { detection ->
-                        detection.detect(logContent.text, log.number)
+                        detection.detect(logContent.text, log.index)
                     }
 
                     val builder = newDetections.fold(initial) { acc, next ->
@@ -114,7 +109,7 @@ class LogViewManager(
                 is LogContent.Text -> {
                     val initial = AnnotatedString.Builder(logContent.text)
                     val newDetections = detectors.filter { it !is JsonDetector }.flatMap { detection ->
-                        detection.detect(logContent.text, log.number)
+                        detection.detect(logContent.text, log.index)
                     }
 
                     val builder = (newDetections + logContent.jsonDetections).fold(initial) { acc, next ->
