@@ -38,7 +38,7 @@ class SourceManager(private val preferences: Preferences) {
         }
         val parser = chooseParser(lines)
         val parseResult = parser.parse(lines)
-        ParseStatus.Completed(parseResult, LogManager(parseResult.logs, preferences))
+        ParseStatus.Completed(parseResult, LogManager(MutableStateFlow(parseResult.logs), preferences))
     }.stateIn(sourceScope, SharingStarted.Lazily, ParseStatus.NotStarted)
 
     private fun chooseParser(lines: List<String>): LogParser {

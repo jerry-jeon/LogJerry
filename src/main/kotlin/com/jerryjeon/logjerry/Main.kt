@@ -88,7 +88,7 @@ fun ActiveTabView(
                     jsonDetectionFocus,
                     markDetectionFocus,
                     investigationView,
-                    logManager.originalLogs,
+                    logManager.originalLogsFlow.value,
                     preferences,
                     header,
                     status.parseResult,
