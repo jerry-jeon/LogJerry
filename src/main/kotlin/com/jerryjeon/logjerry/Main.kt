@@ -6,7 +6,6 @@ package com.jerryjeon.logjerry
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -24,11 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
-import com.jerryjeon.logjerry.detector.*
-import com.jerryjeon.logjerry.filter.PriorityFilter
-import com.jerryjeon.logjerry.filter.TextFilter
-import com.jerryjeon.logjerry.log.Log
-import com.jerryjeon.logjerry.logview.InvestigationView
 import com.jerryjeon.logjerry.parse.ParseResult
 import com.jerryjeon.logjerry.parse.ParseStatus
 import com.jerryjeon.logjerry.preferences.ColorTheme
@@ -40,7 +34,8 @@ import com.jerryjeon.logjerry.tab.Tab
 import com.jerryjeon.logjerry.tab.TabManager
 import com.jerryjeon.logjerry.tab.Tabs
 import com.jerryjeon.logjerry.table.Header
-import com.jerryjeon.logjerry.ui.*
+import com.jerryjeon.logjerry.ui.LogManagerView
+import com.jerryjeon.logjerry.ui.columnCheckboxItem
 import com.jerryjeon.logjerry.util.KeyShortcuts
 import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -63,153 +58,14 @@ fun ActiveTabView(
         is ParseStatus.Proceeding -> Text("Proceeding.... ${status.percent}")
         is ParseStatus.Completed -> {
             Column {
-                val logManager = status.logManager
-                val filterManager = logManager.filterManager
-                val detectorManager = logManager.detectorManager
-                val detectionManager = logManager.detectionManager
-                val logViewManager = logManager.logViewManager
-                val investigationView by logViewManager.investigationViewFlow.collectAsState()
-                val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
-
-                // TODO Find way to abstract these
-                val keywordDetectionFocus by detectionManager.keywordDetectionFocus.collectAsState()
-                val exceptionDetectionFocus by detectionManager.exceptionDetectionFocus.collectAsState()
-                val jsonDetectionFocus by detectionManager.jsonDetectionFocus.collectAsState()
-                val markDetectionFocus by detectionManager.markDetectionFocus.collectAsState()
-                val activeDetectionFocus by detectionManager.activeDetectionFocusFlowState.collectAsState()
-
-                val textFilters by filterManager.textFiltersFlow.collectAsState()
-                val priorityFilters by filterManager.priorityFilterFlow.collectAsState()
-                ParseCompletedView(
-                    keywordDetectionRequest,
-                    activeDetectionFocus,
-                    keywordDetectionFocus,
-                    exceptionDetectionFocus,
-                    jsonDetectionFocus,
-                    markDetectionFocus,
-                    investigationView,
-                    logManager.originalLogsFlow.value,
+                LogManagerView(
                     preferences,
                     header,
-                    status.parseResult,
-                    detectionManager::focusPreviousDetection,
-                    detectionManager::focusNextDetection,
-                    textFilters,
-                    filterManager::addTextFilter,
-                    filterManager::removeTextFilter,
-                    priorityFilters,
-                    filterManager::setPriorityFilter,
-                    detectorManager::findKeyword,
-                    detectorManager::setKeywordDetectionEnabled,
-                    logViewManager::collapseJsonDetection,
-                    logViewManager::expandJsonDetection,
-                    detectorManager::toggleMark
-                )
+                    status.logManager
+                ) { InvalidSentences(status.parseResult) }
             }
         }
     }
-}
-
-@Composable
-fun ParseCompletedView(
-    keywordDetectionRequest: KeywordDetectionRequest,
-    detectionFocus: DetectionFocus?,
-    keywordDetectionFocus: DetectionFocus?,
-    exceptionDetectionFocus: DetectionFocus?,
-    jsonDetectionFocus: DetectionFocus?,
-    markDetectionFocus: DetectionFocus?,
-    investigationView: InvestigationView,
-    logs: List<Log>,
-    preferences: Preferences,
-    header: Header,
-    parseResult: ParseResult,
-    focusPreviousDetection: (DetectorKey, DetectionFocus) -> Unit,
-    focusNextDetection: (DetectorKey, DetectionFocus) -> Unit,
-    textFilters: List<TextFilter>,
-    addTextFilter: (TextFilter) -> Unit,
-    removeTextFilter: (TextFilter) -> Unit,
-    priorityFilter: PriorityFilter,
-    setPriorityFilter: (PriorityFilter) -> Unit,
-    findKeyword: (String) -> Unit,
-    setKeywordDetectionEnabled: (Boolean) -> Unit,
-    collapseJsonDetection: (JsonDetection) -> Unit,
-    expandJsonDetection: (String) -> Unit,
-    toggleMark: (Log) -> Unit
-) {
-    InvalidSentences(parseResult)
-    Row(modifier = Modifier.padding(16.dp)) {
-        TextFilterView(textFilters, addTextFilter, removeTextFilter)
-        Spacer(Modifier.width(16.dp))
-        PriorityFilterView(priorityFilter, setPriorityFilter)
-        Spacer(Modifier.width(16.dp))
-        Box(modifier = Modifier.weight(0.5f).border(1.dp, Color.LightGray, RoundedCornerShape(4.dp))) {
-            Column {
-                Text("Auto-detection", modifier = Modifier.padding(8.dp))
-                Divider()
-                Row {
-                    ExceptionDetectionView(
-                        Modifier.width(200.dp).wrapContentHeight(),
-                        exceptionDetectionFocus,
-                        { focusPreviousDetection(DetectorKey.Exception, it) },
-                        { focusNextDetection(DetectorKey.Exception, it) },
-                    )
-
-                    Spacer(Modifier.width(8.dp))
-                    Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
-                    Spacer(Modifier.width(8.dp))
-
-                    JsonDetectionView(
-                        Modifier.width(200.dp).wrapContentHeight(),
-                        jsonDetectionFocus,
-                        { focusPreviousDetection(DetectorKey.Json, it) },
-                        { focusNextDetection(DetectorKey.Json, it) },
-                    )
-
-                    Spacer(Modifier.width(8.dp))
-                    Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
-                    Spacer(Modifier.width(8.dp))
-
-                    MarkDetectionView(
-                        Modifier.width(200.dp).wrapContentHeight(),
-                        markDetectionFocus,
-                        { focusPreviousDetection(DetectorKey.Mark, it) },
-                        { focusNextDetection(DetectorKey.Mark, it) },
-                    )
-
-                    Spacer(Modifier.width(8.dp))
-                    Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
-                }
-            }
-        }
-    }
-    investigationView.refinedLogs.size
-    val filteredSize = "filteredSize " // TODO fix it
-/*
-    val filteredSize =
-        (if (detectionFinishedLogsList.size != logs.size) "Filtered size : ${detectionFinishedLogsList.size}, " else "")
-*/
-    Box(modifier = Modifier.fillMaxWidth()) {
-        Text(filteredSize + "Total : ${logs.size}", modifier = Modifier.padding(8.dp))
-        KeywordDetectionView(
-            Modifier.align(Alignment.BottomEnd),
-            keywordDetectionRequest,
-            keywordDetectionFocus,
-            findKeyword,
-            setKeywordDetectionEnabled,
-            { focusPreviousDetection(DetectorKey.Keyword, it) },
-            { focusNextDetection(DetectorKey.Keyword, it) },
-        )
-    }
-    Divider(color = Color.Black)
-    LogsView(
-        preferences,
-        header,
-        investigationView.refinedLogs,
-        detectionFocus,
-        collapseJsonDetection,
-        expandJsonDetection,
-        toggleMark
-    )
 }
 
 @Composable
