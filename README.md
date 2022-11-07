@@ -26,7 +26,7 @@ You can download a .dmg file in the [releases](https://github.com/jkj8790/LogJer
 
 The other platforms except Mac ARM64, you can build an application that runs on your platform by yourself.
 1. Clone this repository
-2. Execute `createDistributable` gradle task. `./gradlew createDistributable`
+2. Execute `createReleaseDistributable` gradle task. Run command `./gradlew createReleaseDistributable` on the project top directory 
 3. Check `build/compose/binaries/main/app` folder
 
 ### Next features
