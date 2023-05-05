@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalComposeUiApi::class, ExperimentalComposeUiApi::class)
+
 package com.jerryjeon.logjerry.ui
 
 import androidx.compose.foundation.border
@@ -5,17 +7,20 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.unit.dp
 import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.detector.KeywordDetectionView
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogManager
+import com.jerryjeon.logjerry.logview.LogSelection
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header
 import kotlinx.coroutines.flow.StateFlow
@@ -113,13 +118,48 @@ fun LogManagerView(
         )
     }
     Divider(color = Color.Black)
+
+    // TODO move to other class
+    var selectedLog by remember { mutableStateOf<LogSelection?>(null) }
+
+    fun LogSelection.next(): LogSelection {
+        val nextIndex = (this.index + 1).coerceAtMost(investigationView.refinedLogs.lastIndex)
+        val nextLog = investigationView.refinedLogs[nextIndex]
+        return LogSelection(nextLog, nextIndex)
+    }
+    fun LogSelection.prev(): LogSelection {
+        val nextIndex = (this.index - 1).coerceAtLeast(0)
+        val nextLog = investigationView.refinedLogs[nextIndex]
+        return LogSelection(nextLog, nextIndex)
+    }
+
     LogsView(
-        preferences,
-        header,
-        investigationView.refinedLogs,
-        activeDetectionFocus,
-        logViewManager::collapseJsonDetection,
-        logViewManager::expandJsonDetection,
-        detectorManager::toggleMark
+        modifier = Modifier
+            .onPreviewKeyEvent { keyEvent ->
+                when {
+                    keyEvent.key == Key.DirectionDown && keyEvent.type == KeyEventType.KeyDown -> {
+                        if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                        selectedLog = selectedLog?.next()
+                        true
+                    }
+                    keyEvent.key == Key.DirectionUp && keyEvent.type == KeyEventType.KeyDown -> {
+                        if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                        selectedLog = selectedLog?.prev()
+                        true
+                    }
+                    else -> {
+                        false
+                    }
+                }
+            },
+        preferences = preferences,
+        header = header,
+        logs = investigationView.refinedLogs,
+        detectionFocus = activeDetectionFocus,
+        logSelection = selectedLog,
+        collapseJsonDetection = logViewManager::collapseJsonDetection,
+        expandJsonDetection = logViewManager::expandJsonDetection,
+        toggleMark = detectorManager::toggleMark,
+        selectLog = { selectedLog = LogSelection(it, investigationView.refinedLogs.indexOf(it)) }
     )
 }

@@ -1,9 +1,11 @@
-@file:OptIn(ExperimentalComposeUiApi::class, ExperimentalComposeUiApi::class)
+@file:OptIn(ExperimentalComposeUiApi::class, ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 
 package com.jerryjeon.logjerry.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -49,10 +51,12 @@ fun LogRow(
     refinedLog: RefinedLog,
     preferences: Preferences,
     header: Header,
+    selected: Boolean,
     collapseJsonDetection: (JsonDetection) -> Unit,
     expandJsonDetection: (annotation: String) -> Unit,
     toggleMark: (Log) -> Unit,
-    divider: @Composable RowScope.() -> Unit
+    divider: @Composable RowScope.() -> Unit,
+    selectLog: (RefinedLog) -> Unit,
 ) {
     var active by remember { mutableStateOf(false) }
 
@@ -60,7 +64,14 @@ fun LogRow(
         Modifier
             .onPointerEvent(PointerEventType.Enter) { active = true }
             .onPointerEvent(PointerEventType.Exit) { active = false }
-            .background(if (active) Color(0x20CCCCCC) else Color.Transparent)
+            .background(
+                when {
+                    selected -> Color(0x20CCCCCC)
+                    active ->  Color(0x10CCCCCC)
+                    else -> Color.Transparent
+                }
+            )
+            .onClick { selectLog(refinedLog) }
     ) {
         Spacer(Modifier.width(8.dp))
         header.asColumnList.forEach { columnInfo ->

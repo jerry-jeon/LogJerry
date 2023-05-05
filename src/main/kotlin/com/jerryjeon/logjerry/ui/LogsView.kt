@@ -18,19 +18,23 @@ import com.jerryjeon.logjerry.HeaderDivider
 import com.jerryjeon.logjerry.detector.DetectionFocus
 import com.jerryjeon.logjerry.detector.JsonDetection
 import com.jerryjeon.logjerry.log.Log
+import com.jerryjeon.logjerry.logview.LogSelection
 import com.jerryjeon.logjerry.logview.RefinedLog
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header
 
 @Composable
 fun LogsView(
+    modifier: Modifier = Modifier,
     preferences: Preferences,
     header: Header,
     logs: List<RefinedLog>,
     detectionFocus: DetectionFocus?,
+    logSelection: LogSelection?,
     collapseJsonDetection: (JsonDetection) -> Unit,
     expandJsonDetection: (annotation: String) -> Unit,
-    toggleMark: (log: Log) -> Unit
+    toggleMark: (log: Log) -> Unit,
+    selectLog: (RefinedLog) -> Unit,
 ) {
     val listState = rememberLazyListState()
 
@@ -39,23 +43,41 @@ fun LogsView(
             listState.scrollToItem(it.logIndex)
         }
     }
+    LaunchedEffect(logSelection) {
+        logSelection?.index?.let {
+            // TODO Seems like inefficient... :(
+            val headerCount = 2
+            val currentPosition = it + headerCount
+            if (currentPosition < listState.firstVisibleItemIndex) {
+                listState.scrollToItem(currentPosition)
+            } else {
+                val viewportHeight = listState.layoutInfo.viewportSize.height
+                val lastVisibleItemIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                if(currentPosition > lastVisibleItemIndex) {
+                    listState.scrollToItem(currentPosition, scrollOffset = -viewportHeight + 200)
+                }
+            }
+        }
+    }
 
     val divider: @Composable RowScope.() -> Unit = { ColumnDivider() }
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
             item { HeaderRow(header, divider) }
             item { HeaderDivider() }
-            logs.forEach {
+            logs.forEach { refinedLog ->
                 item {
                     Column {
                         LogRow(
-                            it,
-                            preferences,
-                            header,
+                            refinedLog = refinedLog,
+                            preferences = preferences,
+                            header = header,
+                            selected = refinedLog == logSelection?.refinedLog,
                             divider = divider,
                             collapseJsonDetection = collapseJsonDetection,
                             expandJsonDetection = expandJsonDetection,
-                            toggleMark = toggleMark
+                            toggleMark = toggleMark,
+                            selectLog = selectLog
                         )
                         Divider()
                     }
