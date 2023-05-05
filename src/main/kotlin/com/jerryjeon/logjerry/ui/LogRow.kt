@@ -62,12 +62,9 @@ fun LogRow(
 
     Row(
         Modifier
-            .onPointerEvent(PointerEventType.Enter) { active = true }
-            .onPointerEvent(PointerEventType.Exit) { active = false }
             .background(
                 when {
                     selected -> Color(0x20CCCCCC)
-                    active ->  Color(0x10CCCCCC)
                     else -> Color.Transparent
                 }
             )
