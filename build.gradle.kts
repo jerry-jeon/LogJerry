@@ -5,10 +5,10 @@ import java.io.FileInputStream
 import java.util.Properties
 
 plugins {
-    kotlin("jvm") version "1.7.10"
-    kotlin("plugin.serialization") version "1.7.10"
-    id("org.jetbrains.compose") version "1.2.0-beta01"
-    id("org.jlleitschuh.gradle.ktlint-idea") version "10.2.0"
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.plugin.serialization)
+    alias(libs.plugins.compose)
+    alias(libs.plugins.ktlint)
 }
 
 group = "com.jerryjeon"
@@ -22,13 +22,13 @@ repositories {
 
 dependencies {
     implementation(compose.desktop.currentOs)
-    implementation("com.squareup.okio:okio:3.2.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.6.4")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
-    implementation("org.jetbrains.compose.material:material-icons-extended-desktop:1.2.0-beta01")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
-    testImplementation("io.kotest:kotest-assertions-core:5.4.1")
+    implementation(libs.okio.okio)
+    implementation(libs.coroutines.core)
+    implementation(libs.coroutines.swing)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.compose.material.icons)
+    testImplementation(libs.jupiter)
+    testImplementation(libs.kotest.assertions)
 }
 
 tasks.withType<KotlinCompile> {
