@@ -18,8 +18,8 @@ class DetectionManager(
 
     val detectionFinishedFlow: StateFlow<DetectionFinished> = combine(logsFlow, detectorsFlow) { filteredLogs, detectors ->
         val detectionFinishedLogs = filteredLogs
-            .mapIndexed { logIndex, log ->
-                val detectionResults = detectors.map { it.detect(log.log, logIndex) }
+            .map { log ->
+                val detectionResults = detectors.map { it.detect(log.log, log.index) }
                     .flatten()
                 DetectionFinishedLog(log, detectionResults.groupBy { it.key })
             }
