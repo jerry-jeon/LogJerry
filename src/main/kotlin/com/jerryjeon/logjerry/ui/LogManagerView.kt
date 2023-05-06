@@ -143,16 +143,18 @@ fun LogManagerView(
                     Text("Auto-detection", modifier = Modifier.padding(8.dp))
                     Divider()
                     Row {
-                        ExceptionDetectionView(
-                            Modifier.width(200.dp).wrapContentHeight(),
-                            exceptionDetectionSelection,
-                            { detectionManager.selectPreviousDetection(DetectorKey.Exception, it) },
-                            { detectionManager.selectNextDetection(DetectorKey.Exception, it) },
-                        )
+                        if (preferences.showExceptionDetection) {
+                            ExceptionDetectionView(
+                                Modifier.width(200.dp).wrapContentHeight(),
+                                exceptionDetectionSelection,
+                                { detectionManager.selectPreviousDetection(DetectorKey.Exception, it) },
+                                { detectionManager.selectNextDetection(DetectorKey.Exception, it) },
+                            )
 
-                        Spacer(Modifier.width(8.dp))
-                        Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
-                        Spacer(Modifier.width(8.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
+                            Spacer(Modifier.width(8.dp))
+                        }
 
                         JsonDetectionView(
                             Modifier.width(200.dp).wrapContentHeight(),

@@ -1,16 +1,18 @@
 package com.jerryjeon.logjerry.detector
 
 import com.jerryjeon.logjerry.log.Log
+import com.jerryjeon.logjerry.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 
 @OptIn(FlowPreview::class)
-class DetectorManager {
+class DetectorManager(preferences: Preferences) {
     private val detectionScope = CoroutineScope(Dispatchers.Default)
 
-    private val defaultDetectors = listOf(ExceptionDetector(), JsonDetector())
+    private val defaultDetectors =
+        listOf(JsonDetector()) + (if (preferences.showExceptionDetection) listOf(ExceptionDetector()) else emptyList())
     private val keywordDetectorEnabledStateFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     private val detectingKeywordFlow = MutableStateFlow("")
     val keywordDetectionRequestFlow =
