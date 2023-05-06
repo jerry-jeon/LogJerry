@@ -244,7 +244,8 @@ fun LogManagerView(
             listState = listState,
             collapseJsonDetection = logViewManager::collapseJsonDetection,
             expandJsonDetection = logViewManager::expandJsonDetection,
-            toggleMark = detectorManager::toggleMark
+            setMark = detectorManager::setMark,
+            deleteMark = detectorManager::deleteMark,
         ) {
             selectedLog = LogSelection(it, investigationView.refinedLogs.indexOf(it))
         }
