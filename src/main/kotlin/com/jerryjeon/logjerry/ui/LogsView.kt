@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,9 +18,11 @@ import com.jerryjeon.logjerry.ColumnDivider
 import com.jerryjeon.logjerry.HeaderDivider
 import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.detector.JsonDetection
+import com.jerryjeon.logjerry.detector.MarkDetection
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.logview.LogSelection
 import com.jerryjeon.logjerry.logview.RefinedLog
+import com.jerryjeon.logjerry.mark.LogMark
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header
 
@@ -33,7 +36,8 @@ fun LogsView(
     listState: LazyListState,
     collapseJsonDetection: (JsonDetection) -> Unit,
     expandJsonDetection: (annotation: String) -> Unit,
-    toggleMark: (log: Log) -> Unit,
+    setMark: (logMark: LogMark) -> Unit,
+    deleteMark: (logIndex: Int) -> Unit,
     selectLog: (RefinedLog) -> Unit,
 ) {
     val divider: @Composable RowScope.() -> Unit = { ColumnDivider() }
@@ -53,13 +57,23 @@ fun LogsView(
                                 divider = divider,
                                 collapseJsonDetection = collapseJsonDetection,
                                 expandJsonDetection = expandJsonDetection,
-                                toggleMark = toggleMark,
+                                setMark = setMark,
+                                deleteMark = deleteMark,
                                 selectLog = selectLog
                             )
                         }
-                        val marked = DetectorKey.Mark in refinedLog.detectionFinishedLog.detections.keys
-                        if(marked) {
-                            Box(modifier = Modifier.fillMaxWidth().wrapContentHeight().background(Color.Cyan).padding(start = 4.dp, top = 30.dp, end = 4.dp, bottom = 4.dp)) {
+                        val mark = refinedLog.detectionFinishedLog.detections[DetectorKey.Mark]?.firstOrNull() as? MarkDetection
+                        if(mark != null) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth().wrapContentHeight().background(mark.color)
+                                    .padding(start = 6.dp, top = 0.dp, end = 6.dp, bottom = 6.dp)
+                            ) {
+                                Text(
+                                    text = mark.note,
+                                    modifier = Modifier.wrapContentHeight().align(Alignment.CenterHorizontally).padding(8.dp),
+                                    color = Color.Black,
+                                    style = MaterialTheme.typography.h5,
+                                )
                                 Box(modifier = Modifier.background(MaterialTheme.colors.background)) {
                                     logRow()
                                 }
