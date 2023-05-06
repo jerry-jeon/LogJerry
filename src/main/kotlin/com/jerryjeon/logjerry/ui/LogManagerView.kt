@@ -3,6 +3,7 @@
 package com.jerryjeon.logjerry.ui
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +29,8 @@ import com.jerryjeon.logjerry.ui.focus.DetectionFocus
 import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
 import com.jerryjeon.logjerry.ui.focus.LogFocus
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import javax.security.auth.login.LoginContext
 
 // TODO Consider intuitive name
 @Composable
@@ -91,6 +94,35 @@ fun LogManagerView(
                     if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
                     selectedLog = selectedLog?.prev()
                     logManager.currentFocus.value = selectedLog?.index?.let { KeyboardFocus(it) }
+                    true
+                }
+                keyEvent.key == Key.MoveEnd && keyEvent.type == KeyEventType.KeyDown -> {
+                    if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                    scope.launch {
+                        val lastIndex = investigationView.refinedLogs.lastIndex
+                        listState.scrollToItem(lastIndex)
+                    }
+                    true
+                }
+                keyEvent.key == Key.MoveHome && keyEvent.type == KeyEventType.KeyDown -> {
+                    if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                    scope.launch {
+                        listState.scrollToItem(0)
+                    }
+                    true
+                }
+                keyEvent.key == Key.PageDown && keyEvent.type == KeyEventType.KeyDown -> {
+                    if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                    scope.launch {
+                        listState.scrollBy(listState.layoutInfo.viewportSize.height.toFloat())
+                    }
+                    true
+                }
+                keyEvent.key == Key.PageUp && keyEvent.type == KeyEventType.KeyDown -> {
+                    if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                    scope.launch {
+                        listState.scrollBy(-listState.layoutInfo.viewportSize.height.toFloat())
+                    }
                     true
                 }
                 else -> {
