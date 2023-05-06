@@ -6,16 +6,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.jerryjeon.logjerry.ColumnDivider
 import com.jerryjeon.logjerry.HeaderDivider
-import com.jerryjeon.logjerry.detector.DetectionFocus
 import com.jerryjeon.logjerry.detector.JsonDetection
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.logview.LogSelection
@@ -29,37 +27,13 @@ fun LogsView(
     preferences: Preferences,
     header: Header,
     logs: List<RefinedLog>,
-    detectionFocus: DetectionFocus?,
     logSelection: LogSelection?,
+    listState: LazyListState,
     collapseJsonDetection: (JsonDetection) -> Unit,
     expandJsonDetection: (annotation: String) -> Unit,
     toggleMark: (log: Log) -> Unit,
     selectLog: (RefinedLog) -> Unit,
 ) {
-    val listState = rememberLazyListState()
-
-    LaunchedEffect(detectionFocus) {
-        detectionFocus?.focusing?.let {
-            listState.scrollToItem(it.logIndex)
-        }
-    }
-    LaunchedEffect(logSelection) {
-        logSelection?.index?.let {
-            // TODO Seems like inefficient... :(
-            val headerCount = 2
-            val currentPosition = it + headerCount
-            if (currentPosition < listState.firstVisibleItemIndex) {
-                listState.scrollToItem(currentPosition)
-            } else {
-                val viewportHeight = listState.layoutInfo.viewportSize.height
-                val lastVisibleItemIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-                if(currentPosition > lastVisibleItemIndex) {
-                    listState.scrollToItem(currentPosition, scrollOffset = -viewportHeight + 200)
-                }
-            }
-        }
-    }
-
     val divider: @Composable RowScope.() -> Unit = { ColumnDivider() }
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {

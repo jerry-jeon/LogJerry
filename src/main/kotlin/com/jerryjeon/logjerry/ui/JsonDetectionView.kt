@@ -24,15 +24,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jerryjeon.logjerry.detector.DetectionFocus
+import com.jerryjeon.logjerry.detector.DetectionSelection
 import com.jerryjeon.logjerry.detector.JsonDetection
 
 @Composable
 fun JsonDetectionView(
     modifier: Modifier,
-    detectionFocus: DetectionFocus?,
-    moveToPreviousOccurrence: (DetectionFocus) -> Unit,
-    moveToNextOccurrence: (DetectionFocus) -> Unit,
+    detectionSelection: DetectionSelection?,
+    moveToPreviousOccurrence: (DetectionSelection) -> Unit,
+    moveToNextOccurrence: (DetectionSelection) -> Unit,
 ) {
     CompositionLocalProvider(
         LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp),
@@ -46,11 +46,11 @@ fun JsonDetectionView(
                     }
                 }
                 Text(title)
-                if (detectionFocus == null) {
+                if (detectionSelection == null) {
                     Spacer(Modifier.height(16.dp))
                     Text("No results", textAlign = TextAlign.Center)
                 } else {
-                    JsonDetectionFocusExist(detectionFocus, moveToPreviousOccurrence, moveToNextOccurrence)
+                    JsonDetectionSelectionExist(detectionSelection, moveToPreviousOccurrence, moveToNextOccurrence)
                 }
             }
         }
@@ -58,30 +58,30 @@ fun JsonDetectionView(
 }
 
 @Composable
-fun JsonDetectionFocusExist(
-    focus: DetectionFocus,
-    moveToPreviousOccurrence: (DetectionFocus) -> Unit,
-    moveToNextOccurrence: (DetectionFocus) -> Unit
+fun JsonDetectionSelectionExist(
+    selection: DetectionSelection,
+    moveToPreviousOccurrence: (DetectionSelection) -> Unit,
+    moveToNextOccurrence: (DetectionSelection) -> Unit
 ) {
     Column {
         Row {
             Row(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                if (focus.focusing == null) {
+                if (selection.selected == null) {
                     Text(
-                        "${focus.allDetections.size} results",
+                        "${selection.allDetections.size} results",
                         modifier = Modifier.align(Alignment.CenterVertically)
                     )
                 } else {
                     Text(
-                        "${focus.currentIndexInView} / ${focus.totalCount}",
+                        "${selection.currentIndexInView} / ${selection.totalCount}",
                         modifier = Modifier.align(Alignment.CenterVertically)
                     )
                 }
             }
-            IconButton(onClick = { moveToPreviousOccurrence(focus) }) {
+            IconButton(onClick = { moveToPreviousOccurrence(selection) }) {
                 Icon(Icons.Default.KeyboardArrowUp, "Previous Occurrence")
             }
-            IconButton(onClick = { moveToNextOccurrence(focus) }) {
+            IconButton(onClick = { moveToNextOccurrence(selection) }) {
                 Icon(Icons.Default.KeyboardArrowDown, "Next Occurrence")
             }
         }

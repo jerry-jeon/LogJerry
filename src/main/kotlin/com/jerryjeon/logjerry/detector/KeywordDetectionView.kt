@@ -38,11 +38,11 @@ import androidx.compose.ui.unit.sp
 fun KeywordDetectionView(
     modifier: Modifier = Modifier,
     keywordDetectionRequest: KeywordDetectionRequest,
-    detectionFocus: DetectionFocus?,
+    detectionSelection: DetectionSelection?,
     find: (String) -> Unit,
     setFindEnabled: (Boolean) -> Unit,
-    moveToPreviousOccurrence: (DetectionFocus) -> Unit,
-    moveToNextOccurrence: (DetectionFocus) -> Unit,
+    moveToPreviousOccurrence: (DetectionSelection) -> Unit,
+    moveToNextOccurrence: (DetectionSelection) -> Unit,
 ) {
     CompositionLocalProvider(
         LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp),
@@ -54,7 +54,7 @@ fun KeywordDetectionView(
                     keywordDetectionRequest,
                     find,
                     setFindEnabled,
-                    detectionFocus,
+                    detectionSelection,
                     moveToPreviousOccurrence,
                     moveToNextOccurrence
                 )
@@ -70,9 +70,9 @@ private fun KeywordDetectionRequestViewTurnedOn(
     keywordDetectionRequest: KeywordDetectionRequest.TurnedOn,
     find: (String) -> Unit,
     setFindEnabled: (Boolean) -> Unit,
-    detectionFocus: DetectionFocus?,
-    moveToPreviousOccurrence: (DetectionFocus) -> Unit,
-    moveToNextOccurrence: (DetectionFocus) -> Unit
+    detectionSelection: DetectionSelection?,
+    moveToPreviousOccurrence: (DetectionSelection) -> Unit,
+    moveToNextOccurrence: (DetectionSelection) -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
 
@@ -81,11 +81,11 @@ private fun KeywordDetectionRequestViewTurnedOn(
             modifier = Modifier.focusRequester(focusRequester).onPreviewKeyEvent {
                 when {
                     it.key == Key.Enter && it.type == KeyEventType.KeyDown -> {
-                        detectionFocus?.let { focus ->
+                        detectionSelection?.let { selection ->
                             if (it.isShiftPressed) {
-                                moveToPreviousOccurrence(focus)
+                                moveToPreviousOccurrence(selection)
                             } else {
-                                moveToNextOccurrence(focus)
+                                moveToNextOccurrence(selection)
                             }
                         }
                         true
@@ -102,15 +102,15 @@ private fun KeywordDetectionRequestViewTurnedOn(
             leadingIcon = { Icon(Icons.Default.Search, "Search") },
             trailingIcon = {
                 Row {
-                    detectionFocus?.let {
-                        if (it.focusing == null) {
+                    detectionSelection?.let {
+                        if (it.selected == null) {
                             Text(
                                 "${it.allDetections.size} results",
                                 modifier = Modifier.align(Alignment.CenterVertically)
                             )
                         } else {
                             Text(
-                                "${it.currentIndexInView} / ${detectionFocus.totalCount}",
+                                "${it.currentIndexInView} / ${detectionSelection.totalCount}",
                                 modifier = Modifier.align(Alignment.CenterVertically)
                             )
                         }

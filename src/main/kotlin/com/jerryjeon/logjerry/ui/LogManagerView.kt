@@ -4,6 +4,7 @@ package com.jerryjeon.logjerry.ui
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
@@ -23,7 +24,10 @@ import com.jerryjeon.logjerry.log.LogManager
 import com.jerryjeon.logjerry.logview.LogSelection
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header
-import kotlinx.coroutines.flow.StateFlow
+import com.jerryjeon.logjerry.ui.focus.DetectionFocus
+import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
+import com.jerryjeon.logjerry.ui.focus.LogFocus
+import kotlinx.coroutines.flow.*
 
 // TODO Consider intuitive name
 @Composable
@@ -44,11 +48,10 @@ fun LogManagerView(
 
     // TODO Find way to abstract these
     val detectionManager = logManager.detectionManager
-    val keywordDetectionFocus by detectionManager.keywordDetectionFocus.collectAsState()
-    val exceptionDetectionFocus by detectionManager.exceptionDetectionFocus.collectAsState()
-    val jsonDetectionFocus by detectionManager.jsonDetectionFocus.collectAsState()
-    val markDetectionFocus by detectionManager.markDetectionFocus.collectAsState()
-    val activeDetectionFocus by detectionManager.activeDetectionFocusFlowState.collectAsState()
+    val keywordDetectionSelection by detectionManager.keywordDetectionSelection.collectAsState()
+    val exceptionDetectionSelection by detectionManager.exceptionDetectionSelection.collectAsState()
+    val jsonDetectionSelection by detectionManager.jsonDetectionSelection.collectAsState()
+    val markDetectionSelection by detectionManager.markDetectionSelection.collectAsState()
 
     val textFilters by filterManager.textFiltersFlow.collectAsState()
     val priorityFilters by filterManager.priorityFilterFlow.collectAsState()
@@ -66,9 +69,9 @@ fun LogManagerView(
                 Row {
                     ExceptionDetectionView(
                         Modifier.width(200.dp).wrapContentHeight(),
-                        exceptionDetectionFocus,
-                        { detectionManager.focusPreviousDetection(DetectorKey.Exception, it) },
-                        { detectionManager.focusNextDetection(DetectorKey.Exception, it) },
+                        exceptionDetectionSelection,
+                        { detectionManager.selectPreviousDetection(DetectorKey.Exception, it) },
+                        { detectionManager.selectNextDetection(DetectorKey.Exception, it) },
                     )
 
                     Spacer(Modifier.width(8.dp))
@@ -77,9 +80,9 @@ fun LogManagerView(
 
                     JsonDetectionView(
                         Modifier.width(200.dp).wrapContentHeight(),
-                        jsonDetectionFocus,
-                        { detectionManager.focusPreviousDetection(DetectorKey.Json, it) },
-                        { detectionManager.focusNextDetection(DetectorKey.Json, it) },
+                        jsonDetectionSelection,
+                        { detectionManager.selectPreviousDetection(DetectorKey.Json, it) },
+                        { detectionManager.selectNextDetection(DetectorKey.Json, it) },
                     )
 
                     Spacer(Modifier.width(8.dp))
@@ -88,9 +91,9 @@ fun LogManagerView(
 
                     MarkDetectionView(
                         Modifier.width(200.dp).wrapContentHeight(),
-                        markDetectionFocus,
-                        { detectionManager.focusPreviousDetection(DetectorKey.Mark, it) },
-                        { detectionManager.focusNextDetection(DetectorKey.Mark, it) },
+                        markDetectionSelection,
+                        { detectionManager.selectPreviousDetection(DetectorKey.Mark, it) },
+                        { detectionManager.selectNextDetection(DetectorKey.Mark, it) },
                         { openNewTab(detectorManager.markedRowsFlow) }
                     )
 
@@ -110,11 +113,11 @@ fun LogManagerView(
         KeywordDetectionView(
             Modifier.align(Alignment.BottomEnd),
             keywordDetectionRequest,
-            keywordDetectionFocus,
+            keywordDetectionSelection,
             detectorManager::findKeyword,
             detectorManager::setKeywordDetectionEnabled,
-            { detectionManager.focusPreviousDetection(DetectorKey.Keyword, it) },
-            { detectionManager.focusNextDetection(DetectorKey.Keyword, it) },
+            { detectionManager.selectPreviousDetection(DetectorKey.Keyword, it) },
+            { detectionManager.selectNextDetection(DetectorKey.Keyword, it) },
         )
     }
     Divider(color = Color.Black)
@@ -133,6 +136,49 @@ fun LogManagerView(
         return LogSelection(nextLog, nextIndex)
     }
 
+    val listState = rememberLazyListState()
+
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(detectionManager.activeDetectionSelectionFlowState) {
+        detectionManager.activeDetectionSelectionFlowState
+            .onEach {
+                val index = investigationView.refinedLogs.indexOfFirst { refinedLog ->
+                    refinedLog.detectionFinishedLog.log.index == it?.selected?.logIndex
+                }
+                if (index != -1) {
+                    selectedLog = LogSelection(investigationView.refinedLogs[index], index)
+                    logManager.currentFocus.value = DetectionFocus(index)
+                }
+            }
+            .launchIn(scope)
+    }
+
+    LaunchedEffect(Unit) {
+        logManager.currentFocus.collectLatest {
+            if (it == null) return@collectLatest
+            val headerCount = 2
+            val exactPosition = it.index + headerCount
+
+            when (it) {
+                is DetectionFocus -> {
+                    listState.scrollToItem(exactPosition)
+                }
+                is KeyboardFocus -> {
+                    // TODO Seems like inefficient... :(
+                    if (exactPosition < listState.firstVisibleItemIndex) {
+                        listState.scrollToItem(exactPosition)
+                    } else {
+                        val viewportHeight = listState.layoutInfo.viewportSize.height
+                        val lastVisibleItemIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                        if(exactPosition > lastVisibleItemIndex) {
+                            listState.scrollToItem(exactPosition, scrollOffset = -viewportHeight + 200)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     LogsView(
         modifier = Modifier
             .onPreviewKeyEvent { keyEvent ->
@@ -140,11 +186,13 @@ fun LogManagerView(
                     keyEvent.key == Key.DirectionDown && keyEvent.type == KeyEventType.KeyDown -> {
                         if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
                         selectedLog = selectedLog?.next()
+                        logManager.currentFocus.value = selectedLog?.index?.let { KeyboardFocus(it) }
                         true
                     }
                     keyEvent.key == Key.DirectionUp && keyEvent.type == KeyEventType.KeyDown -> {
                         if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
                         selectedLog = selectedLog?.prev()
+                        logManager.currentFocus.value = selectedLog?.index?.let { KeyboardFocus(it) }
                         true
                     }
                     else -> {
@@ -155,11 +203,12 @@ fun LogManagerView(
         preferences = preferences,
         header = header,
         logs = investigationView.refinedLogs,
-        detectionFocus = activeDetectionFocus,
         logSelection = selectedLog,
+        listState = listState,
         collapseJsonDetection = logViewManager::collapseJsonDetection,
         expandJsonDetection = logViewManager::expandJsonDetection,
-        toggleMark = detectorManager::toggleMark,
-        selectLog = { selectedLog = LogSelection(it, investigationView.refinedLogs.indexOf(it)) }
-    )
+        toggleMark = detectorManager::toggleMark
+    ) {
+        selectedLog = LogSelection(it, investigationView.refinedLogs.indexOf(it))
+    }
 }
