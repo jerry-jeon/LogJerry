@@ -5,6 +5,7 @@ import com.jerryjeon.logjerry.detector.DetectionSelection
 import com.jerryjeon.logjerry.detector.Detector
 import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.log.Log
+import com.jerryjeon.logjerry.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*

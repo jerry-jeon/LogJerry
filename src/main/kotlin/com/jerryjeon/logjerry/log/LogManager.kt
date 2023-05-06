@@ -15,7 +15,7 @@ class LogManager(
     preferences: Preferences
 ) {
     val filterManager = FilterManager()
-    val detectorManager = DetectorManager()
+    val detectorManager = DetectorManager(preferences)
 
     private val filteredLogsFlow = combine(originalLogsFlow, filterManager.filtersFlow) { originalLogs, filters ->
         if (filters.isEmpty()) {

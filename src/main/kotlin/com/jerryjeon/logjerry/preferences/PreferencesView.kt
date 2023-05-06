@@ -37,6 +37,7 @@ fun PreferencesView(
     val saveEnabled by viewModel.saveEnabled.collectAsState()
     val colorTheme by viewModel.colorThemeFlow.collectAsState()
     val expandJsonWhenLoad by viewModel.expandJsonWhenLoadFlow.collectAsState()
+    val showExceptionDetection by viewModel.showExceptionDetection.collectAsState()
 
     if (isOpen.value) {
         Window(
@@ -58,6 +59,11 @@ fun PreferencesView(
                             Text("Expand all json when load the logs")
                             Spacer(Modifier.width(4.dp))
                             Checkbox(expandJsonWhenLoad, onCheckedChange = viewModel::changeExpandJsonWhenLoad)
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Detect exception automatically")
+                            Spacer(Modifier.width(4.dp))
+                            Checkbox(showExceptionDetection, onCheckedChange = viewModel::changeShowExceptionDetection)
                         }
 
                         Spacer(Modifier.height(8.dp))
