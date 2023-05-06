@@ -2,10 +2,8 @@
 
 package com.jerryjeon.logjerry.ui
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.onClick
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -23,14 +21,12 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.pointer.PointerEventType
-import androidx.compose.ui.input.pointer.onPointerEvent
+import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogState
 import com.jerryjeon.logjerry.detection.DetectionFinishedLog
-import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.detector.JsonDetection
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogContentView
@@ -58,7 +54,18 @@ fun LogRow(
     divider: @Composable RowScope.() -> Unit,
     selectLog: (RefinedLog) -> Unit,
 ) {
-    var active by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
+
+    CursorDropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false },
+    ) {
+        DropdownMenuItem(onClick = {
+            toggleMark(refinedLog.detectionFinishedLog.log)
+        }) {
+            Text(if (refinedLog.marked) "Unmark" else "Mark")
+        }
+    }
 
     Row(
         Modifier
@@ -69,6 +76,13 @@ fun LogRow(
                 }
             )
             .onClick { selectLog(refinedLog) }
+            .onClick(
+                matcher = PointerMatcher.mouse(PointerButton.Secondary),
+                onClick = {
+                    expanded = true
+                }
+            )
+
     ) {
         Spacer(Modifier.width(8.dp))
         header.asColumnList.forEach { columnInfo ->
@@ -81,7 +95,6 @@ fun LogRow(
         }
 
         Spacer(Modifier.width(8.dp))
-        MarkCheckbox(active, refinedLog, toggleMark)
     }
 }
 
@@ -338,12 +351,6 @@ private fun JsonPrettyDialog(
             }
         }
     }
-}
-
-@Composable
-private fun MarkCheckbox(active: Boolean, refinedLog: RefinedLog, toggleMark: (Log) -> Unit) {
-    val marked = DetectorKey.Mark in refinedLog.detectionFinishedLog.detections.keys
-    Checkbox(marked, onCheckedChange = { toggleMark(refinedLog.detectionFinishedLog.log) }, Modifier.alpha(if (active || marked) 1f else 0f))
 }
 
 /*
