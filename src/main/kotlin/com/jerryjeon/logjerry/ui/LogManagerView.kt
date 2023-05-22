@@ -1,24 +1,36 @@
+@file:OptIn(ExperimentalComposeUiApi::class, ExperimentalComposeUiApi::class)
+
 package com.jerryjeon.logjerry.ui
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.unit.dp
 import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.detector.KeywordDetectionView
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogManager
+import com.jerryjeon.logjerry.logview.LogSelection
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header
-import kotlinx.coroutines.flow.StateFlow
+import com.jerryjeon.logjerry.ui.focus.DetectionFocus
+import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
+import com.jerryjeon.logjerry.ui.focus.LogFocus
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import javax.security.auth.login.LoginContext
 
 // TODO Consider intuitive name
 @Composable
@@ -39,87 +51,200 @@ fun LogManagerView(
 
     // TODO Find way to abstract these
     val detectionManager = logManager.detectionManager
-    val keywordDetectionFocus by detectionManager.keywordDetectionFocus.collectAsState()
-    val exceptionDetectionFocus by detectionManager.exceptionDetectionFocus.collectAsState()
-    val jsonDetectionFocus by detectionManager.jsonDetectionFocus.collectAsState()
-    val markDetectionFocus by detectionManager.markDetectionFocus.collectAsState()
-    val activeDetectionFocus by detectionManager.activeDetectionFocusFlowState.collectAsState()
+    val keywordDetectionSelection by detectionManager.keywordDetectionSelection.collectAsState()
+    val exceptionDetectionSelection by detectionManager.exceptionDetectionSelection.collectAsState()
+    val jsonDetectionSelection by detectionManager.jsonDetectionSelection.collectAsState()
+    val markDetectionSelection by detectionManager.markDetectionSelection.collectAsState()
 
     val textFilters by filterManager.textFiltersFlow.collectAsState()
     val priorityFilters by filterManager.priorityFilterFlow.collectAsState()
-
-    InvalidSentences()
-    Row(modifier = Modifier.padding(16.dp)) {
-        TextFilterView(textFilters, filterManager::addTextFilter, filterManager::removeTextFilter)
-        Spacer(Modifier.width(16.dp))
-        PriorityFilterView(priorityFilters, filterManager::setPriorityFilter)
-        Spacer(Modifier.width(16.dp))
-        Box(modifier = Modifier.weight(0.5f).border(1.dp, Color.LightGray, RoundedCornerShape(4.dp))) {
-            Column {
-                Text("Auto-detection", modifier = Modifier.padding(8.dp))
-                Divider()
-                Row {
-                    ExceptionDetectionView(
-                        Modifier.width(200.dp).wrapContentHeight(),
-                        exceptionDetectionFocus,
-                        { detectionManager.focusPreviousDetection(DetectorKey.Exception, it) },
-                        { detectionManager.focusNextDetection(DetectorKey.Exception, it) },
-                    )
-
-                    Spacer(Modifier.width(8.dp))
-                    Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
-                    Spacer(Modifier.width(8.dp))
-
-                    JsonDetectionView(
-                        Modifier.width(200.dp).wrapContentHeight(),
-                        jsonDetectionFocus,
-                        { detectionManager.focusPreviousDetection(DetectorKey.Json, it) },
-                        { detectionManager.focusNextDetection(DetectorKey.Json, it) },
-                    )
-
-                    Spacer(Modifier.width(8.dp))
-                    Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
-                    Spacer(Modifier.width(8.dp))
-
-                    MarkDetectionView(
-                        Modifier.width(200.dp).wrapContentHeight(),
-                        markDetectionFocus,
-                        { detectionManager.focusPreviousDetection(DetectorKey.Mark, it) },
-                        { detectionManager.focusNextDetection(DetectorKey.Mark, it) },
-                        { openNewTab(detectorManager.markedRowsFlow) }
-                    )
-
-                    Spacer(Modifier.width(8.dp))
-                    Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
-                }
-            }
-        }
-    }
 
     val filteredSize = investigationView.refinedLogs.size
     val totalSize = logManager.originalLogsFlow.value.size
     val filteredSizeText =
         (if (filteredSize != totalSize) "Filtered size : $filteredSize, " else "")
-    Box(modifier = Modifier.fillMaxWidth()) {
-        Text("${filteredSizeText}Total : $totalSize", modifier = Modifier.padding(8.dp))
-        KeywordDetectionView(
-            Modifier.align(Alignment.BottomEnd),
-            keywordDetectionRequest,
-            keywordDetectionFocus,
-            detectorManager::findKeyword,
-            detectorManager::setKeywordDetectionEnabled,
-            { detectionManager.focusPreviousDetection(DetectorKey.Keyword, it) },
-            { detectionManager.focusNextDetection(DetectorKey.Keyword, it) },
-        )
+
+    // TODO move to other class
+    var selectedLog by remember { mutableStateOf<LogSelection?>(null) }
+
+    fun LogSelection.next(): LogSelection {
+        val nextIndex = (this.index + 1).coerceAtMost(investigationView.refinedLogs.lastIndex)
+        val nextLog = investigationView.refinedLogs[nextIndex]
+        return LogSelection(nextLog, nextIndex)
     }
-    Divider(color = Color.Black)
-    LogsView(
-        preferences,
-        header,
-        investigationView.refinedLogs,
-        activeDetectionFocus,
-        logViewManager::collapseJsonDetection,
-        logViewManager::expandJsonDetection,
-        detectorManager::toggleMark
-    )
+    fun LogSelection.prev(): LogSelection {
+        val nextIndex = (this.index - 1).coerceAtLeast(0)
+        val nextLog = investigationView.refinedLogs[nextIndex]
+        return LogSelection(nextLog, nextIndex)
+    }
+
+    val listState = rememberLazyListState()
+
+    val scope = rememberCoroutineScope()
+    Column(modifier = Modifier
+        .onPreviewKeyEvent { keyEvent ->
+            when {
+                keyEvent.key == Key.DirectionDown && keyEvent.type == KeyEventType.KeyDown -> {
+                    if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                    selectedLog = selectedLog?.next()
+                    logManager.currentFocus.value = selectedLog?.index?.let { KeyboardFocus(it) }
+                    true
+                }
+                keyEvent.key == Key.DirectionUp && keyEvent.type == KeyEventType.KeyDown -> {
+                    if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                    selectedLog = selectedLog?.prev()
+                    logManager.currentFocus.value = selectedLog?.index?.let { KeyboardFocus(it) }
+                    true
+                }
+                keyEvent.key == Key.MoveEnd && keyEvent.type == KeyEventType.KeyDown -> {
+                    if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                    scope.launch {
+                        val lastIndex = investigationView.refinedLogs.lastIndex
+                        listState.scrollToItem(lastIndex)
+                    }
+                    true
+                }
+                keyEvent.key == Key.MoveHome && keyEvent.type == KeyEventType.KeyDown -> {
+                    if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                    scope.launch {
+                        listState.scrollToItem(0)
+                    }
+                    true
+                }
+                keyEvent.key == Key.PageDown && keyEvent.type == KeyEventType.KeyDown -> {
+                    if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                    scope.launch {
+                        listState.scrollBy(listState.layoutInfo.viewportSize.height.toFloat())
+                    }
+                    true
+                }
+                keyEvent.key == Key.PageUp && keyEvent.type == KeyEventType.KeyDown -> {
+                    if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                    scope.launch {
+                        listState.scrollBy(-listState.layoutInfo.viewportSize.height.toFloat())
+                    }
+                    true
+                }
+                else -> {
+                    false
+                }
+            }
+        },
+    ) {
+
+        InvalidSentences()
+        Row(modifier = Modifier.padding(16.dp)) {
+            TextFilterView(textFilters, filterManager::addTextFilter, filterManager::removeTextFilter)
+            Spacer(Modifier.width(16.dp))
+            PriorityFilterView(priorityFilters, filterManager::setPriorityFilter)
+            Spacer(Modifier.width(16.dp))
+            Box(modifier = Modifier.weight(0.5f).border(1.dp, Color.LightGray, RoundedCornerShape(4.dp))) {
+                Column {
+                    Text("Auto-detection", modifier = Modifier.padding(8.dp))
+                    Divider()
+                    Row {
+                        ExceptionDetectionView(
+                            Modifier.width(200.dp).wrapContentHeight(),
+                            exceptionDetectionSelection,
+                            { detectionManager.selectPreviousDetection(DetectorKey.Exception, it) },
+                            { detectionManager.selectNextDetection(DetectorKey.Exception, it) },
+                        )
+
+                        Spacer(Modifier.width(8.dp))
+                        Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
+                        Spacer(Modifier.width(8.dp))
+
+                        JsonDetectionView(
+                            Modifier.width(200.dp).wrapContentHeight(),
+                            jsonDetectionSelection,
+                            { detectionManager.selectPreviousDetection(DetectorKey.Json, it) },
+                            { detectionManager.selectNextDetection(DetectorKey.Json, it) },
+                        )
+
+                        Spacer(Modifier.width(8.dp))
+                        Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
+                        Spacer(Modifier.width(8.dp))
+
+                        MarkDetectionView(
+                            Modifier.width(200.dp).wrapContentHeight(),
+                            markDetectionSelection,
+                            { detectionManager.selectPreviousDetection(DetectorKey.Mark, it) },
+                            { detectionManager.selectNextDetection(DetectorKey.Mark, it) },
+                            { openNewTab(detectorManager.markedRowsFlow) }
+                        )
+
+                        Spacer(Modifier.width(8.dp))
+                        Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
+                    }
+                }
+            }
+        }
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Text("${filteredSizeText}Total : $totalSize", modifier = Modifier.padding(8.dp))
+            KeywordDetectionView(
+                Modifier.align(Alignment.BottomEnd),
+                keywordDetectionRequest,
+                keywordDetectionSelection,
+                detectorManager::findKeyword,
+                detectorManager::setKeywordDetectionEnabled,
+                { detectionManager.selectPreviousDetection(DetectorKey.Keyword, it) },
+                { detectionManager.selectNextDetection(DetectorKey.Keyword, it) },
+            )
+        }
+        Divider(color = Color.Black)
+
+        LaunchedEffect(detectionManager.activeDetectionSelectionFlowState) {
+            detectionManager.activeDetectionSelectionFlowState
+                .onEach {
+                    val index = investigationView.refinedLogs.indexOfFirst { refinedLog ->
+                        refinedLog.detectionFinishedLog.log.index == it?.selected?.logIndex
+                    }
+                    if (index != -1) {
+                        selectedLog = LogSelection(investigationView.refinedLogs[index], index)
+                        logManager.currentFocus.value = DetectionFocus(index)
+                    }
+                }
+                .launchIn(scope)
+        }
+
+        LaunchedEffect(Unit) {
+            logManager.currentFocus.collectLatest {
+                if (it == null) return@collectLatest
+                val headerCount = 2
+                val exactPosition = it.index + headerCount
+
+                when (it) {
+                    is DetectionFocus -> {
+                        listState.scrollToItem(exactPosition)
+                    }
+                    is KeyboardFocus -> {
+                        // TODO Seems like inefficient... :(
+                        if (exactPosition < listState.firstVisibleItemIndex) {
+                            listState.scrollToItem(exactPosition)
+                        } else {
+                            val viewportHeight = listState.layoutInfo.viewportSize.height
+                            val lastVisibleItemIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                            if(exactPosition > lastVisibleItemIndex) {
+                                listState.scrollToItem(exactPosition, scrollOffset = -viewportHeight + 200)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        LogsView(
+            preferences = preferences,
+            header = header,
+            logs = investigationView.refinedLogs,
+            logSelection = selectedLog,
+            listState = listState,
+            collapseJsonDetection = logViewManager::collapseJsonDetection,
+            expandJsonDetection = logViewManager::expandJsonDetection,
+            toggleMark = detectorManager::toggleMark
+        ) {
+            selectedLog = LogSelection(it, investigationView.refinedLogs.indexOf(it))
+        }
+    }
 }

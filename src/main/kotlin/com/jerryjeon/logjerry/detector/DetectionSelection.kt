@@ -1,9 +1,9 @@
 package com.jerryjeon.logjerry.detector
 
-data class DetectionFocus(
+data class DetectionSelection(
     val key: DetectorKey,
     val currentIndex: Int,
-    val focusing: Detection?,
+    val selected: Detection?,
     val allDetections: List<Detection>,
 ) {
     val totalCount = allDetections.size

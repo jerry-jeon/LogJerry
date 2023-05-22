@@ -1,0 +1,25 @@
+[versions]
+coroutine = "1.6.4"
+kotlin = "1.8.20"
+okio = "3.2.0"
+kotlinx-serialization-json = "1.4.0"
+compose = "1.4.0"
+ktlint = "10.2.0"
+compose-material-icons = "1.2.0-beta01"
+jupiter = "5.9.0"
+kotest = "5.4.1"
+
+[libraries]
+coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutine" }
+coroutines-swing = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-swing", version.ref = "coroutine" }
+okio-okio = { group = "com.squareup.okio", name = "okio", version.ref = "okio" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
+compose-material-icons = { group = "org.jetbrains.compose.material", name = "material-icons-extended-desktop", version.ref = "compose-material-icons" }
+jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "jupiter" }
+kotest-assertions = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+compose = { id = "org.jetbrains.compose", version.ref = "compose" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint-idea", version.ref = "ktlint" }

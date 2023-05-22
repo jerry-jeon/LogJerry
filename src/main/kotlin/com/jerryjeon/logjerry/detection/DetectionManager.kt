@@ -1,7 +1,7 @@
 package com.jerryjeon.logjerry.detection
 
 import com.jerryjeon.logjerry.detector.Detection
-import com.jerryjeon.logjerry.detector.DetectionFocus
+import com.jerryjeon.logjerry.detector.DetectionSelection
 import com.jerryjeon.logjerry.detector.Detector
 import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.log.Log
@@ -18,8 +18,8 @@ class DetectionManager(
 
     val detectionFinishedFlow: StateFlow<DetectionFinished> = combine(logsFlow, detectorsFlow) { filteredLogs, detectors ->
         val detectionFinishedLogs = filteredLogs
-            .mapIndexed { logIndex, log ->
-                val detectionResults = detectors.map { it.detect(log.log, logIndex) }
+            .map { log ->
+                val detectionResults = detectors.map { it.detect(log.log, log.index) }
                     .flatten()
                 DetectionFinishedLog(log, detectionResults.groupBy { it.key })
             }
@@ -33,66 +33,66 @@ class DetectionManager(
         DetectionFinished(detectionFinishedLogs, allDetectionResults, detectors)
     }.stateIn(detectionScope, SharingStarted.Lazily, DetectionFinished(emptyList(), emptyMap(), emptyList()))
 
-    val keywordDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
-    val exceptionDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
-    val jsonDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
-    val markDetectionFocus = MutableStateFlow<DetectionFocus?>(null)
+    val keywordDetectionSelection = MutableStateFlow<DetectionSelection?>(null)
+    val exceptionDetectionSelection = MutableStateFlow<DetectionSelection?>(null)
+    val jsonDetectionSelection = MutableStateFlow<DetectionSelection?>(null)
+    val markDetectionSelection = MutableStateFlow<DetectionSelection?>(null)
 
-    private val focuses = mapOf(
-        DetectorKey.Keyword to keywordDetectionFocus,
-        DetectorKey.Exception to exceptionDetectionFocus,
-        DetectorKey.Json to jsonDetectionFocus,
-        DetectorKey.Mark to markDetectionFocus,
+    private val selections = mapOf(
+        DetectorKey.Keyword to keywordDetectionSelection,
+        DetectorKey.Exception to exceptionDetectionSelection,
+        DetectorKey.Json to jsonDetectionSelection,
+        DetectorKey.Mark to markDetectionSelection,
     )
 
-    val activeDetectionFocusFlowState =
-        merge(keywordDetectionFocus, exceptionDetectionFocus, jsonDetectionFocus, markDetectionFocus)
-            .filter { it?.focusing != null }
+    val activeDetectionSelectionFlowState =
+        merge(keywordDetectionSelection, exceptionDetectionSelection, jsonDetectionSelection, markDetectionSelection)
+            .filter { it?.selected != null }
             .stateIn(detectionScope, SharingStarted.Lazily, null)
 
     init {
         detectionScope.launch {
             detectionFinishedFlow.collect { result ->
                 val keywordDetections = result.allDetections[DetectorKey.Keyword] ?: emptyList()
-                keywordDetectionFocus.value = keywordDetections.firstOrNull()?.let {
-                    DetectionFocus(DetectorKey.Keyword, 0, null, keywordDetections)
+                keywordDetectionSelection.value = keywordDetections.firstOrNull()?.let {
+                    DetectionSelection(DetectorKey.Keyword, 0, null, keywordDetections)
                 }
 
                 val exceptionDetections = result.allDetections[DetectorKey.Exception] ?: emptyList()
-                exceptionDetectionFocus.value = exceptionDetections.firstOrNull()?.let {
-                    DetectionFocus(DetectorKey.Exception, 0, null, exceptionDetections)
+                exceptionDetectionSelection.value = exceptionDetections.firstOrNull()?.let {
+                    DetectionSelection(DetectorKey.Exception, 0, null, exceptionDetections)
                 }
 
                 val jsonDetections = result.allDetections[DetectorKey.Json] ?: emptyList()
-                jsonDetectionFocus.value = jsonDetections.firstOrNull()?.let {
-                    DetectionFocus(DetectorKey.Exception, 0, null, jsonDetections)
+                jsonDetectionSelection.value = jsonDetections.firstOrNull()?.let {
+                    DetectionSelection(DetectorKey.Exception, 0, null, jsonDetections)
                 }
 
                 val markDetections = result.allDetections[DetectorKey.Mark] ?: emptyList()
-                markDetectionFocus.value = markDetections.firstOrNull()?.let {
-                    DetectionFocus(DetectorKey.Exception, 0, null, markDetections)
+                markDetectionSelection.value = markDetections.firstOrNull()?.let {
+                    DetectionSelection(DetectorKey.Exception, 0, null, markDetections)
                 }
             }
         }
     }
 
-    fun focusPreviousDetection(key: DetectorKey, focus: DetectionFocus) {
-        val previousIndex = if (focus.currentIndex <= 0) {
-            focus.allDetections.size - 1
+    fun selectPreviousDetection(key: DetectorKey, selection: DetectionSelection) {
+        val previousIndex = if (selection.currentIndex <= 0) {
+            selection.allDetections.size - 1
         } else {
-            focus.currentIndex - 1
+            selection.currentIndex - 1
         }
 
-        focuses[key]?.value = focus.copy(currentIndex = previousIndex, focusing = focus.allDetections[previousIndex])
+        selections[key]?.value = selection.copy(currentIndex = previousIndex, selected = selection.allDetections[previousIndex])
     }
 
-    fun focusNextDetection(key: DetectorKey, focus: DetectionFocus) {
-        val nextIndex = if (focus.currentIndex >= focus.allDetections.size - 1) {
+    fun selectNextDetection(key: DetectorKey, selection: DetectionSelection) {
+        val nextIndex = if (selection.currentIndex >= selection.allDetections.size - 1) {
             0
         } else {
-            focus.currentIndex + 1
+            selection.currentIndex + 1
         }
 
-        focuses[key]?.value = focus.copy(currentIndex = nextIndex, focusing = focus.allDetections[nextIndex])
+        selections[key]?.value = selection.copy(currentIndex = nextIndex, selected = selection.allDetections[nextIndex])
     }
 }
