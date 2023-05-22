@@ -23,13 +23,18 @@ import com.jerryjeon.logjerry.detector.KeywordDetectionView
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogManager
 import com.jerryjeon.logjerry.logview.LogSelection
+import com.jerryjeon.logjerry.logview.RefinedLog
 import com.jerryjeon.logjerry.preferences.Preferences
+import com.jerryjeon.logjerry.source.Source
 import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.ui.focus.DetectionFocus
 import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
 import com.jerryjeon.logjerry.ui.focus.LogFocus
+import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.awt.Toolkit
+import java.awt.datatransfer.DataFlavor
 import javax.security.auth.login.LoginContext
 
 // TODO Consider intuitive name
@@ -64,6 +69,7 @@ fun LogManagerView(
     val filteredSizeText =
         (if (filteredSize != totalSize) "Filtered size : $filteredSize, " else "")
 
+    val showMarkDialog = remember { mutableStateOf<RefinedLog?>(null) }
     // TODO move to other class
     var selectedLog by remember { mutableStateOf<LogSelection?>(null) }
 
@@ -125,6 +131,10 @@ fun LogManagerView(
                     }
                     true
                 }
+                keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.M && keyEvent.type == KeyEventType.KeyDown -> {
+                    showMarkDialog.value = selectedLog?.refinedLog
+                    true
+                }
                 else -> {
                     false
                 }
@@ -143,16 +153,18 @@ fun LogManagerView(
                     Text("Auto-detection", modifier = Modifier.padding(8.dp))
                     Divider()
                     Row {
-                        ExceptionDetectionView(
-                            Modifier.width(200.dp).wrapContentHeight(),
-                            exceptionDetectionSelection,
-                            { detectionManager.selectPreviousDetection(DetectorKey.Exception, it) },
-                            { detectionManager.selectNextDetection(DetectorKey.Exception, it) },
-                        )
+                        if (preferences.showExceptionDetection) {
+                            ExceptionDetectionView(
+                                Modifier.width(200.dp).wrapContentHeight(),
+                                exceptionDetectionSelection,
+                                { detectionManager.selectPreviousDetection(DetectorKey.Exception, it) },
+                                { detectionManager.selectNextDetection(DetectorKey.Exception, it) },
+                            )
 
-                        Spacer(Modifier.width(8.dp))
-                        Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
-                        Spacer(Modifier.width(8.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
+                            Spacer(Modifier.width(8.dp))
+                        }
 
                         JsonDetectionView(
                             Modifier.width(200.dp).wrapContentHeight(),
@@ -242,9 +254,12 @@ fun LogManagerView(
             listState = listState,
             collapseJsonDetection = logViewManager::collapseJsonDetection,
             expandJsonDetection = logViewManager::expandJsonDetection,
-            toggleMark = detectorManager::toggleMark
+            setMark = detectorManager::setMark,
+            deleteMark = detectorManager::deleteMark,
         ) {
             selectedLog = LogSelection(it, investigationView.refinedLogs.indexOf(it))
         }
+
+        MarkDialog(showMarkDialog, detectorManager::setMark)
     }
 }

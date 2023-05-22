@@ -102,6 +102,14 @@ class PreferencesViewModel {
         expandJsonWhenLoadFlow.value = expandJsonWhenLoad
     }
 
+    val showExceptionDetection = MutableStateFlow(preferencesFlow.value.showExceptionDetection)
+
+    fun changeShowExceptionDetection(showExceptionDetection: Boolean) {
+        this.showExceptionDetection.value = showExceptionDetection
+    }
+
+
+
     fun save() {
         val whiteSavingColors = whiteValidColorsByPriority.value
         val whiteSavingBackgroundColor = whiteBackgroundValidColor.value
@@ -120,7 +128,8 @@ class PreferencesViewModel {
             lightBackgroundColor = whiteSavingBackgroundColor,
             darkColorByPriority = darkSavingColors.mapValues { (_, color) -> color!! },
             darkBackgroundColor = darkSavingBackgroundColor,
-            expandJsonWhenLoad = expandJsonWhenLoadFlow.value
+            expandJsonWhenLoad = expandJsonWhenLoadFlow.value,
+            showExceptionDetection = showExceptionDetection.value
         )
 
         Preferences.file.outputStream().use {
@@ -134,6 +143,7 @@ class PreferencesViewModel {
         darkColorStrings.value = Preferences.default.darkColorByPriority.toColorStrings()
         darkBackgroundColorString.value = Preferences.default.darkBackgroundColor.toColorString()
         expandJsonWhenLoadFlow.value = Preferences.default.expandJsonWhenLoad
+        showExceptionDetection.value = Preferences.default.showExceptionDetection
     }
 
     private fun Color.toColorString() = String.format("#%x", this.toArgb())

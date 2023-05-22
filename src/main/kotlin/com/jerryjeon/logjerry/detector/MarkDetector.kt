@@ -1,30 +1,33 @@
 package com.jerryjeon.logjerry.detector
 
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
-import com.jerryjeon.logjerry.log.Log
+import com.jerryjeon.logjerry.mark.LogMark
 import java.util.UUID
 
 class MarkDetector(
-    val logs: Set<Log>
+    val logMarks: Map<Int, LogMark>,
 ) : Detector<MarkDetection> {
-    private val logIndices = logs.map { it.index }.toSet()
     override val key = DetectorKey.Mark
 
-    fun toggleMark(log: Log?): MarkDetector {
-        return when (log) {
-            null -> return this
-            in logs -> MarkDetector(logs - log)
-            else -> MarkDetector(logs + log)
-        }
+    fun setMark(logMark: LogMark): MarkDetector {
+        return MarkDetector(logMarks + (logMark.log.index to logMark))
+    }
+
+    fun deleteMark(logIndex: Int): MarkDetector {
+        return MarkDetector(logMarks = logMarks - logIndex)
     }
 
     override fun detect(logStr: String, logIndex: Int): List<MarkDetection> {
-        return if (logIndex in logIndices) {
+        val logMark = logMarks[logIndex]
+        return if (logMark != null) {
             listOf(
                 MarkDetection(
                     UUID.randomUUID().toString(),
                     logStr.indices,
                     logIndex,
+                    logMark.note,
+                    logMark.color
                 )
             )
         } else {
@@ -37,6 +40,8 @@ class MarkDetection(
     override val id: String,
     override val range: IntRange, // TODO find cleaner way.. It doesn't need to exist
     override val logIndex: Int,
+    val note: String,
+    val color: Color,
 ) : Detection {
     override val key = DetectorKey.Mark
 
