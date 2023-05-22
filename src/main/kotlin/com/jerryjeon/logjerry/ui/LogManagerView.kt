@@ -23,13 +23,18 @@ import com.jerryjeon.logjerry.detector.KeywordDetectionView
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogManager
 import com.jerryjeon.logjerry.logview.LogSelection
+import com.jerryjeon.logjerry.logview.RefinedLog
 import com.jerryjeon.logjerry.preferences.Preferences
+import com.jerryjeon.logjerry.source.Source
 import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.ui.focus.DetectionFocus
 import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
 import com.jerryjeon.logjerry.ui.focus.LogFocus
+import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.awt.Toolkit
+import java.awt.datatransfer.DataFlavor
 import javax.security.auth.login.LoginContext
 
 // TODO Consider intuitive name
@@ -64,6 +69,7 @@ fun LogManagerView(
     val filteredSizeText =
         (if (filteredSize != totalSize) "Filtered size : $filteredSize, " else "")
 
+    val showMarkDialog = remember { mutableStateOf<RefinedLog?>(null) }
     // TODO move to other class
     var selectedLog by remember { mutableStateOf<LogSelection?>(null) }
 
@@ -123,6 +129,10 @@ fun LogManagerView(
                     scope.launch {
                         listState.scrollBy(-listState.layoutInfo.viewportSize.height.toFloat())
                     }
+                    true
+                }
+                keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.M && keyEvent.type == KeyEventType.KeyDown -> {
+                    showMarkDialog.value = selectedLog?.refinedLog
                     true
                 }
                 else -> {
@@ -249,5 +259,7 @@ fun LogManagerView(
         ) {
             selectedLog = LogSelection(it, investigationView.refinedLogs.indexOf(it))
         }
+
+        MarkDialog(showMarkDialog, detectorManager::setMark)
     }
 }
