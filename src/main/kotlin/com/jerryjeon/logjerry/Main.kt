@@ -140,25 +140,27 @@ private fun InvalidSentences(parseResult: ParseResult) {
                 false
             }
         ) {
-            Column(Modifier.padding(16.dp)) {
-                Text(
-                    "There were ${invalidSentences.size} invalid sentences",
-                    color = Color.Red,
-                )
-                Text(
-                    "Supported format : \"date time pid-tid/packageName priority/tag: log\"",
-                    color = Color.Black,
-                )
-                Spacer(Modifier.height(16.dp))
-                Divider()
-                Spacer(Modifier.height(16.dp))
-                invalidSentences.forEach { (index, s) ->
-                    Row(Modifier.height(IntrinsicSize.Min)) {
-                        Text("Line ${index + 1}")
-                        Spacer(Modifier.width(4.dp))
-                        Divider(Modifier.width(1.dp).fillMaxHeight())
-                        Spacer(Modifier.width(4.dp))
-                        Text(s, color = Color.Red)
+            Surface(color = MaterialTheme.colors.surface, contentColor = MaterialTheme.colors.onSurface) {
+                Column(Modifier.fillMaxSize().padding(16.dp)) {
+                    Text(
+                        "There were ${invalidSentences.size} invalid sentences",
+                        style = MaterialTheme.typography.body1
+                    )
+                    Text(
+                        "Supported format : \"date time pid-tid/packageName priority/tag: log\"",
+                        style = MaterialTheme.typography.body1
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Divider()
+                    Spacer(Modifier.height(16.dp))
+                    invalidSentences.forEach { (index, s) ->
+                        Row(Modifier.height(IntrinsicSize.Min)) {
+                            Text("Line ${index + 1}")
+                            Spacer(Modifier.width(4.dp))
+                            Divider(Modifier.width(1.dp).fillMaxHeight())
+                            Spacer(Modifier.width(4.dp))
+                            Text(s, color = MaterialTheme.colors.primary)
+                        }
                     }
                 }
             }
