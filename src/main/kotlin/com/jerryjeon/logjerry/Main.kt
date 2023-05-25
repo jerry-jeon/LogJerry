@@ -207,7 +207,16 @@ fun DarkTheme(preferences: Preferences, content: @Composable () -> Unit) {
             background = preferences.darkBackgroundColor,
             surface = preferences.darkBackgroundColor
         ),
-        content = content
+        content = {
+            CompositionLocalProvider(
+                LocalScrollbarStyle provides LocalScrollbarStyle.current.copy(
+                    hoverColor = Color(0xFF999999),
+                    unhoverColor = Color(0xFF666666)
+                )
+            ) {
+                content()
+            }
+        }
     )
 }
 
