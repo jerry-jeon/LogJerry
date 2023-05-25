@@ -13,6 +13,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.*
@@ -85,14 +87,17 @@ fun LogManagerView(
 
     val listState = rememberLazyListState()
 
+    val focusRequester = remember { FocusRequester() }
     val scope = rememberCoroutineScope()
     Column(modifier = Modifier
         .onPreviewKeyEvent { keyEvent ->
             when {
                 keyEvent.key == Key.DirectionDown && keyEvent.type == KeyEventType.KeyDown -> {
                     if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
-                    selectedLog = selectedLog?.next()
-                    logManager.currentFocus.value = selectedLog?.index?.let { KeyboardFocus(it) }
+                    val currentLog = selectedLog
+                    val nextLog = currentLog?.next() ?: LogSelection(investigationView.refinedLogs.first(), 0)
+                    selectedLog = nextLog
+                    logManager.currentFocus.value = KeyboardFocus(nextLog.index)
                     true
                 }
                 keyEvent.key == Key.DirectionUp && keyEvent.type == KeyEventType.KeyDown -> {
@@ -138,7 +143,8 @@ fun LogManagerView(
                     false
                 }
             }
-        },
+        }
+        .focusRequester(focusRequester),
     ) {
 
         InvalidSentences()
@@ -260,5 +266,9 @@ fun LogManagerView(
         )
 
         MarkDialog(showMarkDialog, detectorManager::setMark)
+
+        LaunchedEffect(logManager) {
+            focusRequester.requestFocus()
+        }
     }
 }

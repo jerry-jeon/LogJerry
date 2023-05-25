@@ -260,7 +260,6 @@ private fun RowScope.LogCell(
                 onClick = { offset ->
                     logContentView.str.getStringAnnotations(tag = "Json", start = offset, end = offset)
                         .firstOrNull()?.let {
-                            println("click :${it.item}")
                             expandJsonDetection(it.item)
                         }
                 }
