@@ -74,7 +74,7 @@ fun ActiveTabView(
 
 @Composable
 private fun GettingStartedView(notStarted: ParseStatus.NotStarted, changeSource: (Source) -> Unit) {
-    val requester = remember { FocusRequester() }
+    val focusRequester = remember { FocusRequester() }
     Column(
         modifier = Modifier.fillMaxSize().padding(50.dp)
             .onPreviewKeyEvent { keyEvent ->
@@ -92,7 +92,7 @@ private fun GettingStartedView(notStarted: ParseStatus.NotStarted, changeSource:
                     }
                 }
             }
-            .focusRequester(requester)
+            .focusRequester(focusRequester)
             .focusable(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -120,7 +120,7 @@ private fun GettingStartedView(notStarted: ParseStatus.NotStarted, changeSource:
         )
     }
     LaunchedEffect(notStarted) {
-        requester.requestFocus()
+        focusRequester.requestFocus()
     }
 }
 

@@ -123,15 +123,14 @@ fun LogsView(
                 markedRows.forEach {
                     val y =
                         it.detectionFinishedLog.log.index.toFloat() / listState.layoutInfo.totalItemsCount.toFloat() * listState.layoutInfo.viewportSize.height
-                    val mark = it.detectionFinishedLog.detections[DetectorKey.Mark]?.firstOrNull() as MarkDetection
                     Box (
                         modifier = Modifier.fillMaxWidth().height(30.dp)
                             .offset(y = y.toInt().dp)
-                            .background(mark.color),
+                            .background(it.mark!!.color),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = mark.note,
+                            text = it.mark.note,
                             color = Color.Black,
                             fontSize = 12.sp,
                             maxLines = 1
