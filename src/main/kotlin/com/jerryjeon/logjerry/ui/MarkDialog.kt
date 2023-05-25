@@ -92,7 +92,11 @@ fun MarkDialog(
             },
             resizable = false
         ) {
-            Surface(color = MaterialTheme.colors.surface, contentColor = MaterialTheme.colors.onSurface) {
+            Surface(
+                modifier = Modifier.focusRequester(focusRequester),
+                color = MaterialTheme.colors.surface,
+                contentColor = MaterialTheme.colors.onSurface
+            ) {
                 Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                     TextField(
                         value = note,
@@ -137,7 +141,6 @@ fun MarkDialog(
                     }
                 }
             }
-
         }
         LaunchedEffect(targetLog) {
             focusRequester.requestFocus()
