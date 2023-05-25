@@ -25,17 +25,12 @@ import com.jerryjeon.logjerry.log.LogManager
 import com.jerryjeon.logjerry.logview.LogSelection
 import com.jerryjeon.logjerry.logview.RefinedLog
 import com.jerryjeon.logjerry.preferences.Preferences
-import com.jerryjeon.logjerry.source.Source
 import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.ui.focus.DetectionFocus
 import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
-import com.jerryjeon.logjerry.ui.focus.LogFocus
 import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.awt.Toolkit
-import java.awt.datatransfer.DataFlavor
-import javax.security.auth.login.LoginContext
 
 // TODO Consider intuitive name
 @Composable
@@ -68,6 +63,10 @@ fun LogManagerView(
     val totalSize = logManager.originalLogsFlow.value.size
     val filteredSizeText =
         (if (filteredSize != totalSize) "Filtered size : $filteredSize, " else "")
+
+
+    val markedRows = investigationView.refinedLogs.filter { it.marked } // TODO omg performance would be bad
+    // val markedRows by detectorManager.markedRowsFlow.collectAsState()
 
     val showMarkDialog = remember { mutableStateOf<RefinedLog?>(null) }
     // TODO move to other class
@@ -252,13 +251,13 @@ fun LogManagerView(
             logs = investigationView.refinedLogs,
             logSelection = selectedLog,
             listState = listState,
+            markedRows = markedRows,
             collapseJsonDetection = logViewManager::collapseJsonDetection,
             expandJsonDetection = logViewManager::expandJsonDetection,
             setMark = detectorManager::setMark,
             deleteMark = detectorManager::deleteMark,
-        ) {
-            selectedLog = LogSelection(it, investigationView.refinedLogs.indexOf(it))
-        }
+            selectLog = { selectedLog = LogSelection(it, investigationView.refinedLogs.indexOf(it)) }
+        )
 
         MarkDialog(showMarkDialog, detectorManager::setMark)
     }
