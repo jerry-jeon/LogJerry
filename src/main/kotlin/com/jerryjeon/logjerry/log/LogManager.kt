@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 
+/**
+ * The class that is created after parsing is completed.
+ */
 class LogManager(
     val originalLogsFlow: StateFlow<List<Log>>,
     preferences: Preferences
@@ -31,5 +34,4 @@ class LogManager(
     val logViewManager = LogViewManager(detectionManager.detectionFinishedFlow, preferences)
 
     val currentFocus = MutableStateFlow<LogFocus?>(null)
-
 }

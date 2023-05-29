@@ -2,32 +2,21 @@
 
 package com.jerryjeon.logjerry.ui
 
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.Divider
-import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.*
-import androidx.compose.ui.unit.dp
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogManager
-import com.jerryjeon.logjerry.logview.LogSelection
-import com.jerryjeon.logjerry.logview.RefinedLog
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.ui.focus.DetectionFocus
 import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
-import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 // TODO Consider intuitive name
 @Composable
@@ -43,93 +32,13 @@ fun LogManagerView(
     val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
     val detectionManager = logManager.detectionManager
     val logViewManager = logManager.logViewManager
-    val investigationView by logViewManager.investigationViewFlow.collectAsState()
-
-    val showMarkDialog = remember { mutableStateOf<RefinedLog?>(null) }
-    // TODO move to other class
-    var selectedLog by remember { mutableStateOf<LogSelection?>(null) }
-
-    fun LogSelection.next(): LogSelection {
-        val nextIndex = (this.index + 1).coerceAtMost(investigationView.refinedLogs.lastIndex)
-        val nextLog = investigationView.refinedLogs[nextIndex]
-        return LogSelection(nextLog, nextIndex)
-    }
-
-    fun LogSelection.prev(): LogSelection {
-        val nextIndex = (this.index - 1).coerceAtLeast(0)
-        val nextLog = investigationView.refinedLogs[nextIndex]
-        return LogSelection(nextLog, nextIndex)
-    }
 
     val listState = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }
-    val scope = rememberCoroutineScope()
     Column(
         modifier = Modifier
-            .onPreviewKeyEvent { keyEvent ->
-                when {
-                    keyEvent.key == Key.DirectionDown && keyEvent.type == KeyEventType.KeyDown -> {
-                        if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
-                        val currentLog = selectedLog
-                        val nextLog = currentLog?.next() ?: LogSelection(investigationView.refinedLogs.first(), 0)
-                        selectedLog = nextLog
-                        logManager.currentFocus.value = KeyboardFocus(nextLog.index)
-                        true
-                    }
-
-                    keyEvent.key == Key.DirectionUp && keyEvent.type == KeyEventType.KeyDown -> {
-                        if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
-                        selectedLog = selectedLog?.prev()
-                        logManager.currentFocus.value = selectedLog?.index?.let { KeyboardFocus(it) }
-                        true
-                    }
-
-                    keyEvent.key == Key.MoveEnd && keyEvent.type == KeyEventType.KeyDown -> {
-                        if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
-                        scope.launch {
-                            val lastIndex = investigationView.refinedLogs.lastIndex
-                            listState.scrollToItem(lastIndex)
-                        }
-                        true
-                    }
-
-                    keyEvent.key == Key.MoveHome && keyEvent.type == KeyEventType.KeyDown -> {
-                        if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
-                        scope.launch {
-                            listState.scrollToItem(0)
-                        }
-                        true
-                    }
-
-                    keyEvent.key == Key.PageDown && keyEvent.type == KeyEventType.KeyDown -> {
-                        if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
-                        scope.launch {
-                            listState.scrollBy(listState.layoutInfo.viewportSize.height.toFloat())
-                        }
-                        true
-                    }
-
-                    keyEvent.key == Key.PageUp && keyEvent.type == KeyEventType.KeyDown -> {
-                        if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
-                        scope.launch {
-                            listState.scrollBy(-listState.layoutInfo.viewportSize.height.toFloat())
-                        }
-                        true
-                    }
-
-                    keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.M && keyEvent.type == KeyEventType.KeyDown -> {
-                        showMarkDialog.value = selectedLog?.refinedLog
-                        true
-                    }
-
-                    else -> {
-                        false
-                    }
-                }
-            }
             .focusRequester(focusRequester),
     ) {
-
         InvalidSentences()
         FilterView(
             filterManager,
@@ -139,15 +48,6 @@ fun LogManagerView(
             detectorManager,
             keywordDetectionRequest,
         )
-
-        // TODO hmm..
-        val filteredSize = investigationView.refinedLogs.size
-        val totalSize = logManager.originalLogsFlow.value.size
-        val filteredSizeText =
-            (if (filteredSize != totalSize) "Filtered size : $filteredSize, " else "")
-        Text("${filteredSizeText}Total : $totalSize", modifier = Modifier.padding(8.dp))
-
-        Divider(color = Color.Black)
 
 /*
         LaunchedEffect(selections?.active) {
@@ -189,22 +89,22 @@ fun LogManagerView(
             }
         }
 
+        val investigationView by logViewManager.investigationViewFlow.collectAsState()
         val markedRows = investigationView.refinedLogs.filter { it.marked } // TODO omg performance would be bad
         // val markedRows by detectorManager.markedRowsFlow.collectAsState()
 
         LogsView(
             preferences = preferences,
+            investigationView = investigationView,
+            logManager = logManager,
+            detectorManager = detectorManager,
             header = header,
             logs = investigationView.refinedLogs,
-            logSelection = selectedLog,
             listState = listState,
             markedRows = markedRows,
             setMark = detectorManager::setMark,
             deleteMark = detectorManager::deleteMark,
-            selectLog = { selectedLog = LogSelection(it, investigationView.refinedLogs.indexOf(it)) }
         )
-
-        MarkDialog(showMarkDialog, detectorManager::setMark)
 
         LaunchedEffect(logManager) {
             focusRequester.requestFocus()
