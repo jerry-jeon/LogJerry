@@ -2,15 +2,16 @@
 
 package com.jerryjeon.logjerry.ui
 
-import androidx.compose.foundation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.PointerMatcher
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Expand
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -48,8 +49,6 @@ fun LogRow(
     preferences: Preferences,
     header: Header,
     selected: Boolean,
-    collapseJsonDetection: (JsonDetection) -> Unit,
-    expandJsonDetection: (annotation: String) -> Unit,
     setMark: (logMark: LogMark) -> Unit,
     deleteMark: (logIndex: Int) -> Unit,
     divider: @Composable RowScope.() -> Unit,
@@ -95,7 +94,7 @@ fun LogRow(
         Spacer(Modifier.width(8.dp))
         header.asColumnList.forEach { columnInfo ->
             if (columnInfo.visible) {
-                CellByColumnType(preferences, columnInfo, refinedLog, collapseJsonDetection, expandJsonDetection)
+                CellByColumnType(preferences, columnInfo, refinedLog)
                 if (columnInfo.columnType.showDivider) {
                     divider()
                 }
@@ -111,8 +110,6 @@ fun RowScope.CellByColumnType(
     preferences: Preferences,
     columnInfo: ColumnInfo,
     refinedLog: RefinedLog,
-    collapseJsonDetection: (JsonDetection) -> Unit,
-    expandJsonDetection: (annotation: String) -> Unit,
 ) {
     val log = refinedLog.detectionFinishedLog.log
     when (columnInfo.columnType) {
@@ -125,7 +122,7 @@ fun RowScope.CellByColumnType(
         ColumnType.Priority -> PriorityCell(preferences, columnInfo, log)
         ColumnType.Tag -> TagCell(preferences, columnInfo, log)
         ColumnType.Detection -> DetectionCell(columnInfo, refinedLog.detectionFinishedLog)
-        ColumnType.Log -> LogCell(preferences, columnInfo, refinedLog, collapseJsonDetection, expandJsonDetection)
+        ColumnType.Log -> LogCell(preferences, columnInfo, refinedLog)
     }
 }
 
@@ -230,13 +227,11 @@ private fun RowScope.LogCell(
     preferences: Preferences,
     logHeader: ColumnInfo,
     refinedLog: RefinedLog,
-    collapseJsonDetection: (JsonDetection) -> Unit,
-    expandJsonDetection: (annotation: String) -> Unit,
 ) {
     Box(modifier = this.cellDefaultModifier(logHeader.width)) {
         Column {
             refinedLog.logContentViews.forEach { logContent ->
-                AnnotatedLogView(preferences, logContent, refinedLog, collapseJsonDetection, expandJsonDetection)
+                AnnotatedLogView(preferences, logContent, refinedLog)
             }
         }
     }
@@ -246,23 +241,15 @@ private fun RowScope.LogCell(
     preferences: Preferences,
     logContentView: LogContentView,
     refinedLog: RefinedLog,
-    collapseJsonDetection: (JsonDetection) -> Unit,
-    expandJsonDetection: (annotation: String) -> Unit,
 ) {
     when (logContentView) {
         is LogContentView.Simple -> {
-            ClickableText(
+            Text(
                 text = logContentView.str,
                 style = MaterialTheme.typography.body2.copy(
                     fontSize = preferences.fontSize,
                     color = preferences.colorByPriority().getValue(refinedLog.detectionFinishedLog.log.priority)
                 ),
-                onClick = { offset ->
-                    logContentView.str.getStringAnnotations(tag = "Json", start = offset, end = offset)
-                        .firstOrNull()?.let {
-                            expandJsonDetection(it.item)
-                        }
-                }
             )
         }
         is LogContentView.Json -> {
@@ -284,12 +271,6 @@ private fun RowScope.LogCell(
                         Icon(Icons.Default.ContentCopy, "Copy the json")
                     }
                     Spacer(Modifier.width(4.dp))
-                    IconButton(
-                        onClick = { collapseJsonDetection(logContentView.jsonDetection) },
-                        modifier = Modifier.size(16.dp),
-                    ) {
-                        Icon(Icons.Default.Expand, "Collapse the json")
-                    }
                 }
             }
         }
@@ -373,4 +354,3 @@ fun RowScope.cellDefaultModifier(width: Int?, modifier: Modifier = Modifier): Mo
     return applyWidth(width, modifier)
         .padding(horizontal = 4.dp, vertical = 8.dp)
 }
-

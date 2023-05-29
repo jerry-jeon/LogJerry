@@ -4,28 +4,25 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.*
+import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.material.Divider
-import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jerryjeon.logjerry.ColumnDivider
 import com.jerryjeon.logjerry.HeaderDivider
 import com.jerryjeon.logjerry.detector.DetectorKey
-import com.jerryjeon.logjerry.detector.JsonDetection
 import com.jerryjeon.logjerry.detector.MarkDetection
-import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.logview.LogSelection
 import com.jerryjeon.logjerry.logview.RefinedLog
 import com.jerryjeon.logjerry.mark.LogMark
@@ -42,8 +39,6 @@ fun LogsView(
     logSelection: LogSelection?,
     listState: LazyListState,
     markedRows: List<RefinedLog>,
-    collapseJsonDetection: (JsonDetection) -> Unit,
-    expandJsonDetection: (annotation: String) -> Unit,
     setMark: (logMark: LogMark) -> Unit,
     deleteMark: (logIndex: Int) -> Unit,
     selectLog: (RefinedLog) -> Unit,
@@ -63,8 +58,6 @@ fun LogsView(
                                 header = header,
                                 selected = refinedLog == logSelection?.refinedLog,
                                 divider = divider,
-                                collapseJsonDetection = collapseJsonDetection,
-                                expandJsonDetection = expandJsonDetection,
                                 setMark = setMark,
                                 deleteMark = deleteMark,
                                 selectLog = selectLog
@@ -116,14 +109,15 @@ fun LogsView(
             exit = fadeOut(animationSpec = tween(500))
         ) {
             val width = listState.layoutInfo.viewportSize.width
-            Box(modifier = Modifier
-                .fillMaxSize()
-                .padding(start = (width - 120).dp)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(start = (width - 120).dp)
             ) {
                 markedRows.forEach {
                     val y =
                         it.detectionFinishedLog.log.index.toFloat() / listState.layoutInfo.totalItemsCount.toFloat() * listState.layoutInfo.viewportSize.height
-                    Box (
+                    Box(
                         modifier = Modifier.fillMaxWidth().height(30.dp)
                             .offset(y = y.toInt().dp)
                             .background(it.mark!!.color),
@@ -139,8 +133,5 @@ fun LogsView(
                 }
             }
         }
-
-        // markedRow
-
     }
 }

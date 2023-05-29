@@ -7,11 +7,7 @@ import androidx.compose.ui.graphics.toArgb
 import com.jerryjeon.logjerry.log.Priority
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.zip
+import kotlinx.coroutines.flow.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -55,9 +51,11 @@ class PreferencesViewModel {
         }
     }
         .stateIn(preferenceScope, SharingStarted.Lazily, Preferences.default.lightBackgroundColor)
+
     fun changeWhiteColorString(priority: Priority, colorString: String) {
         whiteColorStrings.value = whiteColorStrings.value + (priority to colorString)
     }
+
     fun changeWhiteBackgroundColor(colorString: String) {
         whiteBackgroundColorString.value = colorString
     }
@@ -84,23 +82,19 @@ class PreferencesViewModel {
         }
     }
         .stateIn(preferenceScope, SharingStarted.Lazily, Preferences.default.darkBackgroundColor)
+
     fun changeDarkColorString(priority: Priority, colorString: String) {
         darkColorStrings.value = darkColorStrings.value + (priority to colorString)
     }
+
     fun changeDarkBackgroundColor(colorString: String) {
         darkBackgroundColorString.value = colorString
     }
     //endregion
 
-    val expandJsonWhenLoadFlow = MutableStateFlow(preferencesFlow.value.expandJsonWhenLoad)
-
     var saveEnabled = whiteValidColorsByPriority.map { map -> map.values.all { it != null } }
         .zip(darkValidColorsByPriority.map { map -> map.values.all { it != null } }) { b1, b2 -> b1 && b2 }
         .stateIn(preferenceScope, SharingStarted.Lazily, false)
-
-    fun changeExpandJsonWhenLoad(expandJsonWhenLoad: Boolean) {
-        expandJsonWhenLoadFlow.value = expandJsonWhenLoad
-    }
 
     val showExceptionDetection = MutableStateFlow(preferencesFlow.value.showExceptionDetection)
 
@@ -108,17 +102,15 @@ class PreferencesViewModel {
         this.showExceptionDetection.value = showExceptionDetection
     }
 
-
-
     fun save() {
         val whiteSavingColors = whiteValidColorsByPriority.value
         val whiteSavingBackgroundColor = whiteBackgroundValidColor.value
         val darkSavingColors = darkValidColorsByPriority.value
         val darkSavingBackgroundColor = darkBackgroundValidColor.value
-        if (whiteSavingColors.any { (_, color) -> color == null }
-            || whiteSavingBackgroundColor == null
-            || darkSavingColors.any { (_, color) -> color == null }
-            || darkSavingBackgroundColor == null
+        if (whiteSavingColors.any { (_, color) -> color == null } ||
+            whiteSavingBackgroundColor == null ||
+            darkSavingColors.any { (_, color) -> color == null } ||
+            darkSavingBackgroundColor == null
         ) {
             return
         }
@@ -128,7 +120,6 @@ class PreferencesViewModel {
             lightBackgroundColor = whiteSavingBackgroundColor,
             darkColorByPriority = darkSavingColors.mapValues { (_, color) -> color!! },
             darkBackgroundColor = darkSavingBackgroundColor,
-            expandJsonWhenLoad = expandJsonWhenLoadFlow.value,
             showExceptionDetection = showExceptionDetection.value
         )
 
@@ -142,7 +133,6 @@ class PreferencesViewModel {
         whiteBackgroundColorString.value = Preferences.default.lightBackgroundColor.toColorString()
         darkColorStrings.value = Preferences.default.darkColorByPriority.toColorStrings()
         darkBackgroundColorString.value = Preferences.default.darkBackgroundColor.toColorString()
-        expandJsonWhenLoadFlow.value = Preferences.default.expandJsonWhenLoad
         showExceptionDetection.value = Preferences.default.showExceptionDetection
     }
 

@@ -14,7 +14,6 @@ import com.jerryjeon.logjerry.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 
@@ -26,33 +25,18 @@ class LogViewManager(
     private val logViewScope = CoroutineScope(Dispatchers.Default)
     val json = Json { prettyPrint = true }
 
-    private val detectionExpandedFlow = MutableStateFlow<Map<String, Boolean>>(emptyMap())
-
-    val investigationViewFlow: StateFlow<InvestigationView> = combine(detectionFinishedFlow, detectionExpandedFlow) { investigation, expanded ->
+    val investigationViewFlow: StateFlow<InvestigationView> = detectionFinishedFlow.map { investigation ->
         // Why should it be separated : make possible to change data of detectionResult
         // TODO don't want to repeat all annotate if just one log has changed. How can I achieve it
         val refinedLogs = investigation.detectionFinishedLogs.map {
             val logContents =
-                separateAnnotationStrings(it.log, it.detections.values.flatten(), expanded)
+                separateAnnotationStrings(it.log, it.detections.values.flatten())
             RefinedLog(it, annotate(it.log, logContents, investigation.detectors))
         }
-        val allDetectionLogs = investigation.allDetections.mapValues { (_, v) ->
-            v.map { DetectionView(it, false) }
-        }
-        InvestigationView(refinedLogs, allDetectionLogs)
+        InvestigationView(refinedLogs, investigation.allDetections)
     }.stateIn(logViewScope, SharingStarted.Lazily, InvestigationView(emptyList(), emptyMap()))
 
-    init {
-        logViewScope.launch {
-            detectionFinishedFlow.collect { detectionFinished ->
-                detectionExpandedFlow.value = detectionFinished.allDetections.values.flatten().associate {
-                    it.id to (preferences.expandJsonWhenLoad && (it is JsonDetection))
-                }
-            }
-        }
-    }
-
-    private fun separateAnnotationStrings(log: Log, detectionResults: List<Detection>, detectionExpanded: Map<String, Boolean>): List<LogContent> {
+    private fun separateAnnotationStrings(log: Log, detectionResults: List<Detection>): List<LogContent> {
         val sortedDetections = detectionResults.sortedBy { it.range.first }
         val originalLog = log.log
 
@@ -64,20 +48,16 @@ class LogViewManager(
             val newEnd = it.range.last
             // Assume that there are no overlapping areas.
             if (it is JsonDetection) {
-                if (detectionExpanded[it.id] == true) {
-                    if (lastEnded != newStart) {
-                        logContents.add(LogContent.Text(originalLog.substring(lastEnded, newStart), jsonDetections.toList()))
-                    }
-                    logContents.add(
-                        LogContent.ExpandedJson(
-                            json.encodeToString(JsonObject.serializer(), it.json), it
-                        )
-                    )
-                    jsonDetections.clear()
-                    lastEnded = newEnd + 1
-                } else {
-                    jsonDetections.add(it.move(-lastEnded)) // expanded range is separated area, so range should be changed
+                if (lastEnded != newStart) {
+                    logContents.add(LogContent.Text(originalLog.substring(lastEnded, newStart), jsonDetections.toList()))
                 }
+                logContents.add(
+                    LogContent.ExpandedJson(
+                        json.encodeToString(JsonObject.serializer(), it.json), it
+                    )
+                )
+                jsonDetections.clear()
+                lastEnded = newEnd + 1
             }
         }
         if (lastEnded < originalLog.length) {
@@ -130,13 +110,5 @@ class LogViewManager(
         }
 
         return result
-    }
-
-    fun collapseJsonDetection(detection: JsonDetection) {
-        detectionExpandedFlow.value = detectionExpandedFlow.value + (detection.id to false)
-    }
-
-    fun expandJsonDetection(annotation: String) {
-        detectionExpandedFlow.value = detectionExpandedFlow.value + (annotation to true)
     }
 }
