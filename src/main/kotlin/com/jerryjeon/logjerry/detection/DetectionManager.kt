@@ -1,11 +1,7 @@
 package com.jerryjeon.logjerry.detection
 
-import com.jerryjeon.logjerry.detector.Detection
-import com.jerryjeon.logjerry.detector.DetectionSelection
-import com.jerryjeon.logjerry.detector.Detector
-import com.jerryjeon.logjerry.detector.DetectorKey
+import com.jerryjeon.logjerry.detector.*
 import com.jerryjeon.logjerry.log.Log
-import com.jerryjeon.logjerry.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -17,62 +13,51 @@ class DetectionManager(
 ) {
     private val detectionScope = CoroutineScope(Dispatchers.Default)
 
-    val detectionFinishedFlow: StateFlow<DetectionFinished> = combine(logsFlow, detectorsFlow) { filteredLogs, detectors ->
-        val detectionFinishedLogs = filteredLogs
-            .map { log ->
-                val detectionResults = detectors.map { it.detect(log.log, log.index) }
-                    .flatten()
-                DetectionFinishedLog(log, detectionResults.groupBy { it.key })
+    val detectionFinishedFlow: StateFlow<DetectionFinished> =
+        combine(logsFlow, detectorsFlow) { filteredLogs, detectors ->
+            val detectionFinishedLogs = filteredLogs
+                .map { log ->
+                    val detectionResults = detectors.map { it.detect(log.log, log.index) }
+                        .flatten()
+                    DetectionFinishedLog(log, detectionResults.groupBy { it.key })
+                }
+
+            val allDetectionResults = mutableMapOf<DetectorKey, List<Detection>>()
+            detectionFinishedLogs.forEach {
+                it.detections.forEach { (key, value) ->
+                    allDetectionResults[key] = (allDetectionResults[key] ?: emptyList()) + value
+                }
             }
+            DetectionFinished(detectionFinishedLogs, allDetectionResults, detectors)
+        }.stateIn(detectionScope, SharingStarted.Lazily, DetectionFinished(emptyList(), emptyMap(), emptyList()))
 
-        val allDetectionResults = mutableMapOf<DetectorKey, List<Detection>>()
-        detectionFinishedLogs.forEach {
-            it.detections.forEach { (key, value) ->
-                allDetectionResults[key] = (allDetectionResults[key] ?: emptyList()) + value
-            }
-        }
-        DetectionFinished(detectionFinishedLogs, allDetectionResults, detectors)
-    }.stateIn(detectionScope, SharingStarted.Lazily, DetectionFinished(emptyList(), emptyMap(), emptyList()))
-
-    val keywordDetectionSelection = MutableStateFlow<DetectionSelection?>(null)
-    val exceptionDetectionSelection = MutableStateFlow<DetectionSelection?>(null)
-    val jsonDetectionSelection = MutableStateFlow<DetectionSelection?>(null)
-    val markDetectionSelection = MutableStateFlow<DetectionSelection?>(null)
-
-    private val selections = mapOf(
-        DetectorKey.Keyword to keywordDetectionSelection,
-        DetectorKey.Exception to exceptionDetectionSelection,
-        DetectorKey.Json to jsonDetectionSelection,
-        DetectorKey.Mark to markDetectionSelection,
-    )
-
-    val activeDetectionSelectionFlowState =
-        merge(keywordDetectionSelection, exceptionDetectionSelection, jsonDetectionSelection, markDetectionSelection)
-            .filter { it?.selected != null }
-            .stateIn(detectionScope, SharingStarted.Lazily, null)
+    val selections = MutableStateFlow<DetectionSelections?>(null)
 
     init {
         detectionScope.launch {
             detectionFinishedFlow.collect { result ->
                 val keywordDetections = result.allDetections[DetectorKey.Keyword] ?: emptyList()
-                keywordDetectionSelection.value = keywordDetections.firstOrNull()?.let {
+                val keywordSelection = DetectorKey.Keyword to keywordDetections.firstOrNull()?.let {
                     DetectionSelection(DetectorKey.Keyword, 0, null, keywordDetections)
                 }
 
                 val exceptionDetections = result.allDetections[DetectorKey.Exception] ?: emptyList()
-                exceptionDetectionSelection.value = exceptionDetections.firstOrNull()?.let {
+                val exceptionSelection = DetectorKey.Exception to exceptionDetections.firstOrNull()?.let {
                     DetectionSelection(DetectorKey.Exception, 0, null, exceptionDetections)
                 }
 
                 val jsonDetections = result.allDetections[DetectorKey.Json] ?: emptyList()
-                jsonDetectionSelection.value = jsonDetections.firstOrNull()?.let {
+                val jsonSelection = DetectorKey.Json to jsonDetections.firstOrNull()?.let {
                     DetectionSelection(DetectorKey.Exception, 0, null, jsonDetections)
                 }
 
                 val markDetections = result.allDetections[DetectorKey.Mark] ?: emptyList()
-                markDetectionSelection.value = markDetections.firstOrNull()?.let {
+                val markSelection = DetectorKey.Mark to markDetections.firstOrNull()?.let {
                     DetectionSelection(DetectorKey.Exception, 0, null, markDetections)
                 }
+                selections.value = selections.value?.copy(
+                    selectionByKey = listOf(keywordSelection, exceptionSelection, jsonSelection, markSelection).toMap()
+                )
             }
         }
     }
@@ -84,7 +69,9 @@ class DetectionManager(
             selection.currentIndex - 1
         }
 
-        selections[key]?.value = selection.copy(currentIndex = previousIndex, selected = selection.allDetections[previousIndex])
+        val newSelection =
+            selection.copy(currentIndex = previousIndex, selected = selection.allDetections[previousIndex])
+        selections.value = selections.value?.updatedSelections(key, newSelection)
     }
 
     fun selectNextDetection(key: DetectorKey, selection: DetectionSelection) {
@@ -94,6 +81,7 @@ class DetectionManager(
             selection.currentIndex + 1
         }
 
-        selections[key]?.value = selection.copy(currentIndex = nextIndex, selected = selection.allDetections[nextIndex])
+        val newSelection = selection.copy(currentIndex = nextIndex, selected = selection.allDetections[nextIndex])
+        selections.value = selections.value?.updatedSelections(key, newSelection)
     }
 }
