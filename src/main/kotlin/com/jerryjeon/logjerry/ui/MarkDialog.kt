@@ -15,14 +15,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.*
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogState
-import com.jerryjeon.logjerry.logview.LogSelection
 import com.jerryjeon.logjerry.logview.RefinedLog
 import com.jerryjeon.logjerry.mark.LogMark
-import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
 import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
 
 @Composable
@@ -51,7 +52,7 @@ fun MarkDialog(
             showMarkDialog.value = null
         }
         val okFunction = {
-            setMark(LogMark(targetLog.detectionFinishedLog.log, note, colors[selectedColorIndex]))
+            setMark(LogMark(targetLog.log, note, colors[selectedColorIndex]))
             note = ""
             showMarkDialog.value = null
         }
@@ -70,7 +71,7 @@ fun MarkDialog(
                         true
                     }
                     keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.DirectionRight && keyEvent.type == KeyEventType.KeyDown -> {
-                        if(selectedColorIndex >= colors.size - 1) {
+                        if (selectedColorIndex >= colors.size - 1) {
                             selectedColorIndex = 0
                         } else {
                             selectedColorIndex++
@@ -78,7 +79,7 @@ fun MarkDialog(
                         true
                     }
                     keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.DirectionLeft && keyEvent.type == KeyEventType.KeyDown -> {
-                        if(selectedColorIndex <= 0) {
+                        if (selectedColorIndex <= 0) {
                             selectedColorIndex = colors.size - 1
                         } else {
                             selectedColorIndex--

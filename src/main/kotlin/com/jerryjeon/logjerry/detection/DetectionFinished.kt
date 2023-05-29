@@ -6,12 +6,7 @@ import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.log.Log
 
 data class DetectionFinished(
-    val detectionFinishedLogs: List<DetectionFinishedLog>,
+    val detectors: List<Detector<*>>,
+    val detectionsByLog: Map<Log, Map<DetectorKey, List<Detection>>>,
     val allDetections: Map<DetectorKey, List<Detection>>,
-    val detectors: List<Detector<*>>
-)
-
-data class DetectionFinishedLog(
-    val log: Log,
-    val detections: Map<DetectorKey, List<Detection>>
 )

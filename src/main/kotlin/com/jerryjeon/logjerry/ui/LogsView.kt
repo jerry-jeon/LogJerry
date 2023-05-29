@@ -26,11 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jerryjeon.logjerry.ColumnDivider
 import com.jerryjeon.logjerry.HeaderDivider
-import com.jerryjeon.logjerry.detector.DetectorKey
-import com.jerryjeon.logjerry.detector.Detectors
-import com.jerryjeon.logjerry.detector.MarkDetection
+import com.jerryjeon.logjerry.detector.DetectorManager
 import com.jerryjeon.logjerry.log.ParseCompleted
-import com.jerryjeon.logjerry.logview.InvestigationView
 import com.jerryjeon.logjerry.logview.LogSelection
 import com.jerryjeon.logjerry.logview.RefinedLog
 import com.jerryjeon.logjerry.mark.LogMark
@@ -44,12 +41,11 @@ import kotlinx.coroutines.launch
 @Composable
 fun LogsView(
     modifier: Modifier = Modifier,
-    investigationView: InvestigationView,
+    refinedLogs: List<RefinedLog>,
     parseCompleted: ParseCompleted,
-    detectors: Detectors,
+    detectorManager: DetectorManager,
     preferences: Preferences,
     header: Header,
-    logs: List<RefinedLog>,
     listState: LazyListState,
     markedRows: List<RefinedLog>,
     setMark: (logMark: LogMark) -> Unit,
@@ -61,18 +57,18 @@ fun LogsView(
     var selectedLog by remember { mutableStateOf<LogSelection?>(null) }
 
     fun LogSelection.next(): LogSelection {
-        val nextIndex = (this.index + 1).coerceAtMost(investigationView.refinedLogs.lastIndex)
-        val nextLog = investigationView.refinedLogs[nextIndex]
+        val nextIndex = (this.index + 1).coerceAtMost(refinedLogs.lastIndex)
+        val nextLog = refinedLogs[nextIndex]
         return LogSelection(nextLog, nextIndex)
     }
 
     fun LogSelection.prev(): LogSelection {
         val nextIndex = (this.index - 1).coerceAtLeast(0)
-        val nextLog = investigationView.refinedLogs[nextIndex]
+        val nextLog = refinedLogs[nextIndex]
         return LogSelection(nextLog, nextIndex)
     }
 
-    MarkDialog(showMarkDialog, detectors::setMark)
+    MarkDialog(showMarkDialog, detectorManager::setMark)
 
     val divider: @Composable RowScope.() -> Unit = { ColumnDivider() }
     Column(
@@ -80,32 +76,32 @@ fun LogsView(
             .onPreviewKeyEvent { keyEvent ->
                 when {
                     keyEvent.key == Key.DirectionDown && keyEvent.type == KeyEventType.KeyDown -> {
-                        if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                        if (refinedLogs.isEmpty()) return@onPreviewKeyEvent false
                         val currentLog = selectedLog
-                        val nextLog = currentLog?.next() ?: LogSelection(investigationView.refinedLogs.first(), 0)
+                        val nextLog = currentLog?.next() ?: LogSelection(refinedLogs.first(), 0)
                         selectedLog = nextLog
                         parseCompleted.currentFocus.value = KeyboardFocus(nextLog.index)
                         true
                     }
 
                     keyEvent.key == Key.DirectionUp && keyEvent.type == KeyEventType.KeyDown -> {
-                        if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                        if (refinedLogs.isEmpty()) return@onPreviewKeyEvent false
                         selectedLog = selectedLog?.prev()
                         parseCompleted.currentFocus.value = selectedLog?.index?.let { KeyboardFocus(it) }
                         true
                     }
 
                     keyEvent.key == Key.MoveEnd && keyEvent.type == KeyEventType.KeyDown -> {
-                        if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                        if (refinedLogs.isEmpty()) return@onPreviewKeyEvent false
                         scope.launch {
-                            val lastIndex = investigationView.refinedLogs.lastIndex
+                            val lastIndex = refinedLogs.lastIndex
                             listState.scrollToItem(lastIndex)
                         }
                         true
                     }
 
                     keyEvent.key == Key.MoveHome && keyEvent.type == KeyEventType.KeyDown -> {
-                        if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                        if (refinedLogs.isEmpty()) return@onPreviewKeyEvent false
                         scope.launch {
                             listState.scrollToItem(0)
                         }
@@ -113,7 +109,7 @@ fun LogsView(
                     }
 
                     keyEvent.key == Key.PageDown && keyEvent.type == KeyEventType.KeyDown -> {
-                        if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                        if (refinedLogs.isEmpty()) return@onPreviewKeyEvent false
                         scope.launch {
                             listState.scrollBy(listState.layoutInfo.viewportSize.height.toFloat())
                         }
@@ -121,7 +117,7 @@ fun LogsView(
                     }
 
                     keyEvent.key == Key.PageUp && keyEvent.type == KeyEventType.KeyDown -> {
-                        if (investigationView.refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                        if (refinedLogs.isEmpty()) return@onPreviewKeyEvent false
                         scope.launch {
                             listState.scrollBy(-listState.layoutInfo.viewportSize.height.toFloat())
                         }
@@ -141,7 +137,7 @@ fun LogsView(
 
     ) {
         // TODO hmm..
-        val filteredSize = investigationView.refinedLogs.size
+        val filteredSize = refinedLogs.size
         val totalSize = parseCompleted.originalLogsFlow.value.size
         val filteredSizeText =
             (if (filteredSize != totalSize) "Filtered size : $filteredSize, " else "")
@@ -153,7 +149,7 @@ fun LogsView(
             LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
                 item { HeaderRow(header, divider) }
                 item { HeaderDivider() }
-                logs.forEach { refinedLog ->
+                refinedLogs.forEach { refinedLog ->
                     item {
                         Column {
                             val logRow: @Composable () -> Unit = {
@@ -166,19 +162,17 @@ fun LogsView(
                                     setMark = setMark,
                                     deleteMark = deleteMark,
                                     selectLog = {
-                                        selectedLog = LogSelection(it, investigationView.refinedLogs.indexOf(it))
+                                        selectedLog = LogSelection(it, refinedLogs.indexOf(it))
                                     }
                                 )
                             }
-                            val mark =
-                                refinedLog.detectionFinishedLog.detections[DetectorKey.Mark]?.firstOrNull() as? MarkDetection
-                            if (mark != null) {
+                            if (refinedLog.mark != null) {
                                 Column(
-                                    modifier = Modifier.fillMaxWidth().wrapContentHeight().background(mark.color)
+                                    modifier = Modifier.fillMaxWidth().wrapContentHeight().background(refinedLog.mark.color)
                                         .padding(start = 6.dp, top = 0.dp, end = 6.dp, bottom = 6.dp)
                                 ) {
                                     Text(
-                                        text = mark.note,
+                                        text = refinedLog.mark.note,
                                         modifier = Modifier.wrapContentHeight().align(Alignment.CenterHorizontally)
                                             .padding(8.dp),
                                         color = Color.Black,
@@ -224,7 +218,7 @@ fun LogsView(
                 ) {
                     markedRows.forEach {
                         val y =
-                            it.detectionFinishedLog.log.index.toFloat() / listState.layoutInfo.totalItemsCount.toFloat() * listState.layoutInfo.viewportSize.height
+                            it.log.index.toFloat() / listState.layoutInfo.totalItemsCount.toFloat() * listState.layoutInfo.viewportSize.height
                         Box(
                             modifier = Modifier.fillMaxWidth().height(30.dp)
                                 .offset(y = y.toInt().dp)

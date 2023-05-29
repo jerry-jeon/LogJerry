@@ -26,26 +26,21 @@ fun ParseCompletedView(
     openNewTab: (StateFlow<List<Log>>) -> Unit,
     InvalidSentences: @Composable () -> Unit
 ) {
-    val filters = parseCompleted.filters
-    val detectors = parseCompleted.detectors
-    val keywordDetectionRequest by detectors.keywordDetectionRequestFlow.collectAsState()
-    val detections = parseCompleted.detections
-    val logViewManager = parseCompleted.logViewManager
-
-    val listState = rememberLazyListState()
+    val filterManager = parseCompleted.filterManager
+    val detectorManager = parseCompleted.detectorManager
+    val detectionManager = parseCompleted.detectionManager
     val focusRequester = remember { FocusRequester() }
     Column(
         modifier = Modifier
             .focusRequester(focusRequester),
     ) {
         InvalidSentences()
-        FilterView(
-            filters,
+        FilterAndDetectionView(
             preferences,
-            detections,
+            filterManager,
+            detectorManager,
+            detectionManager,
             openNewTab,
-            detectors,
-            keywordDetectionRequest,
         )
 
 /*
@@ -61,6 +56,7 @@ fun ParseCompletedView(
         }
 */
 
+        val listState = rememberLazyListState()
         LaunchedEffect(Unit) {
             parseCompleted.currentFocus.collectLatest {
                 if (it == null) return@collectLatest
@@ -88,21 +84,20 @@ fun ParseCompletedView(
             }
         }
 
-        val investigationView by logViewManager.investigationViewFlow.collectAsState()
-        val markedRows = investigationView.refinedLogs.filter { it.marked } // TODO omg performance would be bad
+        val refinedLogs by parseCompleted.refinedLogs.collectAsState()
+        val markedRows = refinedLogs.filter { it.marked } // TODO omg performance would be bad
         // val markedRows by detectorManager.markedRowsFlow.collectAsState()
 
         LogsView(
             preferences = preferences,
-            investigationView = investigationView,
+            refinedLogs = refinedLogs,
             parseCompleted = parseCompleted,
-            detectors = detectors,
+            detectorManager = detectorManager,
             header = header,
-            logs = investigationView.refinedLogs,
             listState = listState,
             markedRows = markedRows,
-            setMark = detectors::setMark,
-            deleteMark = detectors::deleteMark,
+            setMark = detectorManager::setMark,
+            deleteMark = detectorManager::deleteMark,
         )
 
         LaunchedEffect(parseCompleted) {

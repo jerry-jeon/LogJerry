@@ -8,7 +8,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 
 @OptIn(FlowPreview::class)
-class Detectors(preferences: Preferences) {
+class DetectorManager(preferences: Preferences) {
     private val detectionScope = CoroutineScope(Dispatchers.Default)
 
     private val defaultDetectors =

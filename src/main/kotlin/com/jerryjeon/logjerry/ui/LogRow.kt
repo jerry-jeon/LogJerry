@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogState
-import com.jerryjeon.logjerry.detection.DetectionFinishedLog
 import com.jerryjeon.logjerry.detector.JsonDetection
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogContentView
@@ -63,7 +62,7 @@ fun LogRow(
     ) {
         DropdownMenuItem(onClick = {
             if (refinedLog.marked) {
-                deleteMark(refinedLog.detectionFinishedLog.log.index)
+                deleteMark(refinedLog.log.index)
             } else {
                 showMarkDialog.value = refinedLog
             }
@@ -111,7 +110,7 @@ fun RowScope.CellByColumnType(
     columnInfo: ColumnInfo,
     refinedLog: RefinedLog,
 ) {
-    val log = refinedLog.detectionFinishedLog.log
+    val log = refinedLog.log
     when (columnInfo.columnType) {
         ColumnType.Number -> NumberCell(preferences, columnInfo, log)
         ColumnType.Date -> DateCell(preferences, columnInfo, log)
@@ -121,7 +120,7 @@ fun RowScope.CellByColumnType(
         ColumnType.PackageName -> PackagerNameCell(preferences, columnInfo, log)
         ColumnType.Priority -> PriorityCell(preferences, columnInfo, log)
         ColumnType.Tag -> TagCell(preferences, columnInfo, log)
-        ColumnType.Detection -> DetectionCell(columnInfo, refinedLog.detectionFinishedLog)
+        ColumnType.Detection -> DetectionCell(columnInfo, refinedLog)
         ColumnType.Log -> LogCell(preferences, columnInfo, refinedLog)
     }
 }
@@ -248,7 +247,7 @@ private fun RowScope.LogCell(
                 text = logContentView.str,
                 style = MaterialTheme.typography.body2.copy(
                     fontSize = preferences.fontSize,
-                    color = preferences.colorByPriority().getValue(refinedLog.detectionFinishedLog.log.priority)
+                    color = preferences.colorByPriority().getValue(refinedLog.log.priority)
                 ),
             )
         }
@@ -259,7 +258,7 @@ private fun RowScope.LogCell(
                     text = logContentView.str,
                     style = MaterialTheme.typography.body2.copy(
                         fontSize = preferences.fontSize,
-                        color = preferences.colorByPriority().getValue(refinedLog.detectionFinishedLog.log.priority)
+                        color = preferences.colorByPriority().getValue(refinedLog.log.priority)
                     ),
                     modifier = Modifier.padding(end = 32.dp)
                 )
@@ -278,11 +277,11 @@ private fun RowScope.LogCell(
 }
 
 @Composable
-private fun RowScope.DetectionCell(button: ColumnInfo, detectionFinishedLog: DetectionFinishedLog) {
+private fun RowScope.DetectionCell(button: ColumnInfo, refinedLog: RefinedLog) {
     val showPrettyJsonDialog: MutableState<JsonObject?> = remember { mutableStateOf(null) }
 
     Column(modifier = this.cellDefaultModifier(button.width)) {
-        detectionFinishedLog.detections.values
+        refinedLog.detections.values
             .flatten()
             .filterIsInstance<JsonDetection>()
             .forEachIndexed { index, jsonDetection ->

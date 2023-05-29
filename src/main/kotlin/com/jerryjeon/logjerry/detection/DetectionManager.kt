@@ -7,7 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class Detections(
+class DetectionManager(
     logsFlow: Flow<List<Log>>,
     detectorsFlow: Flow<List<Detector<*>>>
 ) {
@@ -15,21 +15,21 @@ class Detections(
 
     val detectionFinishedFlow: StateFlow<DetectionFinished> =
         combine(logsFlow, detectorsFlow) { filteredLogs, detectors ->
-            val detectionFinishedLogs = filteredLogs
-                .map { log ->
-                    val detectionResults = detectors.map { it.detect(log.log, log.index) }
-                        .flatten()
-                    DetectionFinishedLog(log, detectionResults.groupBy { it.key })
-                }
-
             val allDetectionResults = mutableMapOf<DetectorKey, List<Detection>>()
-            detectionFinishedLogs.forEach {
-                it.detections.forEach { (key, value) ->
+            val detectionFinishedLogs = filteredLogs.associateWith { log ->
+                val detections = detectors.associate { it.key to it.detect(log.log, log.index) }
+                detections.forEach { (key, value) ->
                     allDetectionResults[key] = (allDetectionResults[key] ?: emptyList()) + value
                 }
+                detections
             }
-            DetectionFinished(detectionFinishedLogs, allDetectionResults, detectors)
-        }.stateIn(detectionScope, SharingStarted.Lazily, DetectionFinished(emptyList(), emptyMap(), emptyList()))
+
+            DetectionFinished(detectors, detectionFinishedLogs, allDetectionResults)
+        }.stateIn(
+            detectionScope,
+            SharingStarted.Lazily,
+            DetectionFinished(emptyList(), emptyMap(), emptyMap())
+        )
 
     val selections = MutableStateFlow<DetectionSelections?>(null)
 

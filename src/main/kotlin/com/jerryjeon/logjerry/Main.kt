@@ -60,13 +60,11 @@ fun ActiveTabView(
         is ParseStatus.NotStarted -> GettingStartedView(status, activeTab.sourceManager::changeSource)
         is ParseStatus.Proceeding -> Text("Proceeding.... ${status.percent}")
         is ParseStatus.Completed -> {
-            // Parsecomplemeted
-            status.parseResult
             Column {
                 ParseCompletedView(
                     preferences,
                     header,
-                    status.logManager,
+                    status.parseCompleted,
                     openNewTab
                 ) { InvalidSentences(status.parseResult) }
             }

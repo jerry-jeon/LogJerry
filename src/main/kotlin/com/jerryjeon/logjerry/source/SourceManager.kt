@@ -63,7 +63,7 @@ class SourceManager(
     fun turnOnKeywordDetection() {
         when (val value = parseStatusFlow.value) {
             is ParseStatus.Completed -> {
-                value.logManager.detectorManager.setKeywordDetectionEnabled(true)
+                value.parseCompleted.detectorManager.setKeywordDetectionEnabled(true)
             }
             ParseStatus.NotStarted -> {}
             is ParseStatus.Proceeding -> {}
