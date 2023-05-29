@@ -1,7 +1,5 @@
 package com.jerryjeon.logjerry.detector
 
-import androidx.compose.ui.graphics.Color
-import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.mark.LogMark
 import com.jerryjeon.logjerry.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
@@ -10,7 +8,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 
 @OptIn(FlowPreview::class)
-class DetectorManager(preferences: Preferences) {
+class Detectors(preferences: Preferences) {
     private val detectionScope = CoroutineScope(Dispatchers.Default)
 
     private val defaultDetectors =
@@ -30,7 +28,7 @@ class DetectorManager(preferences: Preferences) {
 
     private val toggleMarkLogRequestFlow = MutableStateFlow<MarkRequest?>(null)
     private val markDetectorFlow = toggleMarkLogRequestFlow.scan(MarkDetector(emptyMap())) { detector, markRequest ->
-        when(markRequest) {
+        when (markRequest) {
             is MarkRequest.Mark -> detector.setMark(markRequest.logMark)
             is MarkRequest.Delete -> detector.deleteMark(markRequest.logIndex)
             null -> detector
@@ -64,6 +62,6 @@ class DetectorManager(preferences: Preferences) {
 
     sealed class MarkRequest {
         data class Mark(val logMark: LogMark) : MarkRequest()
-        data class Delete(val logIndex: Int): MarkRequest()
+        data class Delete(val logIndex: Int) : MarkRequest()
     }
 }

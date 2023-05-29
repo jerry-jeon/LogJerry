@@ -35,7 +35,7 @@ import com.jerryjeon.logjerry.tab.Tab
 import com.jerryjeon.logjerry.tab.TabManager
 import com.jerryjeon.logjerry.tab.Tabs
 import com.jerryjeon.logjerry.table.Header
-import com.jerryjeon.logjerry.ui.LogManagerView
+import com.jerryjeon.logjerry.ui.ParseCompletedView
 import com.jerryjeon.logjerry.ui.columnCheckboxItem
 import com.jerryjeon.logjerry.util.KeyShortcuts
 import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
@@ -60,8 +60,10 @@ fun ActiveTabView(
         is ParseStatus.NotStarted -> GettingStartedView(status, activeTab.sourceManager::changeSource)
         is ParseStatus.Proceeding -> Text("Proceeding.... ${status.percent}")
         is ParseStatus.Completed -> {
+            // Parsecomplemeted
+            status.parseResult
             Column {
-                LogManagerView(
+                ParseCompletedView(
                     preferences,
                     header,
                     status.logManager,

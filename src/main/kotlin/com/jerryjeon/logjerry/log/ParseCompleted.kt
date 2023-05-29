@@ -1,8 +1,8 @@
 package com.jerryjeon.logjerry.log
 
-import com.jerryjeon.logjerry.detection.DetectionManager
-import com.jerryjeon.logjerry.detector.DetectorManager
-import com.jerryjeon.logjerry.filter.FilterManager
+import com.jerryjeon.logjerry.detection.Detections
+import com.jerryjeon.logjerry.detector.Detectors
+import com.jerryjeon.logjerry.filter.Filters
 import com.jerryjeon.logjerry.logview.LogViewManager
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.ui.focus.LogFocus
@@ -13,14 +13,14 @@ import kotlinx.coroutines.flow.combine
 /**
  * The class that is created after parsing is completed.
  */
-class LogManager(
+class ParseCompleted(
     val originalLogsFlow: StateFlow<List<Log>>,
     preferences: Preferences
 ) {
-    val filterManager = FilterManager()
-    val detectorManager = DetectorManager(preferences)
+    val filters = Filters()
+    val detectors = Detectors(preferences)
 
-    private val filteredLogsFlow = combine(originalLogsFlow, filterManager.filtersFlow) { originalLogs, filters ->
+    private val filteredLogsFlow = combine(originalLogsFlow, filters.filtersFlow) { originalLogs, filters ->
         if (filters.isEmpty()) {
             originalLogs
         } else {
@@ -29,9 +29,9 @@ class LogManager(
         }
     }
 
-    val detectionManager = DetectionManager(filteredLogsFlow, detectorManager.detectorsFlow)
+    val detections = Detections(filteredLogsFlow, detectors.detectorsFlow)
 
-    val logViewManager = LogViewManager(detectionManager.detectionFinishedFlow, preferences)
+    val logViewManager = LogViewManager(detections.detectionFinishedFlow, preferences)
 
     val currentFocus = MutableStateFlow<LogFocus?>(null)
 }

@@ -7,7 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class DetectionManager(
+class Detections(
     logsFlow: Flow<List<Log>>,
     detectorsFlow: Flow<List<Detector<*>>>
 ) {

@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import com.jerryjeon.logjerry.log.Log
-import com.jerryjeon.logjerry.log.LogManager
+import com.jerryjeon.logjerry.log.ParseCompleted
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.ui.focus.DetectionFocus
@@ -18,20 +18,19 @@ import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 
-// TODO Consider intuitive name
 @Composable
-fun LogManagerView(
+fun ParseCompletedView(
     preferences: Preferences,
     header: Header,
-    logManager: LogManager,
+    parseCompleted: ParseCompleted,
     openNewTab: (StateFlow<List<Log>>) -> Unit,
     InvalidSentences: @Composable () -> Unit
 ) {
-    val filterManager = logManager.filterManager
-    val detectorManager = logManager.detectorManager
-    val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
-    val detectionManager = logManager.detectionManager
-    val logViewManager = logManager.logViewManager
+    val filters = parseCompleted.filters
+    val detectors = parseCompleted.detectors
+    val keywordDetectionRequest by detectors.keywordDetectionRequestFlow.collectAsState()
+    val detections = parseCompleted.detections
+    val logViewManager = parseCompleted.logViewManager
 
     val listState = rememberLazyListState()
     val focusRequester = remember { FocusRequester() }
@@ -41,11 +40,11 @@ fun LogManagerView(
     ) {
         InvalidSentences()
         FilterView(
-            filterManager,
+            filters,
             preferences,
-            detectionManager,
+            detections,
             openNewTab,
-            detectorManager,
+            detectors,
             keywordDetectionRequest,
         )
 
@@ -63,7 +62,7 @@ fun LogManagerView(
 */
 
         LaunchedEffect(Unit) {
-            logManager.currentFocus.collectLatest {
+            parseCompleted.currentFocus.collectLatest {
                 if (it == null) return@collectLatest
                 val headerCount = 2
                 val exactPosition = it.index + headerCount
@@ -96,17 +95,17 @@ fun LogManagerView(
         LogsView(
             preferences = preferences,
             investigationView = investigationView,
-            logManager = logManager,
-            detectorManager = detectorManager,
+            parseCompleted = parseCompleted,
+            detectors = detectors,
             header = header,
             logs = investigationView.refinedLogs,
             listState = listState,
             markedRows = markedRows,
-            setMark = detectorManager::setMark,
-            deleteMark = detectorManager::deleteMark,
+            setMark = detectors::setMark,
+            deleteMark = detectors::deleteMark,
         )
 
-        LaunchedEffect(logManager) {
+        LaunchedEffect(parseCompleted) {
             focusRequester.requestFocus()
         }
     }

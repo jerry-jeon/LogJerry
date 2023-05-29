@@ -12,29 +12,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.jerryjeon.logjerry.detection.DetectionManager
+import com.jerryjeon.logjerry.detection.Detections
 import com.jerryjeon.logjerry.detector.DetectorKey
-import com.jerryjeon.logjerry.detector.DetectorManager
+import com.jerryjeon.logjerry.detector.Detectors
 import com.jerryjeon.logjerry.detector.KeywordDetectionRequest
 import com.jerryjeon.logjerry.detector.KeywordDetectionView
-import com.jerryjeon.logjerry.filter.FilterManager
+import com.jerryjeon.logjerry.filter.Filters
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.preferences.Preferences
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun FilterView(
-    filterManager: FilterManager,
+    filters: Filters,
     preferences: Preferences,
-    detectionManager: DetectionManager,
+    detections: Detections,
     openNewTab: (StateFlow<List<Log>>) -> Unit,
-    detectorManager: DetectorManager,
+    detectors: Detectors,
     keywordDetectionRequest: KeywordDetectionRequest,
 ) {
-    val textFilters by filterManager.textFiltersFlow.collectAsState()
-    val priorityFilters by filterManager.priorityFilterFlow.collectAsState()
+    val textFilters by filters.textFiltersFlow.collectAsState()
+    val priorityFilters by filters.priorityFilterFlow.collectAsState()
 
-    val selections by detectionManager.selections.collectAsState()
+    val selections by detections.selections.collectAsState()
     val keywordDetectionSelection = selections?.selectionByKey?.get(DetectorKey.Keyword)
     val exceptionDetectionSelection = selections?.selectionByKey?.get(DetectorKey.Exception)
     val jsonDetectionSelection = selections?.selectionByKey?.get(DetectorKey.Json)
@@ -42,9 +42,9 @@ fun FilterView(
 
     Column {
         Row(modifier = Modifier.padding(16.dp)) {
-            TextFilterView(textFilters, filterManager::addTextFilter, filterManager::removeTextFilter)
+            TextFilterView(textFilters, filters::addTextFilter, filters::removeTextFilter)
             Spacer(Modifier.width(16.dp))
-            PriorityFilterView(priorityFilters, filterManager::setPriorityFilter)
+            PriorityFilterView(priorityFilters, filters::setPriorityFilter)
             Spacer(Modifier.width(16.dp))
             Box(modifier = Modifier.weight(0.5f).border(1.dp, Color.LightGray, RoundedCornerShape(4.dp))) {
                 Column {
@@ -55,8 +55,8 @@ fun FilterView(
                             ExceptionDetectionView(
                                 Modifier.width(200.dp).wrapContentHeight(),
                                 exceptionDetectionSelection,
-                                { detectionManager.selectPreviousDetection(DetectorKey.Exception, it) },
-                                { detectionManager.selectNextDetection(DetectorKey.Exception, it) },
+                                { detections.selectPreviousDetection(DetectorKey.Exception, it) },
+                                { detections.selectNextDetection(DetectorKey.Exception, it) },
                             )
 
                             Spacer(Modifier.width(8.dp))
@@ -67,8 +67,8 @@ fun FilterView(
                         JsonDetectionView(
                             Modifier.width(200.dp).wrapContentHeight(),
                             jsonDetectionSelection,
-                            { detectionManager.selectPreviousDetection(DetectorKey.Json, it) },
-                            { detectionManager.selectNextDetection(DetectorKey.Json, it) },
+                            { detections.selectPreviousDetection(DetectorKey.Json, it) },
+                            { detections.selectNextDetection(DetectorKey.Json, it) },
                         )
 
                         Spacer(Modifier.width(8.dp))
@@ -78,9 +78,9 @@ fun FilterView(
                         MarkDetectionView(
                             Modifier.width(200.dp).wrapContentHeight(),
                             markDetectionSelection,
-                            { detectionManager.selectPreviousDetection(DetectorKey.Mark, it) },
-                            { detectionManager.selectNextDetection(DetectorKey.Mark, it) },
-                            { openNewTab(detectorManager.markedRowsFlow) }
+                            { detections.selectPreviousDetection(DetectorKey.Mark, it) },
+                            { detections.selectNextDetection(DetectorKey.Mark, it) },
+                            { openNewTab(detectors.markedRowsFlow) }
                         )
 
                         Spacer(Modifier.width(8.dp))
@@ -95,10 +95,10 @@ fun FilterView(
                 Modifier.align(Alignment.BottomEnd),
                 keywordDetectionRequest,
                 keywordDetectionSelection,
-                detectorManager::findKeyword,
-                detectorManager::setKeywordDetectionEnabled,
-                { detectionManager.selectPreviousDetection(DetectorKey.Keyword, it) },
-                { detectionManager.selectNextDetection(DetectorKey.Keyword, it) },
+                detectors::findKeyword,
+                detectors::setKeywordDetectionEnabled,
+                { detections.selectPreviousDetection(DetectorKey.Keyword, it) },
+                { detections.selectNextDetection(DetectorKey.Keyword, it) },
             )
         }
     }

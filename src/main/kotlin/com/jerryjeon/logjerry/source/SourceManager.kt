@@ -1,6 +1,6 @@
 package com.jerryjeon.logjerry.source
 
-import com.jerryjeon.logjerry.log.LogManager
+import com.jerryjeon.logjerry.log.ParseCompleted
 import com.jerryjeon.logjerry.parse.*
 import com.jerryjeon.logjerry.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +28,7 @@ class SourceManager(
         if (it is Source.LogsFlow) {
             return@map ParseStatus.Completed(
                 ParseResult(it.logs.value, emptyList()),
-                LogManager(it.logs, preferences)
+                ParseCompleted(it.logs, preferences)
             )
         }
 
@@ -46,7 +46,7 @@ class SourceManager(
         }
         val parser = chooseParser(lines)
         val parseResult = parser.parse(lines)
-        ParseStatus.Completed(parseResult, LogManager(MutableStateFlow(parseResult.logs), preferences))
+        ParseStatus.Completed(parseResult, ParseCompleted(MutableStateFlow(parseResult.logs), preferences))
     }.stateIn(sourceScope, SharingStarted.Lazily, ParseStatus.NotStarted)
 
     private fun chooseParser(lines: List<String>): LogParser {
