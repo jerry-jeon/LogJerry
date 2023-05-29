@@ -2,15 +2,13 @@
 
 package com.jerryjeon.logjerry.ui
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -18,8 +16,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
-import com.jerryjeon.logjerry.detector.DetectorKey
-import com.jerryjeon.logjerry.detector.KeywordDetectionView
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogManager
 import com.jerryjeon.logjerry.logview.LogSelection
@@ -43,31 +39,11 @@ fun LogManagerView(
     InvalidSentences: @Composable () -> Unit
 ) {
     val filterManager = logManager.filterManager
-
-    val logViewManager = logManager.logViewManager
-    val investigationView by logViewManager.investigationViewFlow.collectAsState()
-
     val detectorManager = logManager.detectorManager
     val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
-
-    // TODO Find way to abstract these
     val detectionManager = logManager.detectionManager
-    val selections by detectionManager.selections.collectAsState()
-    val keywordDetectionSelection = selections?.selectionByKey?.get(DetectorKey.Keyword)
-    val exceptionDetectionSelection = selections?.selectionByKey?.get(DetectorKey.Exception)
-    val jsonDetectionSelection = selections?.selectionByKey?.get(DetectorKey.Json)
-    val markDetectionSelection = selections?.selectionByKey?.get(DetectorKey.Mark)
-
-    val textFilters by filterManager.textFiltersFlow.collectAsState()
-    val priorityFilters by filterManager.priorityFilterFlow.collectAsState()
-
-    val filteredSize = investigationView.refinedLogs.size
-    val totalSize = logManager.originalLogsFlow.value.size
-    val filteredSizeText =
-        (if (filteredSize != totalSize) "Filtered size : $filteredSize, " else "")
-
-    val markedRows = investigationView.refinedLogs.filter { it.marked } // TODO omg performance would be bad
-    // val markedRows by detectorManager.markedRowsFlow.collectAsState()
+    val logViewManager = logManager.logViewManager
+    val investigationView by logViewManager.investigationViewFlow.collectAsState()
 
     val showMarkDialog = remember { mutableStateOf<RefinedLog?>(null) }
     // TODO move to other class
@@ -86,7 +62,6 @@ fun LogManagerView(
     }
 
     val listState = rememberLazyListState()
-
     val focusRequester = remember { FocusRequester() }
     val scope = rememberCoroutineScope()
     Column(
@@ -156,69 +131,25 @@ fun LogManagerView(
     ) {
 
         InvalidSentences()
-        Row(modifier = Modifier.padding(16.dp)) {
-            TextFilterView(textFilters, filterManager::addTextFilter, filterManager::removeTextFilter)
-            Spacer(Modifier.width(16.dp))
-            PriorityFilterView(priorityFilters, filterManager::setPriorityFilter)
-            Spacer(Modifier.width(16.dp))
-            Box(modifier = Modifier.weight(0.5f).border(1.dp, Color.LightGray, RoundedCornerShape(4.dp))) {
-                Column {
-                    Text("Auto-detection", modifier = Modifier.padding(8.dp))
-                    Divider()
-                    Row {
-                        if (preferences.showExceptionDetection) {
-                            ExceptionDetectionView(
-                                Modifier.width(200.dp).wrapContentHeight(),
-                                exceptionDetectionSelection,
-                                { detectionManager.selectPreviousDetection(DetectorKey.Exception, it) },
-                                { detectionManager.selectNextDetection(DetectorKey.Exception, it) },
-                            )
+        FilterView(
+            filterManager,
+            preferences,
+            detectionManager,
+            openNewTab,
+            detectorManager,
+            keywordDetectionRequest,
+        )
 
-                            Spacer(Modifier.width(8.dp))
-                            Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
-                            Spacer(Modifier.width(8.dp))
-                        }
+        // TODO hmm..
+        val filteredSize = investigationView.refinedLogs.size
+        val totalSize = logManager.originalLogsFlow.value.size
+        val filteredSizeText =
+            (if (filteredSize != totalSize) "Filtered size : $filteredSize, " else "")
+        Text("${filteredSizeText}Total : $totalSize", modifier = Modifier.padding(8.dp))
 
-                        JsonDetectionView(
-                            Modifier.width(200.dp).wrapContentHeight(),
-                            jsonDetectionSelection,
-                            { detectionManager.selectPreviousDetection(DetectorKey.Json, it) },
-                            { detectionManager.selectNextDetection(DetectorKey.Json, it) },
-                        )
-
-                        Spacer(Modifier.width(8.dp))
-                        Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
-                        Spacer(Modifier.width(8.dp))
-
-                        MarkDetectionView(
-                            Modifier.width(200.dp).wrapContentHeight(),
-                            markDetectionSelection,
-                            { detectionManager.selectPreviousDetection(DetectorKey.Mark, it) },
-                            { detectionManager.selectNextDetection(DetectorKey.Mark, it) },
-                            { openNewTab(detectorManager.markedRowsFlow) }
-                        )
-
-                        Spacer(Modifier.width(8.dp))
-                        Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
-                    }
-                }
-            }
-        }
-
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Text("${filteredSizeText}Total : $totalSize", modifier = Modifier.padding(8.dp))
-            KeywordDetectionView(
-                Modifier.align(Alignment.BottomEnd),
-                keywordDetectionRequest,
-                keywordDetectionSelection,
-                detectorManager::findKeyword,
-                detectorManager::setKeywordDetectionEnabled,
-                { detectionManager.selectPreviousDetection(DetectorKey.Keyword, it) },
-                { detectionManager.selectNextDetection(DetectorKey.Keyword, it) },
-            )
-        }
         Divider(color = Color.Black)
 
+/*
         LaunchedEffect(selections?.active) {
             // TODO Reposition would happen again, which is unnecessary
             val index = investigationView.refinedLogs.indexOfFirst { refinedLog ->
@@ -229,6 +160,7 @@ fun LogManagerView(
                 logManager.currentFocus.value = DetectionFocus(index)
             }
         }
+*/
 
         LaunchedEffect(Unit) {
             logManager.currentFocus.collectLatest {
@@ -256,6 +188,9 @@ fun LogManagerView(
                 }
             }
         }
+
+        val markedRows = investigationView.refinedLogs.filter { it.marked } // TODO omg performance would be bad
+        // val markedRows by detectorManager.markedRowsFlow.collectAsState()
 
         LogsView(
             preferences = preferences,
