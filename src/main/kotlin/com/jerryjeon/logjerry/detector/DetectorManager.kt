@@ -23,7 +23,6 @@ class DetectorManager(preferences: Preferences) {
                 KeywordDetectionRequest.TurnedOff
             }
         }
-            .debounce(250)
             .stateIn(detectionScope, SharingStarted.Lazily, KeywordDetectionRequest.TurnedOff)
 
     private val toggleMarkLogRequestFlow = MutableStateFlow<MarkRequest?>(null)
@@ -38,7 +37,9 @@ class DetectorManager(preferences: Preferences) {
         .map { it.values.map { it.log }.sortedBy { log -> log.index } } // TODO find cleaner way
         .stateIn(detectionScope, SharingStarted.Lazily, emptyList())
 
-    val detectorsFlow = combine(keywordDetectionRequestFlow, markDetectorFlow) { keywordDetectionRequest, markDetector ->
+    val detectorsFlow = combine(
+        keywordDetectionRequestFlow.debounce(100L), markDetectorFlow
+    ) { keywordDetectionRequest, markDetector ->
         when (keywordDetectionRequest) {
             is KeywordDetectionRequest.TurnedOn -> defaultDetectors + listOf(KeywordDetector(keywordDetectionRequest.keyword)) + markDetector
             KeywordDetectionRequest.TurnedOff -> defaultDetectors + markDetector
