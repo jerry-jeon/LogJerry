@@ -1,13 +1,6 @@
 package com.jerryjeon.logjerry.ui
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.LocalTextStyle
@@ -24,15 +17,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jerryjeon.logjerry.detector.DetectionSelection
+import com.jerryjeon.logjerry.detector.DetectionStatus
 import com.jerryjeon.logjerry.detector.JsonDetection
 
 @Composable
 fun JsonDetectionView(
     modifier: Modifier,
-    detectionSelection: DetectionSelection?,
-    moveToPreviousOccurrence: (DetectionSelection) -> Unit,
-    moveToNextOccurrence: (DetectionSelection) -> Unit,
+    detectionStatus: DetectionStatus?,
+    moveToPreviousOccurrence: (DetectionStatus) -> Unit,
+    moveToNextOccurrence: (DetectionStatus) -> Unit,
 ) {
     CompositionLocalProvider(
         LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp),
@@ -46,11 +39,11 @@ fun JsonDetectionView(
                     }
                 }
                 Text(title)
-                if (detectionSelection == null) {
+                if (detectionStatus == null) {
                     Spacer(Modifier.height(16.dp))
                     Text("No results", textAlign = TextAlign.Center)
                 } else {
-                    JsonDetectionSelectionExist(detectionSelection, moveToPreviousOccurrence, moveToNextOccurrence)
+                    JsonDetectionSelectionExist(detectionStatus, moveToPreviousOccurrence, moveToNextOccurrence)
                 }
             }
         }
@@ -59,9 +52,9 @@ fun JsonDetectionView(
 
 @Composable
 fun JsonDetectionSelectionExist(
-    selection: DetectionSelection,
-    moveToPreviousOccurrence: (DetectionSelection) -> Unit,
-    moveToNextOccurrence: (DetectionSelection) -> Unit
+    selection: DetectionStatus,
+    moveToPreviousOccurrence: (DetectionStatus) -> Unit,
+    moveToNextOccurrence: (DetectionStatus) -> Unit
 ) {
     Column {
         Row {

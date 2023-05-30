@@ -6,11 +6,7 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.LocalTextStyle
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -25,12 +21,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isShiftPressed
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -38,11 +29,11 @@ import androidx.compose.ui.unit.sp
 fun KeywordDetectionView(
     modifier: Modifier = Modifier,
     keywordDetectionRequest: KeywordDetectionRequest,
-    detectionSelection: DetectionSelection?,
+    detectionStatus: DetectionStatus?,
     find: (String) -> Unit,
     setFindEnabled: (Boolean) -> Unit,
-    moveToPreviousOccurrence: (DetectionSelection) -> Unit,
-    moveToNextOccurrence: (DetectionSelection) -> Unit,
+    moveToPreviousOccurrence: (DetectionStatus) -> Unit,
+    moveToNextOccurrence: (DetectionStatus) -> Unit,
 ) {
     CompositionLocalProvider(
         LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp),
@@ -54,7 +45,7 @@ fun KeywordDetectionView(
                     keywordDetectionRequest,
                     find,
                     setFindEnabled,
-                    detectionSelection,
+                    detectionStatus,
                     moveToPreviousOccurrence,
                     moveToNextOccurrence
                 )
@@ -70,9 +61,9 @@ private fun KeywordDetectionRequestViewTurnedOn(
     keywordDetectionRequest: KeywordDetectionRequest.TurnedOn,
     find: (String) -> Unit,
     setFindEnabled: (Boolean) -> Unit,
-    detectionSelection: DetectionSelection?,
-    moveToPreviousOccurrence: (DetectionSelection) -> Unit,
-    moveToNextOccurrence: (DetectionSelection) -> Unit
+    detectionStatus: DetectionStatus?,
+    moveToPreviousOccurrence: (DetectionStatus) -> Unit,
+    moveToNextOccurrence: (DetectionStatus) -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
 
@@ -81,7 +72,7 @@ private fun KeywordDetectionRequestViewTurnedOn(
             modifier = Modifier.focusRequester(focusRequester).onPreviewKeyEvent {
                 when {
                     it.key == Key.Enter && it.type == KeyEventType.KeyDown -> {
-                        detectionSelection?.let { selection ->
+                        detectionStatus?.let { selection ->
                             if (it.isShiftPressed) {
                                 moveToPreviousOccurrence(selection)
                             } else {
@@ -102,7 +93,7 @@ private fun KeywordDetectionRequestViewTurnedOn(
             leadingIcon = { Icon(Icons.Default.Search, "Search") },
             trailingIcon = {
                 Row {
-                    detectionSelection?.let {
+                    detectionStatus?.let {
                         if (it.selected == null) {
                             Text(
                                 "${it.allDetections.size} results",
@@ -110,7 +101,7 @@ private fun KeywordDetectionRequestViewTurnedOn(
                             )
                         } else {
                             Text(
-                                "${it.currentIndexInView} / ${detectionSelection.totalCount}",
+                                "${it.currentIndexInView} / ${detectionStatus.totalCount}",
                                 modifier = Modifier.align(Alignment.CenterVertically)
                             )
                         }

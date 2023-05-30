@@ -2,13 +2,18 @@
 
 package com.jerryjeon.logjerry.ui
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.unit.dp
+import com.jerryjeon.logjerry.detector.DetectorKey
+import com.jerryjeon.logjerry.detector.KeywordDetectionView
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.ParseCompleted
 import com.jerryjeon.logjerry.preferences.Preferences
@@ -28,37 +33,43 @@ fun ParseCompletedView(
 ) {
     val filterManager = parseCompleted.filterManager
     val detectorManager = parseCompleted.detectorManager
-    val detectionManager = parseCompleted.detectionManager
     val focusRequester = remember { FocusRequester() }
+    val refineResult by parseCompleted.refineResultFlow.collectAsState()
     Column(
         modifier = Modifier
             .focusRequester(focusRequester),
     ) {
         InvalidSentences()
-        FilterAndDetectionView(
-            preferences,
-            filterManager,
-            detectorManager,
-            detectionManager,
-            openNewTab,
-        )
-
-/*
-        LaunchedEffect(selections?.active) {
-            // TODO Reposition would happen again, which is unnecessary
-            val index = investigationView.refinedLogs.indexOfFirst { refinedLog ->
-                refinedLog.detectionFinishedLog.log.index == selections?.active?.selected?.logIndex
+        Column {
+            val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
+            val statusByKey by refineResult.statusByKey.collectAsState()
+            Row(modifier = Modifier.padding(16.dp)) {
+                FilterView(filterManager)
+                DetectionView(
+                    preferences,
+                    detectorManager,
+                    statusByKey,
+                    openNewTab,
+                    refineResult::selectPreviousDetection,
+                    refineResult::selectNextDetection,
+                )
             }
-            if (index != -1) {
-                selectedLog = LogSelection(investigationView.refinedLogs[index], index)
-                logManager.currentFocus.value = DetectionFocus(index)
+
+            Box(modifier = Modifier.fillMaxWidth()) {
+                KeywordDetectionView(
+                    Modifier.align(Alignment.BottomEnd),
+                    keywordDetectionRequest,
+                    statusByKey[DetectorKey.Keyword],
+                    detectorManager::findKeyword,
+                    detectorManager::setKeywordDetectionEnabled,
+                    refineResult::selectPreviousDetection,
+                    refineResult::selectNextDetection,
+                )
             }
         }
-*/
-
         val listState = rememberLazyListState()
         LaunchedEffect(Unit) {
-            parseCompleted.currentFocus.collectLatest {
+            refineResult.currentFocus.collectLatest {
                 if (it == null) return@collectLatest
                 val headerCount = 2
                 val exactPosition = it.index + headerCount
@@ -84,23 +95,25 @@ fun ParseCompletedView(
             }
         }
 
-        val refinedLogs by parseCompleted.refinedLogs.collectAsState()
-        val markedRows = refinedLogs.filter { it.marked } // TODO omg performance would be bad
-        // val markedRows by detectorManager.markedRowsFlow.collectAsState()
+        val filteredSize = refineResult.refinedLogs.size
+        val totalSize = parseCompleted.originalLogsFlow.value.size
+        val filteredSizeText =
+            (if (filteredSize != totalSize) "Filtered size : $filteredSize, " else "")
+        Text("${filteredSizeText}Total : $totalSize", modifier = Modifier.padding(8.dp))
 
         LogsView(
             preferences = preferences,
-            refinedLogs = refinedLogs,
-            parseCompleted = parseCompleted,
+            refinedLogs = refineResult.refinedLogs,
             detectorManager = detectorManager,
             header = header,
             listState = listState,
-            markedRows = markedRows,
+            markedRows = refineResult.markedRows,
             setMark = detectorManager::setMark,
             deleteMark = detectorManager::deleteMark,
+            changeFocus = { refineResult.currentFocus.value = it }
         )
 
-        LaunchedEffect(parseCompleted) {
+        LaunchedEffect(Unit) {
             focusRequester.requestFocus()
         }
     }

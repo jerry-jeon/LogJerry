@@ -27,13 +27,13 @@ import androidx.compose.ui.unit.sp
 import com.jerryjeon.logjerry.ColumnDivider
 import com.jerryjeon.logjerry.HeaderDivider
 import com.jerryjeon.logjerry.detector.DetectorManager
-import com.jerryjeon.logjerry.log.ParseCompleted
 import com.jerryjeon.logjerry.logview.LogSelection
 import com.jerryjeon.logjerry.logview.RefinedLog
 import com.jerryjeon.logjerry.mark.LogMark
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
+import com.jerryjeon.logjerry.ui.focus.LogFocus
 import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -42,7 +42,6 @@ import kotlinx.coroutines.launch
 fun LogsView(
     modifier: Modifier = Modifier,
     refinedLogs: List<RefinedLog>,
-    parseCompleted: ParseCompleted,
     detectorManager: DetectorManager,
     preferences: Preferences,
     header: Header,
@@ -50,6 +49,7 @@ fun LogsView(
     markedRows: List<RefinedLog>,
     setMark: (logMark: LogMark) -> Unit,
     deleteMark: (logIndex: Int) -> Unit,
+    changeFocus: (LogFocus?) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val showMarkDialog = remember { mutableStateOf<RefinedLog?>(null) }
@@ -80,14 +80,14 @@ fun LogsView(
                         val currentLog = selectedLog
                         val nextLog = currentLog?.next() ?: LogSelection(refinedLogs.first(), 0)
                         selectedLog = nextLog
-                        parseCompleted.currentFocus.value = KeyboardFocus(nextLog.index)
+                        changeFocus(KeyboardFocus(nextLog.index))
                         true
                     }
 
                     keyEvent.key == Key.DirectionUp && keyEvent.type == KeyEventType.KeyDown -> {
                         if (refinedLogs.isEmpty()) return@onPreviewKeyEvent false
                         selectedLog = selectedLog?.prev()
-                        parseCompleted.currentFocus.value = selectedLog?.index?.let { KeyboardFocus(it) }
+                        changeFocus(selectedLog?.index?.let { KeyboardFocus(it) })
                         true
                     }
 
@@ -136,15 +136,6 @@ fun LogsView(
             }
 
     ) {
-        // TODO hmm..
-        val filteredSize = refinedLogs.size
-        val totalSize = parseCompleted.originalLogsFlow.value.size
-        val filteredSizeText =
-            (if (filteredSize != totalSize) "Filtered size : $filteredSize, " else "")
-        Text("${filteredSizeText}Total : $totalSize", modifier = Modifier.padding(8.dp))
-
-        Divider(color = Color.Black)
-
         Box {
             LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
                 item { HeaderRow(header, divider) }
