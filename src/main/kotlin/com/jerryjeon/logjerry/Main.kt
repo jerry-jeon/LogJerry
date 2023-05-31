@@ -37,6 +37,7 @@ import com.jerryjeon.logjerry.tab.Tabs
 import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.ui.InvalidSentencesDialog
 import com.jerryjeon.logjerry.ui.ParseCompletedView
+import com.jerryjeon.logjerry.ui.ShortcutDialog
 import com.jerryjeon.logjerry.ui.columnCheckboxItem
 import com.jerryjeon.logjerry.util.KeyShortcuts
 import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
@@ -212,6 +213,7 @@ fun main() = application {
     val preferences by preferencesViewModel.preferencesFlow.collectAsState()
     val headerState = remember { mutableStateOf(Header.default) }
     val preferenceOpen = remember { mutableStateOf(false) }
+    val shortcutDialogOpened = remember { mutableStateOf(false) }
     val tabManager = TabManager(preferences)
     val tabsState = tabManager.tabs.collectAsState()
     Window(
@@ -259,6 +261,11 @@ fun main() = application {
                         preferenceOpen.value = true
                     }
                 }
+                Menu("Help") {
+                    Item("Shortcuts") {
+                        shortcutDialogOpened.value = true
+                    }
+                }
             }
             Surface(
                 color = MaterialTheme.colors.surface,
@@ -276,6 +283,7 @@ fun main() = application {
                         }
                     )
                     PreferencesView(preferenceOpen, preferencesViewModel)
+                    ShortcutDialog(shortcutDialogOpened)
                 }
             }
         }
