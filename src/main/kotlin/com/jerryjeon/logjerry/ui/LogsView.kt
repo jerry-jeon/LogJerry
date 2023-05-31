@@ -54,7 +54,9 @@ fun LogsView(
     preferences: Preferences,
     detectorManager: DetectorManager,
     header: Header,
-    hide: (logIndex: Int) -> Unit
+    hide: (logIndex: Int) -> Unit,
+    moveToPreviousMark: () -> Unit,
+    moveToNextMark: () -> Unit,
 ) {
     val listState = rememberLazyListState()
     LaunchedEffect(refineResult) {
@@ -100,7 +102,9 @@ fun LogsView(
         setMark = detectorManager::setMark,
         deleteMark = detectorManager::deleteMark,
         hide = hide,
-        changeFocus = { refineResult.currentFocus.value = it }
+        changeFocus = { refineResult.currentFocus.value = it },
+        moveToPreviousMark = moveToPreviousMark,
+        moveToNextMark = moveToNextMark,
     )
 
 }
@@ -118,6 +122,8 @@ fun LogsView(
     deleteMark: (logIndex: Int) -> Unit,
     hide: (logIndex: Int) -> Unit,
     changeFocus: (LogFocus?) -> Unit,
+    moveToPreviousMark: () -> Unit,
+    moveToNextMark: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
@@ -201,6 +207,16 @@ fun LogsView(
 
                     keyEvent.key == Key.Backspace && keyEvent.type == KeyEventType.KeyDown -> {
                         selectedLog?.refinedLog?.log?.index?.let(hide)
+                        true
+                    }
+
+                    keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.LeftBracket && keyEvent.type == KeyEventType.KeyDown -> {
+                        moveToPreviousMark()
+                        true
+                    }
+
+                    keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.RightBracket && keyEvent.type == KeyEventType.KeyDown -> {
+                        moveToNextMark()
                         true
                     }
 

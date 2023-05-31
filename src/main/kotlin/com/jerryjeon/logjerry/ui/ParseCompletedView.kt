@@ -59,7 +59,16 @@ fun ParseCompletedView(
             }
         }
 
-        LogsView(refineResult, parseCompleted, preferences, detectorManager, header, filterManager::hide)
+        LogsView(
+            refineResult = refineResult,
+            parseCompleted = parseCompleted,
+            preferences = preferences,
+            detectorManager = detectorManager,
+            header = header,
+            hide = filterManager::hide,
+            moveToPreviousMark = { refineResult.selectPreviousDetection(DetectorKey.Mark) },
+            moveToNextMark = { refineResult.selectNextDetection(DetectorKey.Mark) }
+        )
     }
 }
 
