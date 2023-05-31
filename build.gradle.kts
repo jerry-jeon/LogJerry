@@ -30,9 +30,17 @@ dependencies {
     testImplementation(libs.kotest.assertions)
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "18"
+tasks {
+    withType<JavaCompile> {
+        sourceCompatibility = "18"
+        targetCompatibility = "18"
+    }
+
+    withType<KotlinCompile> {
+        kotlinOptions.jvmTarget = "18"
+    }
 }
+
 
 tasks.test {
     useJUnitPlatform()

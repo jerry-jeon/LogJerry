@@ -12,6 +12,7 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
@@ -20,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
@@ -27,16 +29,80 @@ import androidx.compose.ui.unit.sp
 import com.jerryjeon.logjerry.ColumnDivider
 import com.jerryjeon.logjerry.HeaderDivider
 import com.jerryjeon.logjerry.detector.DetectorManager
+import com.jerryjeon.logjerry.log.ParseCompleted
 import com.jerryjeon.logjerry.logview.LogSelection
+import com.jerryjeon.logjerry.logview.RefineResult
 import com.jerryjeon.logjerry.logview.RefinedLog
 import com.jerryjeon.logjerry.mark.LogMark
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header
+import com.jerryjeon.logjerry.ui.focus.DetectionFocus
 import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
 import com.jerryjeon.logjerry.ui.focus.LogFocus
 import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+
+@Composable
+fun LogsView(
+    refineResult: RefineResult,
+    parseCompleted: ParseCompleted,
+    preferences: Preferences,
+    detectorManager: DetectorManager,
+    header: Header,
+    focusRequester: FocusRequester
+) {
+    val listState = rememberLazyListState()
+    LaunchedEffect(refineResult) {
+        refineResult.currentFocus.collectLatest {
+            if (it == null) return@collectLatest
+            val headerCount = 2
+            val exactPosition = it.index + headerCount
+
+            when (it) {
+                is DetectionFocus -> {
+                    listState.scrollToItem(exactPosition)
+                }
+
+                is KeyboardFocus -> {
+                    // TODO Seems like inefficient... :(
+                    if (exactPosition < listState.firstVisibleItemIndex) {
+                        listState.scrollToItem(exactPosition)
+                    } else {
+                        val viewportHeight = listState.layoutInfo.viewportSize.height
+                        val lastVisibleItemIndex = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                        if (exactPosition > lastVisibleItemIndex) {
+                            listState.scrollToItem(exactPosition, scrollOffset = -viewportHeight + 200)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    val filteredSize = refineResult.refinedLogs.size
+    val totalSize = parseCompleted.originalLogsFlow.value.size
+    val filteredSizeText =
+        (if (filteredSize != totalSize) "Filtered size : $filteredSize, " else "")
+    Text("${filteredSizeText}Total : $totalSize", modifier = Modifier.padding(8.dp))
+
+    LogsView(
+        preferences = preferences,
+        refinedLogs = refineResult.refinedLogs,
+        detectorManager = detectorManager,
+        header = header,
+        listState = listState,
+        markedRows = refineResult.markedRows,
+        setMark = detectorManager::setMark,
+        deleteMark = detectorManager::deleteMark,
+        changeFocus = { refineResult.currentFocus.value = it }
+    )
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+}
 
 @Composable
 fun LogsView(
@@ -159,7 +225,8 @@ fun LogsView(
                             }
                             if (refinedLog.mark != null) {
                                 Column(
-                                    modifier = Modifier.fillMaxWidth().wrapContentHeight().background(refinedLog.mark.color)
+                                    modifier = Modifier.fillMaxWidth().wrapContentHeight()
+                                        .background(refinedLog.mark.color)
                                         .padding(start = 6.dp, top = 0.dp, end = 6.dp, bottom = 6.dp)
                                 ) {
                                     Text(

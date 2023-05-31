@@ -61,7 +61,7 @@ data class Preferences(
                 Priority.Error to Color(0xFFFF6B68),
             ),
             Color(0XFF121212),
-            true,
+            false,
         )
         val file = File(System.getProperty("java.io.tmpdir"), "LogJerryPreferences.json")
     }
