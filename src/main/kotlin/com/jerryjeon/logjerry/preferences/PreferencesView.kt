@@ -37,6 +37,7 @@ fun PreferencesView(
     val saveEnabled by viewModel.saveEnabled.collectAsState()
     val colorTheme by viewModel.colorThemeFlow.collectAsState()
     val showExceptionDetection by viewModel.showExceptionDetection.collectAsState()
+    val showInvalidSentences by viewModel.showInvalidSentences.collectAsState()
 
     if (isOpen.value) {
         Window(
@@ -58,6 +59,11 @@ fun PreferencesView(
                             Text("Detect exception automatically")
                             Spacer(Modifier.width(4.dp))
                             Checkbox(showExceptionDetection, onCheckedChange = viewModel::changeShowExceptionDetection)
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Show invalid sentences")
+                            Spacer(Modifier.width(4.dp))
+                            Checkbox(showInvalidSentences, onCheckedChange = viewModel::changeShowInvalidSentences)
                         }
 
                         Spacer(Modifier.height(8.dp))

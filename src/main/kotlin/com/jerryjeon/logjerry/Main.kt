@@ -20,11 +20,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import com.jerryjeon.logjerry.log.Log
-import com.jerryjeon.logjerry.parse.ParseResult
 import com.jerryjeon.logjerry.parse.ParseStatus
 import com.jerryjeon.logjerry.preferences.ColorTheme
 import com.jerryjeon.logjerry.preferences.Preferences
@@ -35,7 +35,9 @@ import com.jerryjeon.logjerry.tab.Tab
 import com.jerryjeon.logjerry.tab.TabManager
 import com.jerryjeon.logjerry.tab.Tabs
 import com.jerryjeon.logjerry.table.Header
+import com.jerryjeon.logjerry.ui.InvalidSentencesDialog
 import com.jerryjeon.logjerry.ui.ParseCompletedView
+import com.jerryjeon.logjerry.ui.ShortcutDialog
 import com.jerryjeon.logjerry.ui.columnCheckboxItem
 import com.jerryjeon.logjerry.util.KeyShortcuts
 import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
@@ -60,13 +62,30 @@ fun ActiveTabView(
         is ParseStatus.NotStarted -> GettingStartedView(status, activeTab.sourceManager::changeSource)
         is ParseStatus.Proceeding -> Text("Proceeding.... ${status.percent}")
         is ParseStatus.Completed -> {
-            Column {
-                ParseCompletedView(
-                    preferences,
-                    header,
-                    status.parseCompleted,
-                    openNewTab
-                ) { InvalidSentences(status.parseResult) }
+            if (status.parseResult.logs.isNotEmpty()) {
+                Column {
+                    if (preferences.showInvalidSentences) {
+                        InvalidSentencesDialog(status.parseResult.invalidSentences)
+                    }
+                    ParseCompletedView(
+                        preferences,
+                        header,
+                        status.parseCompleted,
+                        openNewTab
+                    )
+                }
+            } else {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        """
+                          It's not possible to parse the log. 
+                          Currently LogJerry only support the log format of the Android Studio  
+                        """.trimIndent(),
+                        style = MaterialTheme.typography.h4,
+                        modifier = Modifier.fillMaxWidth().align(Alignment.Center),
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }
@@ -121,50 +140,6 @@ private fun GettingStartedView(notStarted: ParseStatus.NotStarted, changeSource:
     }
     LaunchedEffect(notStarted) {
         focusRequester.requestFocus()
-    }
-}
-
-@Composable
-private fun InvalidSentences(parseResult: ParseResult) {
-    val invalidSentences = parseResult.invalidSentences
-    var showInvalidSentence by remember { mutableStateOf(invalidSentences.isNotEmpty()) }
-    if (showInvalidSentence) {
-        Dialog(
-            onCloseRequest = { showInvalidSentence = false },
-            title = "Invalid sentences",
-            state = DialogState(width = 800.dp, height = 600.dp),
-            onPreviewKeyEvent = { keyEvent ->
-                if (keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown) {
-                    showInvalidSentence = false
-                }
-                false
-            }
-        ) {
-            Surface(color = MaterialTheme.colors.surface, contentColor = MaterialTheme.colors.onSurface) {
-                Column(Modifier.fillMaxSize().padding(16.dp)) {
-                    Text(
-                        "There were ${invalidSentences.size} invalid sentences",
-                        style = MaterialTheme.typography.body1
-                    )
-                    Text(
-                        "Supported format : \"date time pid-tid/packageName priority/tag: log\"",
-                        style = MaterialTheme.typography.body1
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    Divider()
-                    Spacer(Modifier.height(16.dp))
-                    invalidSentences.forEach { (index, s) ->
-                        Row(Modifier.height(IntrinsicSize.Min)) {
-                            Text("Line ${index + 1}")
-                            Spacer(Modifier.width(4.dp))
-                            Divider(Modifier.width(1.dp).fillMaxHeight())
-                            Spacer(Modifier.width(4.dp))
-                            Text(s, color = MaterialTheme.colors.primary)
-                        }
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -238,6 +213,7 @@ fun main() = application {
     val preferences by preferencesViewModel.preferencesFlow.collectAsState()
     val headerState = remember { mutableStateOf(Header.default) }
     val preferenceOpen = remember { mutableStateOf(false) }
+    val shortcutDialogOpened = remember { mutableStateOf(false) }
     val tabManager = TabManager(preferences)
     val tabsState = tabManager.tabs.collectAsState()
     Window(
@@ -285,6 +261,11 @@ fun main() = application {
                         preferenceOpen.value = true
                     }
                 }
+                Menu("Help") {
+                    Item("Shortcuts") {
+                        shortcutDialogOpened.value = true
+                    }
+                }
             }
             Surface(
                 color = MaterialTheme.colors.surface,
@@ -302,6 +283,7 @@ fun main() = application {
                         }
                     )
                     PreferencesView(preferenceOpen, preferencesViewModel)
+                    ShortcutDialog(shortcutDialogOpened)
                 }
             }
         }

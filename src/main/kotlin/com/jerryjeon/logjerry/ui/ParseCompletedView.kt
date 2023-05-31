@@ -24,17 +24,13 @@ fun ParseCompletedView(
     header: Header,
     parseCompleted: ParseCompleted,
     openNewTab: (StateFlow<List<Log>>) -> Unit,
-    InvalidSentences: @Composable () -> Unit
 ) {
     val filterManager = parseCompleted.filterManager
     val detectorManager = parseCompleted.detectorManager
-    val focusRequester = remember { FocusRequester() }
     val refineResult by parseCompleted.refineResultFlow.collectAsState()
     Column(
         modifier = Modifier
-            .focusRequester(focusRequester),
     ) {
-        InvalidSentences()
         Column {
             val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
             val statusByKey by refineResult.statusByKey.collectAsState()
@@ -63,7 +59,16 @@ fun ParseCompletedView(
             }
         }
 
-        LogsView(refineResult, parseCompleted, preferences, detectorManager, header, focusRequester)
+        LogsView(
+            refineResult = refineResult,
+            parseCompleted = parseCompleted,
+            preferences = preferences,
+            detectorManager = detectorManager,
+            header = header,
+            hide = filterManager::hide,
+            moveToPreviousMark = { refineResult.selectPreviousDetection(DetectorKey.Mark) },
+            moveToNextMark = { refineResult.selectNextDetection(DetectorKey.Mark) }
+        )
     }
 }
 

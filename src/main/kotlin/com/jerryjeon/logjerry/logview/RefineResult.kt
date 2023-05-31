@@ -58,4 +58,12 @@ data class RefineResult(
             currentFocus.value = DetectionFocus(indexInRefinedLogs)
         }
     }
+
+    fun selectPreviousDetection(key: DetectorKey) {
+        statusByKey.value[key]?.let { selectPreviousDetection(it) }
+    }
+
+    fun selectNextDetection(key: DetectorKey) {
+        statusByKey.value[key]?.let { selectNextDetection(it) }
+    }
 }

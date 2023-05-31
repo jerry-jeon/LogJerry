@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,6 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
@@ -51,7 +54,9 @@ fun LogsView(
     preferences: Preferences,
     detectorManager: DetectorManager,
     header: Header,
-    focusRequester: FocusRequester
+    hide: (logIndex: Int) -> Unit,
+    moveToPreviousMark: () -> Unit,
+    moveToNextMark: () -> Unit,
 ) {
     val listState = rememberLazyListState()
     LaunchedEffect(refineResult) {
@@ -96,12 +101,12 @@ fun LogsView(
         markedRows = refineResult.markedRows,
         setMark = detectorManager::setMark,
         deleteMark = detectorManager::deleteMark,
-        changeFocus = { refineResult.currentFocus.value = it }
+        hide = hide,
+        changeFocus = { refineResult.currentFocus.value = it },
+        moveToPreviousMark = moveToPreviousMark,
+        moveToNextMark = moveToNextMark,
     )
 
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
 }
 
 @Composable
@@ -115,9 +120,13 @@ fun LogsView(
     markedRows: List<RefinedLog>,
     setMark: (logMark: LogMark) -> Unit,
     deleteMark: (logIndex: Int) -> Unit,
-    changeFocus: (LogFocus?) -> Unit
+    hide: (logIndex: Int) -> Unit,
+    changeFocus: (LogFocus?) -> Unit,
+    moveToPreviousMark: () -> Unit,
+    moveToNextMark: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val focusRequester = remember { FocusRequester() }
     val showMarkDialog = remember { mutableStateOf<RefinedLog?>(null) }
     // TODO move to other class
     var selectedLog by remember { mutableStateOf<LogSelection?>(null) }
@@ -138,7 +147,8 @@ fun LogsView(
 
     val divider: @Composable RowScope.() -> Unit = { ColumnDivider() }
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
             .onPreviewKeyEvent { keyEvent ->
                 when {
                     keyEvent.key == Key.DirectionDown && keyEvent.type == KeyEventType.KeyDown -> {
@@ -195,12 +205,28 @@ fun LogsView(
                         true
                     }
 
+                    keyEvent.key == Key.Backspace && keyEvent.type == KeyEventType.KeyDown -> {
+                        selectedLog?.refinedLog?.log?.index?.let(hide)
+                        true
+                    }
+
+                    keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.LeftBracket && keyEvent.type == KeyEventType.KeyDown -> {
+                        moveToPreviousMark()
+                        true
+                    }
+
+                    keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.RightBracket && keyEvent.type == KeyEventType.KeyDown -> {
+                        moveToNextMark()
+                        true
+                    }
+
                     else -> {
                         false
                     }
                 }
             }
-
+            .focusRequester(focusRequester)
+            .focusable()
     ) {
         Box {
             LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
@@ -218,6 +244,7 @@ fun LogsView(
                                     divider = divider,
                                     setMark = setMark,
                                     deleteMark = deleteMark,
+                                    hide = hide,
                                     selectLog = {
                                         selectedLog = LogSelection(it, refinedLogs.indexOf(it))
                                     }
@@ -294,5 +321,9 @@ fun LogsView(
                 }
             }
         }
+    }
+
+    LaunchedEffect(focusRequester) {
+        focusRequester.requestFocus()
     }
 }

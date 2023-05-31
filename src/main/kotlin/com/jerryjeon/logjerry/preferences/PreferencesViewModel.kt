@@ -97,9 +97,14 @@ class PreferencesViewModel {
         .stateIn(preferenceScope, SharingStarted.Lazily, false)
 
     val showExceptionDetection = MutableStateFlow(preferencesFlow.value.showExceptionDetection)
+    val showInvalidSentences = MutableStateFlow(preferencesFlow.value.showInvalidSentences)
 
     fun changeShowExceptionDetection(showExceptionDetection: Boolean) {
         this.showExceptionDetection.value = showExceptionDetection
+    }
+
+    fun changeShowInvalidSentences(showInvalidSentences: Boolean) {
+        this.showInvalidSentences.value = showInvalidSentences
     }
 
     fun save() {
@@ -120,7 +125,8 @@ class PreferencesViewModel {
             lightBackgroundColor = whiteSavingBackgroundColor,
             darkColorByPriority = darkSavingColors.mapValues { (_, color) -> color!! },
             darkBackgroundColor = darkSavingBackgroundColor,
-            showExceptionDetection = showExceptionDetection.value
+            showExceptionDetection = showExceptionDetection.value,
+            showInvalidSentences = showInvalidSentences.value,
         )
 
         Preferences.file.outputStream().use {
@@ -134,6 +140,7 @@ class PreferencesViewModel {
         darkColorStrings.value = Preferences.default.darkColorByPriority.toColorStrings()
         darkBackgroundColorString.value = Preferences.default.darkBackgroundColor.toColorString()
         showExceptionDetection.value = Preferences.default.showExceptionDetection
+        showInvalidSentences.value = Preferences.default.showInvalidSentences
     }
 
     private fun Color.toColorString() = String.format("#%x", this.toArgb())
