@@ -16,14 +16,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jerryjeon.logjerry.detector.DetectionSelection
+import com.jerryjeon.logjerry.detector.DetectionStatus
 
 @Composable
 fun MarkDetectionView(
     modifier: Modifier,
-    detectionSelection: DetectionSelection?,
-    moveToPreviousOccurrence: (DetectionSelection) -> Unit,
-    moveToNextOccurrence: (DetectionSelection) -> Unit,
+    detectionStatus: DetectionStatus?,
+    moveToPreviousOccurrence: (DetectionStatus) -> Unit,
+    moveToNextOccurrence: (DetectionStatus) -> Unit,
     openMarkedRowsTab: () -> Unit
 ) {
     CompositionLocalProvider(
@@ -36,11 +36,11 @@ fun MarkDetectionView(
                     Spacer(Modifier.width(16.dp))
                     Text("Open as a tab", modifier = Modifier.onClick { openMarkedRowsTab() }, color = MaterialTheme.colors.secondary)
                 }
-                if (detectionSelection == null) {
+                if (detectionStatus == null) {
                     Spacer(Modifier.height(16.dp))
                     Text("No results", textAlign = TextAlign.Center)
                 } else {
-                    MarkDetectionSelectionExist(detectionSelection, moveToPreviousOccurrence, moveToNextOccurrence)
+                    MarkDetectionSelectionExist(detectionStatus, moveToPreviousOccurrence, moveToNextOccurrence)
                 }
             }
         }
@@ -49,9 +49,9 @@ fun MarkDetectionView(
 
 @Composable
 fun MarkDetectionSelectionExist(
-    selection: DetectionSelection,
-    moveToPreviousOccurrence: (DetectionSelection) -> Unit,
-    moveToNextOccurrence: (DetectionSelection) -> Unit
+    selection: DetectionStatus,
+    moveToPreviousOccurrence: (DetectionStatus) -> Unit,
+    moveToNextOccurrence: (DetectionStatus) -> Unit
 ) {
     Column {
         Row {

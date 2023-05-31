@@ -1,6 +1,6 @@
 package com.jerryjeon.logjerry.detector
 
-data class DetectionSelection(
+data class DetectionStatus(
     val key: DetectorKey,
     val currentIndex: Int,
     val selected: Detection?,

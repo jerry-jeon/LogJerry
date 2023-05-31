@@ -1,4 +1,3 @@
-import org.jetbrains.compose.compose
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.FileInputStream
@@ -31,9 +30,17 @@ dependencies {
     testImplementation(libs.kotest.assertions)
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "11"
+tasks {
+    withType<JavaCompile> {
+        sourceCompatibility = "18"
+        targetCompatibility = "18"
+    }
+
+    withType<KotlinCompile> {
+        kotlinOptions.jvmTarget = "18"
+    }
 }
+
 
 tasks.test {
     useJUnitPlatform()

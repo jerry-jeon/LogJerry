@@ -1,6 +1,6 @@
 package com.jerryjeon.logjerry.parse
 
-import com.jerryjeon.logjerry.log.LogManager
+import com.jerryjeon.logjerry.log.ParseCompleted
 
 sealed class ParseStatus {
     object NotStarted : ParseStatus()
@@ -9,6 +9,6 @@ sealed class ParseStatus {
     ) : ParseStatus()
     class Completed(
         val parseResult: ParseResult,
-        val logManager: LogManager,
+        val parseCompleted: ParseCompleted,
     ) : ParseStatus()
 }
