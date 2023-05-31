@@ -28,11 +28,9 @@ fun ParseCompletedView(
 ) {
     val filterManager = parseCompleted.filterManager
     val detectorManager = parseCompleted.detectorManager
-    val focusRequester = remember { FocusRequester() }
     val refineResult by parseCompleted.refineResultFlow.collectAsState()
     Column(
         modifier = Modifier
-            .focusRequester(focusRequester),
     ) {
         InvalidSentences()
         Column {
@@ -63,7 +61,7 @@ fun ParseCompletedView(
             }
         }
 
-        LogsView(refineResult, parseCompleted, preferences, detectorManager, header, focusRequester, filterManager::hide)
+        LogsView(refineResult, parseCompleted, preferences, detectorManager, header, filterManager::hide)
     }
 }
 

@@ -62,6 +62,10 @@ fun MarkDialog(
             state = DialogState(width = 400.dp, height = 600.dp),
             onPreviewKeyEvent = { keyEvent ->
                 when {
+                    keyEvent.key == Key.Escape && keyEvent.type == KeyEventType.KeyDown -> {
+                        cancelFunction()
+                        true
+                    }
                     keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown -> {
                         cancelFunction()
                         true

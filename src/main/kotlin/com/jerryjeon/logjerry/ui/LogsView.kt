@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,6 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
@@ -51,7 +54,6 @@ fun LogsView(
     preferences: Preferences,
     detectorManager: DetectorManager,
     header: Header,
-    focusRequester: FocusRequester,
     hide: (logIndex: Int) -> Unit
 ) {
     val listState = rememberLazyListState()
@@ -101,9 +103,6 @@ fun LogsView(
         changeFocus = { refineResult.currentFocus.value = it }
     )
 
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
 }
 
 @Composable
@@ -121,6 +120,7 @@ fun LogsView(
     changeFocus: (LogFocus?) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val focusRequester = remember { FocusRequester() }
     val showMarkDialog = remember { mutableStateOf<RefinedLog?>(null) }
     // TODO move to other class
     var selectedLog by remember { mutableStateOf<LogSelection?>(null) }
@@ -141,7 +141,8 @@ fun LogsView(
 
     val divider: @Composable RowScope.() -> Unit = { ColumnDivider() }
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
             .onPreviewKeyEvent { keyEvent ->
                 when {
                     keyEvent.key == Key.DirectionDown && keyEvent.type == KeyEventType.KeyDown -> {
@@ -198,12 +199,18 @@ fun LogsView(
                         true
                     }
 
+                    keyEvent.key == Key.Backspace && keyEvent.type == KeyEventType.KeyDown -> {
+                        selectedLog?.refinedLog?.log?.index?.let(hide)
+                        true
+                    }
+
                     else -> {
                         false
                     }
                 }
             }
-
+            .focusRequester(focusRequester)
+            .focusable()
     ) {
         Box {
             LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
@@ -298,5 +305,9 @@ fun LogsView(
                 }
             }
         }
+    }
+
+    LaunchedEffect(focusRequester) {
+        focusRequester.requestFocus()
     }
 }
