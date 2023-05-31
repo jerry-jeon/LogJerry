@@ -50,6 +50,7 @@ fun LogRow(
     selected: Boolean,
     setMark: (logMark: LogMark) -> Unit,
     deleteMark: (logIndex: Int) -> Unit,
+    hide: (logIndex: Int) -> Unit,
     divider: @Composable RowScope.() -> Unit,
     selectLog: (RefinedLog) -> Unit,
 ) {
@@ -68,6 +69,12 @@ fun LogRow(
             }
         }) {
             Text(if (refinedLog.marked) "Unmark" else "Mark")
+        }
+        DropdownMenuItem(onClick = {
+            hide(refinedLog.log.index)
+            showContextMenu = null
+        }) {
+            Text("Hide")
         }
     }
 

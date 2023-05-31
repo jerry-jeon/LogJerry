@@ -51,7 +51,8 @@ fun LogsView(
     preferences: Preferences,
     detectorManager: DetectorManager,
     header: Header,
-    focusRequester: FocusRequester
+    focusRequester: FocusRequester,
+    hide: (logIndex: Int) -> Unit
 ) {
     val listState = rememberLazyListState()
     LaunchedEffect(refineResult) {
@@ -96,6 +97,7 @@ fun LogsView(
         markedRows = refineResult.markedRows,
         setMark = detectorManager::setMark,
         deleteMark = detectorManager::deleteMark,
+        hide = hide,
         changeFocus = { refineResult.currentFocus.value = it }
     )
 
@@ -115,7 +117,8 @@ fun LogsView(
     markedRows: List<RefinedLog>,
     setMark: (logMark: LogMark) -> Unit,
     deleteMark: (logIndex: Int) -> Unit,
-    changeFocus: (LogFocus?) -> Unit
+    hide: (logIndex: Int) -> Unit,
+    changeFocus: (LogFocus?) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val showMarkDialog = remember { mutableStateOf<RefinedLog?>(null) }
@@ -218,6 +221,7 @@ fun LogsView(
                                     divider = divider,
                                     setMark = setMark,
                                     deleteMark = deleteMark,
+                                    hide = hide,
                                     selectLog = {
                                         selectedLog = LogSelection(it, refinedLogs.indexOf(it))
                                     }

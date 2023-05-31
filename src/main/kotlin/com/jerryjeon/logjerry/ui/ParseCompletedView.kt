@@ -63,7 +63,7 @@ fun ParseCompletedView(
             }
         }
 
-        LogsView(refineResult, parseCompleted, preferences, detectorManager, header, focusRequester)
+        LogsView(refineResult, parseCompleted, preferences, detectorManager, header, focusRequester, filterManager::hide)
     }
 }
 
