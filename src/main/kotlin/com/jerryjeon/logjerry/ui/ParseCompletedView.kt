@@ -24,7 +24,6 @@ fun ParseCompletedView(
     header: Header,
     parseCompleted: ParseCompleted,
     openNewTab: (StateFlow<List<Log>>) -> Unit,
-    InvalidSentences: @Composable () -> Unit
 ) {
     val filterManager = parseCompleted.filterManager
     val detectorManager = parseCompleted.detectorManager
@@ -32,7 +31,6 @@ fun ParseCompletedView(
     Column(
         modifier = Modifier
     ) {
-        InvalidSentences()
         Column {
             val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
             val statusByKey by refineResult.statusByKey.collectAsState()
