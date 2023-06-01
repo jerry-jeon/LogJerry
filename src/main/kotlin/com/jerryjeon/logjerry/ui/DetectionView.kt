@@ -31,19 +31,6 @@ fun RowScope.DetectionView(
             Text("Auto-detection", modifier = Modifier.padding(8.dp))
             Divider()
             Row {
-                if (preferences.showExceptionDetection) {
-                    ExceptionDetectionView(
-                        Modifier.width(200.dp).wrapContentHeight(),
-                        statusByKey[DetectorKey.Exception],
-                        selectPreviousDetection,
-                        selectNextDetection
-                    )
-
-                    Spacer(Modifier.width(8.dp))
-                    Divider(Modifier.width(1.dp).height(70.dp).align(Alignment.CenterVertically))
-                    Spacer(Modifier.width(8.dp))
-                }
-
                 JsonDetectionView(
                     Modifier.width(200.dp).wrapContentHeight(),
                     statusByKey[DetectorKey.Json],
