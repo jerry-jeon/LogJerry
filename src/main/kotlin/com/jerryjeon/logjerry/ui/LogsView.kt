@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalComposeUiApi::class)
+@file:OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class, ExperimentalFoundationApi::class)
 
 package com.jerryjeon.logjerry.ui
 
@@ -6,15 +6,13 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.VerticalScrollbar
-import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -24,9 +22,10 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jerryjeon.logjerry.ColumnDivider
@@ -42,7 +41,9 @@ import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.ui.focus.DetectionFocus
 import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
 import com.jerryjeon.logjerry.ui.focus.LogFocus
+import com.jerryjeon.logjerry.ui.focus.MarkFocus
 import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -59,7 +60,7 @@ fun LogsView(
     moveToNextMark: () -> Unit,
 ) {
     val listState = rememberLazyListState()
-    LaunchedEffect(refineResult) {
+    LaunchedEffect(refineResult.currentFocus) {
         refineResult.currentFocus.collectLatest {
             if (it == null) return@collectLatest
             val headerCount = 2
@@ -92,26 +93,50 @@ fun LogsView(
         (if (filteredSize != totalSize) "Filtered size : $filteredSize, " else "")
     Text("${filteredSizeText}Total : $totalSize", modifier = Modifier.padding(8.dp))
 
-    LogsView(
-        preferences = preferences,
-        refinedLogs = refineResult.refinedLogs,
-        detectorManager = detectorManager,
-        header = header,
-        listState = listState,
-        markedRows = refineResult.markedRows,
-        setMark = detectorManager::setMark,
-        deleteMark = detectorManager::deleteMark,
-        hide = hide,
-        changeFocus = { refineResult.currentFocus.value = it },
-        moveToPreviousMark = moveToPreviousMark,
-        moveToNextMark = moveToNextMark,
-    )
+    Box {
+        LogsView(
+            modifier = Modifier.fillMaxWidth(),
+            endPadding = 120.dp,
+            preferences = preferences,
+            refinedLogs = refineResult.refinedLogs,
+            detectorManager = detectorManager,
+            header = header,
+            listState = listState,
+            markedRows = refineResult.markedRows,
+            setMark = detectorManager::setMark,
+            deleteMark = detectorManager::deleteMark,
+            hide = hide,
+            changeFocus = { refineResult.currentFocus.value = it },
+            moveToPreviousMark = moveToPreviousMark,
+            moveToNextMark = moveToNextMark,
+        )
+        LazyColumn(modifier = Modifier.width(120.dp).fillMaxHeight().align(Alignment.CenterEnd)) {
+            items(refineResult.markedRows) {
+                val mark = it.mark!!
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(60.dp).background(mark.color)
+                        .clickable {
+                            refineResult.selectDetection(mark)
+                    },
+                ) {
+                    Text(
+                        mark.note,
+                        modifier = Modifier.align(Alignment.Center),
+                        textAlign = TextAlign.Center,
+                        color = Color.Black,
+                    )
+                }
+                Divider()
+            }
+        }
 
+    }
 }
 
 @Composable
 fun LogsView(
     modifier: Modifier = Modifier,
+    endPadding: Dp,
     refinedLogs: List<RefinedLog>,
     detectorManager: DetectorManager,
     preferences: Preferences,
@@ -229,7 +254,7 @@ fun LogsView(
             .focusable()
     ) {
         Box {
-            LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
+            LazyColumn(modifier = Modifier.fillMaxSize().padding(end = endPadding), state = listState) {
                 item { HeaderRow(header, divider) }
                 item { HeaderDivider() }
                 refinedLogs.forEach { refinedLog ->

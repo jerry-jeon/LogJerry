@@ -3,6 +3,7 @@ package com.jerryjeon.logjerry.logview
 import com.jerryjeon.logjerry.detector.Detection
 import com.jerryjeon.logjerry.detector.DetectionStatus
 import com.jerryjeon.logjerry.detector.DetectorKey
+import com.jerryjeon.logjerry.detector.MarkDetection
 import com.jerryjeon.logjerry.ui.focus.DetectionFocus
 import com.jerryjeon.logjerry.ui.focus.LogFocus
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,5 +66,19 @@ data class RefineResult(
 
     fun selectNextDetection(key: DetectorKey) {
         statusByKey.value[key]?.let { selectNextDetection(it) }
+    }
+
+    fun selectDetection(detection: MarkDetection) {
+        statusByKey.update {
+            val status = it[detection.key] ?: return@update it
+            val index = status.allDetections.indexOf(detection)
+            val newStatus = status.copy(currentIndex = index, selected = detection)
+            it + (newStatus.key to newStatus)
+        }
+
+        val indexInRefinedLogs = refinedLogs.indexOfFirst { refinedLog ->
+            refinedLog.log.index == statusByKey.value[detection.key]?.selected?.logIndex
+        }
+        currentFocus.value = DetectionFocus(indexInRefinedLogs)
     }
 }
