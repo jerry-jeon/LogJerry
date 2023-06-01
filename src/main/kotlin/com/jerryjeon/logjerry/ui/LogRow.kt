@@ -127,7 +127,6 @@ fun RowScope.CellByColumnType(
         ColumnType.PackageName -> PackagerNameCell(preferences, columnInfo, log)
         ColumnType.Priority -> PriorityCell(preferences, columnInfo, log)
         ColumnType.Tag -> TagCell(preferences, columnInfo, log)
-        ColumnType.Detection -> DetectionCell(columnInfo, refinedLog)
         ColumnType.Log -> LogCell(preferences, columnInfo, refinedLog)
     }
 }
@@ -277,70 +276,6 @@ private fun RowScope.LogCell(
                         Icon(Icons.Default.ContentCopy, "Copy the json")
                     }
                     Spacer(Modifier.width(4.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RowScope.DetectionCell(button: ColumnInfo, refinedLog: RefinedLog) {
-    val showPrettyJsonDialog: MutableState<JsonObject?> = remember { mutableStateOf(null) }
-
-    Column(modifier = this.cellDefaultModifier(button.width)) {
-        refinedLog.detections.values
-            .flatten()
-            .filterIsInstance<JsonDetection>()
-            .forEachIndexed { index, jsonDetection ->
-                TextButton(onClick = { showPrettyJsonDialog.value = jsonDetection.json }) {
-                    Row {
-                        Text("{ }")
-                        Text("${index + 1}", fontSize = 9.sp)
-                    }
-                }
-            }
-    }
-
-    JsonPrettyDialog(showPrettyJsonDialog)
-}
-
-@Composable
-private fun JsonPrettyDialog(
-    showPrettyJsonDialogState: MutableState<JsonObject?>,
-) {
-    showPrettyJsonDialogState.value?.let { jsonObject ->
-        val prettyJson = json.encodeToString(JsonObject.serializer(), jsonObject)
-        Dialog(
-            onCloseRequest = { showPrettyJsonDialogState.value = null },
-            title = "Pretty Json",
-            state = DialogState(width = 800.dp, height = 600.dp),
-            onPreviewKeyEvent = { keyEvent ->
-                when {
-                    keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.W && keyEvent.type == KeyEventType.KeyDown -> {
-                        showPrettyJsonDialogState.value = null
-                        true
-                    }
-                    keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.C && keyEvent.type == KeyEventType.KeyDown -> {
-                        copyToClipboard(prettyJson)
-                        true
-                    }
-                    else -> {
-                        false
-                    }
-                }
-            }
-        ) {
-            Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                SelectionContainer(Modifier.fillMaxSize()) {
-                    BasicTextField(
-                        value = prettyJson,
-                        onValueChange = {},
-                        modifier = Modifier.fillMaxSize(),
-                        readOnly = true,
-                    )
-                }
-                Button(onClick = { copyToClipboard(prettyJson) }, modifier = Modifier.align(Alignment.TopEnd)) {
-                    Text("Copy all (Cmd + C)")
                 }
             }
         }
