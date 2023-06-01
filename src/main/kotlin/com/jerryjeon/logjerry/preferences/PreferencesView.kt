@@ -55,11 +55,15 @@ fun PreferencesView(
                     Column {
                         Text("General", style = MaterialTheme.typography.h5)
                         Spacer(Modifier.height(8.dp))
+
+                        /* TODO Disable exception feature temporarily, it seems not useful
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("Detect exception automatically")
                             Spacer(Modifier.width(4.dp))
                             Checkbox(showExceptionDetection, onCheckedChange = viewModel::changeShowExceptionDetection)
                         }
+
+                         */
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("Show invalid sentences")
                             Spacer(Modifier.width(4.dp))

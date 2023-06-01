@@ -33,10 +33,7 @@ fun JsonDetectionView(
         Box(modifier = modifier) {
             Column(Modifier.height(IntrinsicSize.Min).padding(8.dp)) {
                 val title = buildAnnotatedString {
-                    append("Json ")
-                    withStyle(JsonDetection.detectedStyle) {
-                        append("{ \"key\" : \"value\" }")
-                    }
+                    append("Json")
                 }
                 Text(title)
                 if (detectionStatus == null) {

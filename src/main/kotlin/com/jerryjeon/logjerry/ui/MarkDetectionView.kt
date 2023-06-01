@@ -34,7 +34,6 @@ fun MarkDetectionView(
                 Row {
                     Text("Marked rows")
                     Spacer(Modifier.width(16.dp))
-                    Text("Open as a tab", modifier = Modifier.onClick { openMarkedRowsTab() }, color = MaterialTheme.colors.secondary)
                 }
                 if (detectionStatus == null) {
                     Spacer(Modifier.height(16.dp))
