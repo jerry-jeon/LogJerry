@@ -129,7 +129,6 @@ fun LogsView(
                 Divider()
             }
         }
-
     }
 }
 
@@ -295,7 +294,6 @@ fun LogsView(
                             } else {
                                 logRow()
                             }
-                            Divider()
                         }
                     }
                 }
