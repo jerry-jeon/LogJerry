@@ -16,5 +16,4 @@ enum class ColumnType(val text: String, val shortcut: KeyShortcut, val showDivid
     Priority("Lev", KeyShortcut(Key.Seven, meta = true), true),
     Tag("Tag", KeyShortcut(Key.Eight, meta = true), true),
     Log("Log", KeyShortcut(Key.Nine, meta = true), false),
-    Detection("", KeyShortcut(Key.Zero, meta = true), false);
 }
