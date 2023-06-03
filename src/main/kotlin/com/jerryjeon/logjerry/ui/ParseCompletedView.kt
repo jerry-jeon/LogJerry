@@ -3,15 +3,21 @@
 package com.jerryjeon.logjerry.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.OutlinedButton
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.unit.*
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
 import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.detector.KeywordDetectionView
+import com.jerryjeon.logjerry.filter.FilterManager
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.ParseCompleted
 import com.jerryjeon.logjerry.preferences.Preferences
@@ -31,6 +37,22 @@ fun ParseCompletedView(
     Column(
         modifier = Modifier
     ) {
+        Row {
+            TextFilterPopup(filterManager)
+        }
+
+        val textFilters by filterManager.textFiltersFlow.collectAsState()
+        Column {
+            textFilters.chunked(2).forEach {
+                Row {
+                    it.forEach { filter ->
+                        AppliedTextFilter(filter, filterManager::removeTextFilter)
+                        Spacer(Modifier.width(8.dp))
+                    }
+                }
+            }
+        }
+
         Column {
             val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
             val statusByKey by refineResult.statusByKey.collectAsState()
@@ -72,3 +94,39 @@ fun ParseCompletedView(
     }
 }
 
+private fun TextFilterPopup(filterManager: FilterManager) {
+    var showPopup by remember { mutableStateOf(false) }
+    var anchor by remember { mutableStateOf(Offset.Zero) }
+    OutlinedButton(
+        onClick = {
+            showPopup = true
+        },
+        modifier = Modifier
+            .onGloballyPositioned { coordinates ->
+                anchor = coordinates.positionInRoot()
+            },
+    ) {
+        Text("Add Filter")
+    }
+
+    if (showPopup) {
+        Popup(
+            onDismissRequest = { showPopup = false },
+            focusable = true,
+            popupPositionProvider = object : PopupPositionProvider {
+                override fun calculatePosition(
+                    anchorBounds: IntRect,
+                    windowSize: IntSize,
+                    layoutDirection: LayoutDirection,
+                    popupContentSize: IntSize
+                ): IntOffset {
+                    return IntOffset(anchor.x.toInt(), (anchor.y + anchorBounds.height).toInt())
+                }
+            }
+        ) {
+            TextFilterView(
+                filterManager::addTextFilter
+            ) { showPopup = false }
+        }
+    }
+}

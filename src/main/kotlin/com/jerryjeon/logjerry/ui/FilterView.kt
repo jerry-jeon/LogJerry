@@ -13,11 +13,8 @@ import com.jerryjeon.logjerry.filter.FilterManager
 fun FilterView(
     filterManager: FilterManager,
 ) {
-    val textFilters by filterManager.textFiltersFlow.collectAsState()
     val priorityFilters by filterManager.priorityFilterFlow.collectAsState()
-
-    TextFilterView(textFilters, filterManager::addTextFilter, filterManager::removeTextFilter)
-    Spacer(Modifier.width(16.dp))
+    Spacer(Modifier.width(200.dp))
     PriorityFilterView(priorityFilters, filterManager::setPriorityFilter)
     Spacer(Modifier.width(16.dp))
 }
