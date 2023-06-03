@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jerryjeon.logjerry.ColumnDivider
 import com.jerryjeon.logjerry.HeaderDivider
+import com.jerryjeon.logjerry.detector.Detection
 import com.jerryjeon.logjerry.detector.DetectorManager
 import com.jerryjeon.logjerry.log.ParseCompleted
 import com.jerryjeon.logjerry.logview.LogSelection
@@ -41,9 +42,7 @@ import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.ui.focus.DetectionFocus
 import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
 import com.jerryjeon.logjerry.ui.focus.LogFocus
-import com.jerryjeon.logjerry.ui.focus.MarkFocus
 import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -109,26 +108,8 @@ fun LogsView(
             changeFocus = { refineResult.currentFocus.value = it },
             moveToPreviousMark = moveToPreviousMark,
             moveToNextMark = moveToNextMark,
+            selectDetection = refineResult::selectDetection,
         )
-        LazyColumn(modifier = Modifier.width(120.dp).fillMaxHeight().align(Alignment.CenterEnd)) {
-            items(refineResult.markedRows) {
-                val mark = it.mark!!
-                Box(
-                    modifier = Modifier.fillMaxWidth().height(60.dp).background(mark.color)
-                        .clickable {
-                            refineResult.selectDetection(mark)
-                    },
-                ) {
-                    Text(
-                        mark.note,
-                        modifier = Modifier.align(Alignment.Center),
-                        textAlign = TextAlign.Center,
-                        color = Color.Black,
-                    )
-                }
-                Divider()
-            }
-        }
     }
 }
 
@@ -148,6 +129,7 @@ fun LogsView(
     changeFocus: (LogFocus?) -> Unit,
     moveToPreviousMark: () -> Unit,
     moveToNextMark: () -> Unit,
+    selectDetection: (Detection) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
@@ -305,48 +287,91 @@ fun LogsView(
                 adapter = adapter,
             )
 
-            var isScrolling by remember { mutableStateOf(false) }
-            LaunchedEffect(listState.firstVisibleItemScrollOffset) {
-                isScrolling = true
-                delay(1000)
-                isScrolling = false
-            }
-
-            // TODO why this should be annotated
-            this@Column.AnimatedVisibility(
-                visible = isScrolling,
-                enter = fadeIn(animationSpec = tween(500)),
-                exit = fadeOut(animationSpec = tween(500))
+            Box(
+                modifier = Modifier
+                    .width(120.dp)
+                    .fillMaxHeight()
+                    .padding(end = LocalScrollbarStyle.current.thickness)
+                    .align(Alignment.TopEnd)
             ) {
-                val width = listState.layoutInfo.viewportSize.width
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(start = (width - 120).dp)
-                ) {
-                    markedRows.forEach {
-                        val y =
-                            it.log.index.toFloat() / listState.layoutInfo.totalItemsCount.toFloat() * listState.layoutInfo.viewportSize.height
-                        Box(
-                            modifier = Modifier.fillMaxWidth().height(30.dp)
-                                .offset(y = y.toInt().dp)
-                                .background(it.mark!!.color),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = it.mark.note,
-                                color = Color.Black,
-                                fontSize = 12.sp,
-                                maxLines = 1
-                            )
-                        }
-                    }
-                }
+                MarkView(markedRows, listState, selectDetection)
             }
         }
     }
 
     LaunchedEffect(focusRequester) {
         focusRequester.requestFocus()
+    }
+}
+
+@Composable
+private fun MarkView(
+    markedRows: List<RefinedLog>,
+    listState: LazyListState,
+    selectDetection: (Detection) -> Unit,
+) {
+    var isScrolling by remember { mutableStateOf(false) }
+    LaunchedEffect(listState.firstVisibleItemScrollOffset) {
+        isScrolling = true
+        delay(1000)
+        isScrolling = false
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            items(markedRows) {
+                val mark = it.mark!!
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(60.dp).background(mark.color)
+                        .clickable { selectDetection(mark) },
+                ) {
+                    Text(
+                        mark.note,
+                        modifier = Modifier.align(Alignment.Center),
+                        textAlign = TextAlign.Center,
+                        color = Color.Black,
+                    )
+                }
+                Divider()
+            }
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        AnimatedVisibility(
+            visible = isScrolling,
+            enter = fadeIn(animationSpec = tween(500)),
+            exit = fadeOut(animationSpec = tween(500))
+        ) {
+            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background))
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        AnimatedVisibility(
+            visible = isScrolling,
+            enter = fadeIn(animationSpec = tween(500)),
+            exit = fadeOut(animationSpec = tween(500))
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                markedRows.forEach {
+                    val y =
+                        it.log.index.toFloat() / listState.layoutInfo.totalItemsCount.toFloat() * listState.layoutInfo.viewportSize.height
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(30.dp)
+                            .offset(y = y.toInt().dp)
+                            .background(it.mark!!.color),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = it.mark.note,
+                            color = Color.Black,
+                            fontSize = 12.sp,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
+        }
     }
 }
