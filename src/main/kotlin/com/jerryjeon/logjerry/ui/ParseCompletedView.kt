@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -38,8 +37,28 @@ fun ParseCompletedView(
     Column(
         modifier = Modifier
     ) {
-        Row {
+        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
             FilterPopup(filterManager)
+            val statusByKey by refineResult.statusByKey.collectAsState()
+            statusByKey[DetectorKey.Json]?.let {
+                JsonDetectionView(
+                    detectionStatus = it,
+                    moveToPreviousOccurrence = refineResult::selectPreviousDetection,
+                    moveToNextOccurrence = refineResult::selectNextDetection,
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
+            KeywordDetectionView(
+                keywordDetectionRequest = keywordDetectionRequest,
+                detectionStatus = statusByKey[DetectorKey.Keyword],
+                find = detectorManager::findKeyword,
+                setFindEnabled = detectorManager::setKeywordDetectionEnabled,
+                moveToPreviousOccurrence = refineResult::selectPreviousDetection,
+                moveToNextOccurrence = refineResult::selectNextDetection,
+            )
         }
 
         val textFilters by filterManager.textFiltersFlow.collectAsState()
@@ -51,33 +70,6 @@ fun ParseCompletedView(
                         Spacer(Modifier.width(8.dp))
                     }
                 }
-            }
-        }
-
-        Column {
-            val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
-            val statusByKey by refineResult.statusByKey.collectAsState()
-            Row(modifier = Modifier.padding(16.dp)) {
-                DetectionView(
-                    preferences,
-                    detectorManager,
-                    statusByKey,
-                    openNewTab,
-                    refineResult::selectPreviousDetection,
-                    refineResult::selectNextDetection,
-                )
-            }
-
-            Box(modifier = Modifier.fillMaxWidth()) {
-                KeywordDetectionView(
-                    Modifier.align(Alignment.BottomEnd),
-                    keywordDetectionRequest,
-                    statusByKey[DetectorKey.Keyword],
-                    detectorManager::findKeyword,
-                    detectorManager::setKeywordDetectionEnabled,
-                    refineResult::selectPreviousDetection,
-                    refineResult::selectNextDetection,
-                )
             }
         }
 
