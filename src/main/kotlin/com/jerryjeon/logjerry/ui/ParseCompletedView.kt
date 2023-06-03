@@ -18,6 +18,7 @@ import androidx.compose.ui.window.PopupPositionProvider
 import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.detector.KeywordDetectionView
 import com.jerryjeon.logjerry.filter.FilterManager
+import com.jerryjeon.logjerry.filter.PriorityFilter
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.ParseCompleted
 import com.jerryjeon.logjerry.preferences.Preferences
@@ -38,7 +39,7 @@ fun ParseCompletedView(
         modifier = Modifier
     ) {
         Row {
-            TextFilterPopup(filterManager)
+            FilterPopup(filterManager)
         }
 
         val textFilters by filterManager.textFiltersFlow.collectAsState()
@@ -57,7 +58,6 @@ fun ParseCompletedView(
             val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
             val statusByKey by refineResult.statusByKey.collectAsState()
             Row(modifier = Modifier.padding(16.dp)) {
-                FilterView(filterManager)
                 DetectionView(
                     preferences,
                     detectorManager,
@@ -94,24 +94,79 @@ fun ParseCompletedView(
     }
 }
 
-private fun TextFilterPopup(filterManager: FilterManager) {
-    var showPopup by remember { mutableStateOf(false) }
-    var anchor by remember { mutableStateOf(Offset.Zero) }
+@Composable
+private fun FilterPopup(filterManager: FilterManager) {
+    var showTextFilterPopup by remember { mutableStateOf(false) }
+    var textFilterAnchor by remember { mutableStateOf(Offset.Zero) }
+    var showLogLevelPopup by remember { mutableStateOf(false) }
+    var logLevelAnchor by remember { mutableStateOf(Offset.Zero) }
+    val priorityFilter by filterManager.priorityFilterFlow.collectAsState()
+
     OutlinedButton(
         onClick = {
-            showPopup = true
+            showTextFilterPopup = true
         },
         modifier = Modifier
             .onGloballyPositioned { coordinates ->
-                anchor = coordinates.positionInRoot()
+                textFilterAnchor = coordinates.positionInRoot()
             },
     ) {
         Text("Add Filter")
     }
 
+    OutlinedButton(
+        onClick = {
+            showLogLevelPopup = true
+        },
+        modifier = Modifier
+            .onGloballyPositioned { coordinates ->
+                logLevelAnchor = coordinates.positionInRoot()
+            },
+    ) {
+        Text("Log Level | ${priorityFilter.priority.name}")
+    }
+
+    if (showTextFilterPopup) {
+        Popup(
+            onDismissRequest = { showTextFilterPopup = false },
+            focusable = true,
+            popupPositionProvider = object : PopupPositionProvider {
+                override fun calculatePosition(
+                    anchorBounds: IntRect,
+                    windowSize: IntSize,
+                    layoutDirection: LayoutDirection,
+                    popupContentSize: IntSize
+                ): IntOffset {
+                    return IntOffset(textFilterAnchor.x.toInt(), (textFilterAnchor.y + anchorBounds.height).toInt())
+                }
+            }
+        ) {
+            TextFilterView(
+                filterManager::addTextFilter
+            ) { showTextFilterPopup = false }
+        }
+    }
+
+    PriorityFilterPopup(
+        priorityFilter,
+        logLevelAnchor,
+        showLogLevelPopup,
+        dismissPopup = { showLogLevelPopup = false },
+        setPriorityFilter = filterManager::setPriorityFilter
+    )
+}
+
+@Composable
+private fun PriorityFilterPopup(
+    priorityFilter: PriorityFilter,
+    anchor: Offset,
+    showPopup: Boolean,
+    dismissPopup: () -> Unit,
+    setPriorityFilter: (PriorityFilter) -> Unit
+) {
     if (showPopup) {
         Popup(
-            onDismissRequest = { showPopup = false },
+            onDismissRequest = dismissPopup,
             focusable = true,
             popupPositionProvider = object : PopupPositionProvider {
                 override fun calculatePosition(
@@ -124,9 +179,7 @@ private fun TextFilterPopup(filterManager: FilterManager) {
                 }
             }
         ) {
-            TextFilterView(
-                filterManager::addTextFilter
-            ) { showPopup = false }
+            PriorityFilterView(priorityFilter, setPriorityFilter)
         }
     }
 }
