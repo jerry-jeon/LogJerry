@@ -339,8 +339,8 @@ private fun MarkView(
                     ) {
                         DashedDivider(
                             modifier = Modifier.fillMaxHeight().align(Alignment.Center),
-                            thickness = 4.dp,
-                            color = Color(0x44888888)
+                            thickness = 2.dp,
+                            color = Color(0x22888888)
                         )
                         Text(
                             text = "${it.logCount} logs, ${it.duration}",
