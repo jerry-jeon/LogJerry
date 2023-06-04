@@ -2,18 +2,12 @@
 
 package com.jerryjeon.logjerry.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -23,16 +17,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.jerryjeon.logjerry.ColumnDivider
 import com.jerryjeon.logjerry.HeaderDivider
+import com.jerryjeon.logjerry.detector.Detection
 import com.jerryjeon.logjerry.detector.DetectorManager
 import com.jerryjeon.logjerry.log.ParseCompleted
 import com.jerryjeon.logjerry.logview.LogSelection
+import com.jerryjeon.logjerry.logview.MarkInfo
 import com.jerryjeon.logjerry.logview.RefineResult
 import com.jerryjeon.logjerry.logview.RefinedLog
 import com.jerryjeon.logjerry.mark.LogMark
@@ -41,10 +38,7 @@ import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.ui.focus.DetectionFocus
 import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
 import com.jerryjeon.logjerry.ui.focus.LogFocus
-import com.jerryjeon.logjerry.ui.focus.MarkFocus
 import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -102,34 +96,15 @@ fun LogsView(
             detectorManager = detectorManager,
             header = header,
             listState = listState,
-            markedRows = refineResult.markedRows,
+            markInfos = refineResult.markInfos,
             setMark = detectorManager::setMark,
             deleteMark = detectorManager::deleteMark,
             hide = hide,
             changeFocus = { refineResult.currentFocus.value = it },
             moveToPreviousMark = moveToPreviousMark,
             moveToNextMark = moveToNextMark,
+            selectDetection = refineResult::selectDetection,
         )
-        LazyColumn(modifier = Modifier.width(120.dp).fillMaxHeight().align(Alignment.CenterEnd)) {
-            items(refineResult.markedRows) {
-                val mark = it.mark!!
-                Box(
-                    modifier = Modifier.fillMaxWidth().height(60.dp).background(mark.color)
-                        .clickable {
-                            refineResult.selectDetection(mark)
-                    },
-                ) {
-                    Text(
-                        mark.note,
-                        modifier = Modifier.align(Alignment.Center),
-                        textAlign = TextAlign.Center,
-                        color = Color.Black,
-                    )
-                }
-                Divider()
-            }
-        }
-
     }
 }
 
@@ -142,13 +117,14 @@ fun LogsView(
     preferences: Preferences,
     header: Header,
     listState: LazyListState,
-    markedRows: List<RefinedLog>,
+    markInfos: List<MarkInfo>,
     setMark: (logMark: LogMark) -> Unit,
     deleteMark: (logIndex: Int) -> Unit,
     hide: (logIndex: Int) -> Unit,
     changeFocus: (LogFocus?) -> Unit,
     moveToPreviousMark: () -> Unit,
     moveToNextMark: () -> Unit,
+    selectDetection: (Detection) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
@@ -295,7 +271,6 @@ fun LogsView(
                             } else {
                                 logRow()
                             }
-                            Divider()
                         }
                     }
                 }
@@ -307,48 +282,147 @@ fun LogsView(
                 adapter = adapter,
             )
 
-            var isScrolling by remember { mutableStateOf(false) }
-            LaunchedEffect(listState.firstVisibleItemScrollOffset) {
-                isScrolling = true
-                delay(1000)
-                isScrolling = false
-            }
-
-            // TODO why this should be annotated
-            this@Column.AnimatedVisibility(
-                visible = isScrolling,
-                enter = fadeIn(animationSpec = tween(500)),
-                exit = fadeOut(animationSpec = tween(500))
+            Box(
+                modifier = Modifier
+                    .width(120.dp)
+                    .fillMaxHeight()
+                    .padding(end = LocalScrollbarStyle.current.thickness)
+                    .align(Alignment.TopEnd)
             ) {
-                val width = listState.layoutInfo.viewportSize.width
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(start = (width - 120).dp)
-                ) {
-                    markedRows.forEach {
-                        val y =
-                            it.log.index.toFloat() / listState.layoutInfo.totalItemsCount.toFloat() * listState.layoutInfo.viewportSize.height
-                        Box(
-                            modifier = Modifier.fillMaxWidth().height(30.dp)
-                                .offset(y = y.toInt().dp)
-                                .background(it.mark!!.color),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = it.mark.note,
-                                color = Color.Black,
-                                fontSize = 12.sp,
-                                maxLines = 1
-                            )
-                        }
-                    }
-                }
+                MarkView(markInfos, listState.layoutInfo.viewportSize.height, refinedLogs.size, selectDetection)
             }
         }
     }
 
     LaunchedEffect(focusRequester) {
         focusRequester.requestFocus()
+    }
+}
+
+@Composable
+private fun MarkView(
+    markInfos: List<MarkInfo>,
+    viewportHeight: Int,
+    refinedLogsSize: Int,
+    selectDetection: (Detection) -> Unit,
+) {
+    val minHeight = 40
+    val minRatio = minHeight.toFloat() / viewportHeight.toFloat()
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        markInfos.forEach {
+            when (it) {
+                is MarkInfo.Marked -> {
+                    val mark = it.markedLog.mark!!
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(60.dp).background(mark.color)
+                            .clickable { selectDetection(mark) },
+                    ) {
+                        Text(
+                            mark.note,
+                            modifier = Modifier.align(Alignment.Center),
+                            textAlign = TextAlign.Center,
+                            color = Color.Black,
+                        )
+                    }
+                }
+
+                is MarkInfo.StatBetweenMarks -> {
+                    val ratio = it.logCount.toFloat() / refinedLogsSize.toFloat() / markInfos.size
+                    val baseModifier = if (ratio < minRatio) {
+                        Modifier.height(minHeight.dp)
+                    } else {
+                        Modifier.weight(ratio)
+                    }
+                    Box(
+                        modifier = baseModifier.fillMaxWidth()
+                    ) {
+                        DashedDivider(
+                            modifier = Modifier.fillMaxHeight().align(Alignment.Center),
+                            thickness = 4.dp,
+                            color = Color(0x44888888)
+                        )
+                        Text(
+                            text = "${it.logCount} logs, ${it.duration}",
+                            modifier = Modifier.padding(vertical = 12.dp).align(Alignment.Center).background(MaterialTheme.colors.background),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.body2
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /* TODO it seems not useful..
+    var isScrolling by remember { mutableStateOf(false) }
+    LaunchedEffect(listState.firstVisibleItemScrollOffset) {
+        isScrolling = true
+        delay(1000)
+        isScrolling = false
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        AnimatedVisibility(
+            visible = isScrolling,
+            enter = fadeIn(animationSpec = tween(500)),
+            exit = fadeOut(animationSpec = tween(500))
+        ) {
+            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background))
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        AnimatedVisibility(
+            visible = isScrolling,
+            enter = fadeIn(animationSpec = tween(500)),
+            exit = fadeOut(animationSpec = tween(500))
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                markedRows.forEach {
+                    val y =
+                        it.log.index.toFloat() / listState.layoutInfo.totalItemsCount.toFloat() * listState.layoutInfo.viewportSize.height
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(30.dp)
+                            .offset(y = y.toInt().dp)
+                            .background(it.mark!!.color),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = it.mark.note,
+                            color = Color.Black,
+                            fontSize = 12.sp,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
+        }
+    }
+     */
+}
+
+@Composable
+fun DashedDivider(
+    thickness: Dp,
+    color: Color = MaterialTheme.colors.onSurface,
+    phase: Float = 10f,
+    intervals: FloatArray = floatArrayOf(20f, 25f),
+    modifier: Modifier = Modifier
+) {
+    Canvas(
+        modifier = modifier
+    ) {
+        val dividerHeight = thickness.toPx()
+        drawRoundRect(
+            color = color,
+            style = Stroke(
+                width = dividerHeight,
+                pathEffect = PathEffect.dashPathEffect(
+                    intervals = intervals,
+                    phase = phase
+                )
+            )
+        )
     }
 }

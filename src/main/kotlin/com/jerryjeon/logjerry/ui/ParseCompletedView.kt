@@ -3,15 +3,21 @@
 package com.jerryjeon.logjerry.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.OutlinedButton
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.unit.*
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
 import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.detector.KeywordDetectionView
+import com.jerryjeon.logjerry.filter.FilterManager
+import com.jerryjeon.logjerry.filter.PriorityFilter
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.ParseCompleted
 import com.jerryjeon.logjerry.preferences.Preferences
@@ -31,31 +37,47 @@ fun ParseCompletedView(
     Column(
         modifier = Modifier
     ) {
-        Column {
-            val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
+        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
             val statusByKey by refineResult.statusByKey.collectAsState()
-            Row(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .height(IntrinsicSize.Min)
+            ) {
                 FilterView(filterManager)
-                DetectionView(
-                    preferences,
-                    detectorManager,
-                    statusByKey,
-                    openNewTab,
-                    refineResult::selectPreviousDetection,
-                    refineResult::selectNextDetection,
-                )
+                Spacer(Modifier.width(8.dp))
+                statusByKey[DetectorKey.Json]?.let {
+                    JsonDetectionView(
+                        modifier = Modifier.fillMaxHeight(),
+                        detectionStatus = it,
+                        moveToPreviousOccurrence = refineResult::selectPreviousDetection,
+                        moveToNextOccurrence = refineResult::selectNextDetection,
+                    )
+                }
             }
 
-            Box(modifier = Modifier.fillMaxWidth()) {
-                KeywordDetectionView(
-                    Modifier.align(Alignment.BottomEnd),
-                    keywordDetectionRequest,
-                    statusByKey[DetectorKey.Keyword],
-                    detectorManager::findKeyword,
-                    detectorManager::setKeywordDetectionEnabled,
-                    refineResult::selectPreviousDetection,
-                    refineResult::selectNextDetection,
-                )
+            Spacer(modifier = Modifier.weight(1f))
+
+            val keywordDetectionRequest by detectorManager.keywordDetectionRequestFlow.collectAsState()
+            KeywordDetectionView(
+                keywordDetectionRequest = keywordDetectionRequest,
+                detectionStatus = statusByKey[DetectorKey.Keyword],
+                find = detectorManager::findKeyword,
+                setFindEnabled = detectorManager::setKeywordDetectionEnabled,
+                moveToPreviousOccurrence = refineResult::selectPreviousDetection,
+                moveToNextOccurrence = refineResult::selectNextDetection,
+            )
+        }
+
+        val textFilters by filterManager.textFiltersFlow.collectAsState()
+        Column {
+            textFilters.chunked(2).forEach {
+                Row {
+                    it.forEach { filter ->
+                        AppliedTextFilter(filter, filterManager::removeTextFilter)
+                        Spacer(Modifier.width(8.dp))
+                    }
+                }
             }
         }
 
@@ -72,3 +94,96 @@ fun ParseCompletedView(
     }
 }
 
+@Composable
+private fun FilterView(filterManager: FilterManager) {
+    var showTextFilterPopup by remember { mutableStateOf(false) }
+    var textFilterAnchor by remember { mutableStateOf(Offset.Zero) }
+    var showLogLevelPopup by remember { mutableStateOf(false) }
+    var logLevelAnchor by remember { mutableStateOf(Offset.Zero) }
+    val priorityFilter by filterManager.priorityFilterFlow.collectAsState()
+
+    OutlinedButton(
+        onClick = {
+            showTextFilterPopup = true
+        },
+        modifier = Modifier
+            .height(48.dp)
+            .onGloballyPositioned { coordinates ->
+                textFilterAnchor = coordinates.positionInRoot()
+            },
+    ) {
+        Text("Add Filter")
+    }
+
+    Spacer(Modifier.width(8.dp))
+
+    OutlinedButton(
+        onClick = {
+            showLogLevelPopup = true
+        },
+        modifier = Modifier
+            .height(48.dp)
+            .onGloballyPositioned { coordinates ->
+                logLevelAnchor = coordinates.positionInRoot()
+            },
+    ) {
+        Text("Log Level | ${priorityFilter.priority.name}")
+    }
+
+    if (showTextFilterPopup) {
+        Popup(
+            onDismissRequest = { showTextFilterPopup = false },
+            focusable = true,
+            popupPositionProvider = object : PopupPositionProvider {
+                override fun calculatePosition(
+                    anchorBounds: IntRect,
+                    windowSize: IntSize,
+                    layoutDirection: LayoutDirection,
+                    popupContentSize: IntSize
+                ): IntOffset {
+                    return IntOffset(textFilterAnchor.x.toInt(), (textFilterAnchor.y + anchorBounds.height).toInt())
+                }
+            }
+        ) {
+            TextFilterView(
+                filterManager::addTextFilter
+            ) { showTextFilterPopup = false }
+        }
+    }
+
+    PriorityFilterPopup(
+        priorityFilter,
+        logLevelAnchor,
+        showLogLevelPopup,
+        dismissPopup = { showLogLevelPopup = false },
+        setPriorityFilter = filterManager::setPriorityFilter
+    )
+}
+
+@Composable
+private fun PriorityFilterPopup(
+    priorityFilter: PriorityFilter,
+    anchor: Offset,
+    showPopup: Boolean,
+    dismissPopup: () -> Unit,
+    setPriorityFilter: (PriorityFilter) -> Unit
+) {
+    if (showPopup) {
+        Popup(
+            onDismissRequest = dismissPopup,
+            focusable = true,
+            popupPositionProvider = object : PopupPositionProvider {
+                override fun calculatePosition(
+                    anchorBounds: IntRect,
+                    windowSize: IntSize,
+                    layoutDirection: LayoutDirection,
+                    popupContentSize: IntSize
+                ): IntOffset {
+                    return IntOffset(anchor.x.toInt(), (anchor.y + anchorBounds.height).toInt())
+                }
+            }
+        ) {
+            PriorityFilterView(priorityFilter, setPriorityFilter)
+        }
+    }
+}

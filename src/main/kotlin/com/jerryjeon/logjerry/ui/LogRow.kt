@@ -7,8 +7,6 @@ import androidx.compose.foundation.PointerMatcher
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.onClick
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
@@ -17,28 +15,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerButton
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogState
-import com.jerryjeon.logjerry.detector.JsonDetection
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogContentView
 import com.jerryjeon.logjerry.logview.RefinedLog
+import com.jerryjeon.logjerry.logview.toHumanReadable
 import com.jerryjeon.logjerry.mark.LogMark
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.ColumnInfo
 import com.jerryjeon.logjerry.table.ColumnType
 import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.util.copyToClipboard
-import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
 
 val json = Json { prettyPrint = true }
 
@@ -80,34 +69,52 @@ fun LogRow(
 
     MarkDialog(showMarkDialog, setMark)
 
-    Row(
-        Modifier
-            .background(
-                when {
-                    selected -> Color(0x20CCCCCC)
-                    else -> Color.Transparent
-                }
-            )
-            .onClick { selectLog(refinedLog) }
-            .onClick(
-                matcher = PointerMatcher.mouse(PointerButton.Secondary),
-                onClick = {
-                    showContextMenu = refinedLog
-                }
-            )
-
-    ) {
-        Spacer(Modifier.width(8.dp))
-        header.asColumnList.forEach { columnInfo ->
-            if (columnInfo.visible) {
-                CellByColumnType(preferences, columnInfo, refinedLog)
-                if (columnInfo.columnType.showDivider) {
-                    divider()
-                }
+    Column {
+        // This should be separated as a different item of LazyColumn
+        if (refinedLog.timeGap != null) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(40.dp)
+                    .background(Color(0x20CCCCCC))
+            ) {
+                Text(
+                    text = "Large time gap: ${refinedLog.timeGap.toHumanReadable()}",
+                    style = MaterialTheme.typography.body2,
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
         }
 
-        Spacer(Modifier.width(8.dp))
+        Row(
+            Modifier
+                .background(
+                    when {
+                        selected -> Color(0x20CCCCCC)
+                        else -> Color.Transparent
+                    }
+                )
+                .onClick { selectLog(refinedLog) }
+                .onClick(
+                    matcher = PointerMatcher.mouse(PointerButton.Secondary),
+                    onClick = {
+                        showContextMenu = refinedLog
+                    }
+                )
+
+        ) {
+            Spacer(Modifier.width(8.dp))
+            header.asColumnList.forEach { columnInfo ->
+                if (columnInfo.visible) {
+                    CellByColumnType(preferences, columnInfo, refinedLog)
+                    if (columnInfo.columnType.showDivider) {
+                        divider()
+                    }
+                }
+            }
+
+            Spacer(Modifier.width(8.dp))
+        }
     }
 }
 

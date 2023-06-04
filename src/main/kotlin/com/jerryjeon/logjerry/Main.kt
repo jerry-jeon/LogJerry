@@ -23,7 +23,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.*
+import androidx.compose.ui.window.MenuBar
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.WindowState
+import androidx.compose.ui.window.application
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.parse.ParseStatus
 import com.jerryjeon.logjerry.preferences.ColorTheme
@@ -106,6 +109,7 @@ private fun GettingStartedView(notStarted: ParseStatus.NotStarted, changeSource:
                             ?.let { changeSource(Source.Text(it.toString())) }
                         true
                     }
+
                     else -> {
                         false
                     }
@@ -296,16 +300,31 @@ private fun TabView(tabs: Tabs, activate: (Tab) -> Unit, close: (Tab) -> Unit) {
     val scrollState = rememberScrollState()
     Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).horizontalScroll(scrollState)) {
         tabList.forEach { tab ->
-            Row(
-                modifier = Modifier
-                    .background(if (tab === activated) MaterialTheme.colors.secondary else Color.Transparent)
-                    .clickable { activate(tab) }
-                    .padding(8.dp)
-            ) {
-                Text(tab.name, modifier = Modifier.align(Alignment.CenterVertically), style = MaterialTheme.typography.body2)
-                Spacer(Modifier.width(8.dp))
-                IconButton(modifier = Modifier.size(16.dp).align(Alignment.CenterVertically), onClick = { close(tab) }) {
-                    Icon(Icons.Default.Close, "Close tab")
+            Column(modifier = Modifier.width(IntrinsicSize.Max).clickable { activate(tab) }) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 12.dp, end = 12.dp, top = 12.dp)
+                ) {
+                    Text(
+                        tab.name,
+                        modifier = Modifier.align(Alignment.CenterVertically),
+                        style = MaterialTheme.typography.body2,
+                        maxLines = 1
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    IconButton(
+                        modifier = Modifier.size(16.dp).align(Alignment.CenterVertically),
+                        onClick = { close(tab) }
+                    ) {
+                        Icon(Icons.Default.Close, "Close tab")
+                    }
+                }
+                if (tab === activated) {
+                    Box(modifier = Modifier.fillMaxWidth().height(7.dp))
+                    Divider(modifier = Modifier.fillMaxWidth().height(5.dp), color = MaterialTheme.colors.primary)
+                } else {
+                    Box(modifier = Modifier.fillMaxWidth().height(12.dp))
                 }
             }
             Divider(modifier = Modifier.fillMaxHeight().width(1.dp))

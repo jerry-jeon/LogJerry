@@ -3,7 +3,6 @@ package com.jerryjeon.logjerry.logview
 import com.jerryjeon.logjerry.detector.Detection
 import com.jerryjeon.logjerry.detector.DetectionStatus
 import com.jerryjeon.logjerry.detector.DetectorKey
-import com.jerryjeon.logjerry.detector.MarkDetection
 import com.jerryjeon.logjerry.ui.focus.DetectionFocus
 import com.jerryjeon.logjerry.ui.focus.LogFocus
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,8 +12,6 @@ data class RefineResult(
     val refinedLogs: List<RefinedLog>,
     val allDetections: Map<DetectorKey, List<Detection>>
 ) {
-    val markedRows = refinedLogs.filter { it.marked }
-
     val currentFocus = MutableStateFlow<LogFocus?>(null)
 
     val statusByKey = MutableStateFlow(
@@ -27,6 +24,41 @@ data class RefineResult(
                 }
             }
     )
+
+    val markInfos: List<MarkInfo>
+
+    init {
+        val markedLogs = refinedLogs.filter { it.marked }
+        markInfos = if (markedLogs.isEmpty()) {
+            emptyList()
+        } else {
+            val markInfos = mutableListOf<MarkInfo>()
+            markedLogs
+                .scan(refinedLogs.first()) { prevRefinedLog, refinedLog ->
+                    val duration = prevRefinedLog.durationBetween(refinedLog)
+                    markInfos.add(
+                        MarkInfo.StatBetweenMarks(
+                            logCount = refinedLogs.indexOf(refinedLog) - refinedLogs.indexOf(prevRefinedLog),
+                            duration = duration?.toHumanReadable()
+                        )
+                    )
+                    markInfos.add(MarkInfo.Marked(refinedLog))
+                    refinedLog
+                }
+
+            val lastLog = refinedLogs.last()
+            val lastMarkedLogs = markedLogs.last()
+            val duration = lastMarkedLogs.durationBetween(lastLog)
+
+            markInfos.add(
+                MarkInfo.StatBetweenMarks(
+                    logCount = refinedLogs.indexOf(lastLog) - refinedLogs.indexOf(lastMarkedLogs),
+                    duration = duration?.toHumanReadable()
+                )
+            )
+            markInfos
+        }
+    }
 
     fun selectPreviousDetection(status: DetectionStatus) {
         val previousIndex = if (status.currentIndex <= 0) {
@@ -68,7 +100,7 @@ data class RefineResult(
         statusByKey.value[key]?.let { selectNextDetection(it) }
     }
 
-    fun selectDetection(detection: MarkDetection) {
+    fun selectDetection(detection: Detection) {
         statusByKey.update {
             val status = it[detection.key] ?: return@update it
             val index = status.allDetections.indexOf(detection)
