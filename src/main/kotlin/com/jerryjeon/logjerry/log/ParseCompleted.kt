@@ -58,6 +58,7 @@ class ParseCompleted(
         detectionFinishedFlow
     ) { filteredLogs, detectionFinished ->
         val allDetections = mutableMapOf<DetectorKey, List<Detection>>()
+        var lastRefinedLog: RefinedLog? = null
         val refinedLogs = filteredLogs.map { log ->
             val detections = detectionFinished.detectionsByLog[log] ?: emptyMap()
             detections.forEach { (key, newValue) ->
@@ -69,7 +70,10 @@ class ParseCompleted(
             // TODO don't want to repeat all annotate if just one log has changed. How can I achieve it
             val logContents =
                 LogAnnotation.separateAnnotationStrings(log, detections.values.flatten())
-            RefinedLog(log, detections, LogAnnotation.annotate(log, logContents, detectionFinished.detectors))
+            val timeGap = lastRefinedLog?.log?.durationBetween(log)?.takeIf { it.toSeconds() >= 3 }
+            RefinedLog(log, detections, LogAnnotation.annotate(log, logContents, detectionFinished.detectors), timeGap).also {
+                lastRefinedLog = it
+            }
         }
         RefineResult(refinedLogs, allDetections)
     }

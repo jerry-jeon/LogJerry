@@ -1,5 +1,6 @@
 package com.jerryjeon.logjerry.log
 
+import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -33,6 +34,12 @@ data class Log(
             e.printStackTrace()
             null
         }
+
+    fun durationBetween(other: Log): Duration? {
+        val thisLocalDateTime = localDateTime ?: return null
+        val otherLocalDateTime = other.localDateTime ?: return null
+        return Duration.between(thisLocalDateTime, otherLocalDateTime)
+    }
 
     companion object {
         val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")

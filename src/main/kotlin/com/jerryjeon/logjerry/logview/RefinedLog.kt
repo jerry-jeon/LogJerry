@@ -10,15 +10,14 @@ import java.time.Duration
 class RefinedLog(
     val log: Log,
     val detections: Map<DetectorKey, List<Detection>>,
-    val logContentViews: List<LogContentView>
+    val logContentViews: List<LogContentView>,
+    val timeGap: Duration?
 ) {
     val mark = detections[DetectorKey.Mark]?.firstOrNull() as? MarkDetection
     val marked = mark != null
 
     fun durationBetween(other: RefinedLog): Duration? {
-        val thisLocalDateTime = log.localDateTime ?: return null
-        val otherLocalDateTime = other.log.localDateTime ?: return null
-        return Duration.between(thisLocalDateTime, otherLocalDateTime)
+        return this.log.durationBetween(other.log)
     }
 }
 
