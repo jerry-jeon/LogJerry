@@ -17,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -304,7 +306,7 @@ private fun MarkView(
     refinedLogsSize: Int,
     selectDetection: (Detection) -> Unit,
 ) {
-    val minHeight = 60
+    val minHeight = 40
     val minRatio = minHeight.toFloat() / viewportHeight.toFloat()
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -335,9 +337,14 @@ private fun MarkView(
                     Box(
                         modifier = baseModifier.fillMaxWidth()
                     ) {
+                        DashedDivider(
+                            modifier = Modifier.fillMaxHeight().align(Alignment.Center),
+                            thickness = 4.dp,
+                            color = Color(0x44888888)
+                        )
                         Text(
                             text = "${it.logCount} logs, ${it.duration}",
-                            modifier = Modifier.align(Alignment.Center),
+                            modifier = Modifier.padding(vertical = 12.dp).align(Alignment.Center).background(MaterialTheme.colors.background),
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.body2
                         )
@@ -393,4 +400,29 @@ private fun MarkView(
         }
     }
      */
+}
+
+@Composable
+fun DashedDivider(
+    thickness: Dp,
+    color: Color = MaterialTheme.colors.onSurface,
+    phase: Float = 10f,
+    intervals: FloatArray = floatArrayOf(20f, 25f),
+    modifier: Modifier = Modifier
+) {
+    Canvas(
+        modifier = modifier
+    ) {
+        val dividerHeight = thickness.toPx()
+        drawRoundRect(
+            color = color,
+            style = Stroke(
+                width = dividerHeight,
+                pathEffect = PathEffect.dashPathEffect(
+                    intervals = intervals,
+                    phase = phase
+                )
+            )
+        )
+    }
 }
