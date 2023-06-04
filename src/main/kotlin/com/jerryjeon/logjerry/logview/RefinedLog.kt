@@ -5,6 +5,7 @@ import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.detector.MarkDetection
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogContentView
+import java.time.Duration
 
 class RefinedLog(
     val log: Log,
@@ -13,4 +14,28 @@ class RefinedLog(
 ) {
     val mark = detections[DetectorKey.Mark]?.firstOrNull() as? MarkDetection
     val marked = mark != null
+
+    fun durationBetween(other: RefinedLog): Duration? {
+        val thisLocalDateTime = log.localDateTime ?: return null
+        val otherLocalDateTime = other.log.localDateTime ?: return null
+        return Duration.between(thisLocalDateTime, otherLocalDateTime)
+    }
+}
+
+fun Duration.toHumanReadable(): String {
+    val hours: Long = toHours()
+    val minutes: Long = toMinutes() % 60
+    val seconds: Long = seconds % 60
+
+    return when {
+        hours > 0 -> {
+            "${hours}h ${minutes}m ${seconds}s"
+        }
+        minutes > 0 -> {
+            "${minutes}m ${seconds}s"
+        }
+        else -> {
+            "${toMillis()}ms"
+        }
+    }
 }

@@ -1,4 +1,10 @@
 package com.jerryjeon.logjerry.log
+
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+
 data class Log(
     val number: Int,
     val date: String?,
@@ -12,6 +18,26 @@ data class Log(
 ) {
     val index = number - 1
     val priority = Priority.find(priorityText)
+
+    val localDateTime: LocalDateTime?
+        get() = try {
+            if (date != null && time != null) {
+                LocalDateTime.parse("$date $time", formatter)
+            } else if (time != null) {
+                // Assume date is today.
+                LocalTime.parse(time, timeFormatter).atDate(LocalDate.now())
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+
+    companion object {
+        val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
+        val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSS")
+    }
 }
 
 enum class Priority(val text: String, val fullText: String, val level: Int) {

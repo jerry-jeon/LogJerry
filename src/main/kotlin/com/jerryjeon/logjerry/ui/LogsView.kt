@@ -2,18 +2,12 @@
 
 package com.jerryjeon.logjerry.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -27,13 +21,13 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.jerryjeon.logjerry.ColumnDivider
 import com.jerryjeon.logjerry.HeaderDivider
 import com.jerryjeon.logjerry.detector.Detection
 import com.jerryjeon.logjerry.detector.DetectorManager
 import com.jerryjeon.logjerry.log.ParseCompleted
 import com.jerryjeon.logjerry.logview.LogSelection
+import com.jerryjeon.logjerry.logview.MarkInfo
 import com.jerryjeon.logjerry.logview.RefineResult
 import com.jerryjeon.logjerry.logview.RefinedLog
 import com.jerryjeon.logjerry.mark.LogMark
@@ -43,7 +37,6 @@ import com.jerryjeon.logjerry.ui.focus.DetectionFocus
 import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
 import com.jerryjeon.logjerry.ui.focus.LogFocus
 import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -101,7 +94,7 @@ fun LogsView(
             detectorManager = detectorManager,
             header = header,
             listState = listState,
-            markedRows = refineResult.markedRows,
+            markInfos = refineResult.markInfos,
             setMark = detectorManager::setMark,
             deleteMark = detectorManager::deleteMark,
             hide = hide,
@@ -122,7 +115,7 @@ fun LogsView(
     preferences: Preferences,
     header: Header,
     listState: LazyListState,
-    markedRows: List<RefinedLog>,
+    markInfos: List<MarkInfo>,
     setMark: (logMark: LogMark) -> Unit,
     deleteMark: (logIndex: Int) -> Unit,
     hide: (logIndex: Int) -> Unit,
@@ -294,7 +287,7 @@ fun LogsView(
                     .padding(end = LocalScrollbarStyle.current.thickness)
                     .align(Alignment.TopEnd)
             ) {
-                MarkView(markedRows, listState, selectDetection)
+                MarkView(markInfos, listState.layoutInfo.viewportSize.height, refinedLogs.size, selectDetection)
             }
         }
     }
@@ -306,35 +299,60 @@ fun LogsView(
 
 @Composable
 private fun MarkView(
-    markedRows: List<RefinedLog>,
-    listState: LazyListState,
+    markInfos: List<MarkInfo>,
+    viewportHeight: Int,
+    refinedLogsSize: Int,
     selectDetection: (Detection) -> Unit,
 ) {
+    val minHeight = 60
+    val minRatio = minHeight.toFloat() / viewportHeight.toFloat()
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        markInfos.forEach {
+            when (it) {
+                is MarkInfo.Marked -> {
+                    val mark = it.markedLog.mark!!
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(60.dp).background(mark.color)
+                            .clickable { selectDetection(mark) },
+                    ) {
+                        Text(
+                            mark.note,
+                            modifier = Modifier.align(Alignment.Center),
+                            textAlign = TextAlign.Center,
+                            color = Color.Black,
+                        )
+                    }
+                }
+
+                is MarkInfo.StatBetweenMarks -> {
+                    val ratio = it.logCount.toFloat() / refinedLogsSize.toFloat() / markInfos.size
+                    val baseModifier = if (ratio < minRatio) {
+                        Modifier.height(minHeight.dp)
+                    } else {
+                        Modifier.weight(ratio)
+                    }
+                    Box(
+                        modifier = baseModifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "${it.logCount} logs, ${it.duration}",
+                            modifier = Modifier.align(Alignment.Center),
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.body2
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /* TODO it seems not useful..
     var isScrolling by remember { mutableStateOf(false) }
     LaunchedEffect(listState.firstVisibleItemScrollOffset) {
         isScrolling = true
         delay(1000)
         isScrolling = false
-    }
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            items(markedRows) {
-                val mark = it.mark!!
-                Box(
-                    modifier = Modifier.fillMaxWidth().height(60.dp).background(mark.color)
-                        .clickable { selectDetection(mark) },
-                ) {
-                    Text(
-                        mark.note,
-                        modifier = Modifier.align(Alignment.Center),
-                        textAlign = TextAlign.Center,
-                        color = Color.Black,
-                    )
-                }
-                Divider()
-            }
-        }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -374,4 +392,5 @@ private fun MarkView(
             }
         }
     }
+     */
 }
