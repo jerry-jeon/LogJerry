@@ -38,14 +38,22 @@ fun ParseCompletedView(
         modifier = Modifier
     ) {
         Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-            FilterPopup(filterManager)
             val statusByKey by refineResult.statusByKey.collectAsState()
-            statusByKey[DetectorKey.Json]?.let {
-                JsonDetectionView(
-                    detectionStatus = it,
-                    moveToPreviousOccurrence = refineResult::selectPreviousDetection,
-                    moveToNextOccurrence = refineResult::selectNextDetection,
-                )
+            Row(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .height(IntrinsicSize.Min)
+            ) {
+                FilterView(filterManager)
+                Spacer(Modifier.width(8.dp))
+                statusByKey[DetectorKey.Json]?.let {
+                    JsonDetectionView(
+                        modifier = Modifier.fillMaxHeight(),
+                        detectionStatus = it,
+                        moveToPreviousOccurrence = refineResult::selectPreviousDetection,
+                        moveToNextOccurrence = refineResult::selectNextDetection,
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.weight(1f))
@@ -87,7 +95,7 @@ fun ParseCompletedView(
 }
 
 @Composable
-private fun FilterPopup(filterManager: FilterManager) {
+private fun FilterView(filterManager: FilterManager) {
     var showTextFilterPopup by remember { mutableStateOf(false) }
     var textFilterAnchor by remember { mutableStateOf(Offset.Zero) }
     var showLogLevelPopup by remember { mutableStateOf(false) }
@@ -99,6 +107,7 @@ private fun FilterPopup(filterManager: FilterManager) {
             showTextFilterPopup = true
         },
         modifier = Modifier
+            .height(48.dp)
             .onGloballyPositioned { coordinates ->
                 textFilterAnchor = coordinates.positionInRoot()
             },
@@ -106,11 +115,14 @@ private fun FilterPopup(filterManager: FilterManager) {
         Text("Add Filter")
     }
 
+    Spacer(Modifier.width(8.dp))
+
     OutlinedButton(
         onClick = {
             showLogLevelPopup = true
         },
         modifier = Modifier
+            .height(48.dp)
             .onGloballyPositioned { coordinates ->
                 logLevelAnchor = coordinates.positionInRoot()
             },
