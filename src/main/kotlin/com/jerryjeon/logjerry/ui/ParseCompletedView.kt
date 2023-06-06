@@ -141,7 +141,8 @@ private fun FilterView(filterManager: FilterManager) {
                     layoutDirection: LayoutDirection,
                     popupContentSize: IntSize
                 ): IntOffset {
-                    return IntOffset(textFilterAnchor.x.toInt(), (textFilterAnchor.y + anchorBounds.height).toInt())
+                    val additionalMargin = 10
+                    return IntOffset(textFilterAnchor.x.toInt(), (textFilterAnchor.y + anchorBounds.height + additionalMargin).toInt())
                 }
             }
         ) {
