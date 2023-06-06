@@ -11,6 +11,7 @@ sealed class LogContentView {
     class Json(
         val str: AnnotatedString,
         val background: Color?,
-        val jsonDetection: JsonDetection
+        val jsonDetection: JsonDetection,
+        val lineCount: Int
     ) : LogContentView()
 }

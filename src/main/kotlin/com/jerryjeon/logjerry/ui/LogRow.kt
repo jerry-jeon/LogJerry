@@ -266,23 +266,47 @@ private fun RowScope.LogCell(
         }
         is LogContentView.Json -> {
             val modifier = logContentView.background?.let { Modifier.background(color = it) } ?: Modifier
-            Box(modifier = modifier.padding(4.dp)) {
-                Text(
-                    text = logContentView.str,
-                    style = MaterialTheme.typography.body2.copy(
-                        fontSize = preferences.fontSize,
-                        color = preferences.colorByPriority().getValue(refinedLog.log.priority)
-                    ),
-                    modifier = Modifier.padding(end = 32.dp)
-                )
-                Row(modifier = Modifier.align(Alignment.TopEnd)) {
-                    IconButton(
-                        onClick = { copyToClipboard(logContentView.str.toString()) },
-                        modifier = Modifier.size(16.dp),
-                    ) {
-                        Icon(Icons.Default.ContentCopy, "Copy the json")
+            var maxLines by remember { mutableStateOf(preferences.jsonPreviewSize) }
+            Box(modifier = modifier.width(IntrinsicSize.Max)) {
+                Box(modifier = Modifier.padding(4.dp)) {
+                    Column {
+                        Text(
+                            text = logContentView.str,
+                            style = MaterialTheme.typography.body2.copy(
+                                fontSize = preferences.fontSize,
+                                color = preferences.colorByPriority().getValue(refinedLog.log.priority)
+                            ),
+                            modifier = Modifier.padding(end = 32.dp),
+                            maxLines = maxLines
+                        )
+                        when {
+                            logContentView.lineCount > maxLines -> {
+                                OutlinedButton(
+                                    onClick = { maxLines = Int.MAX_VALUE },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Expand")
+                                }
+                            }
+                            maxLines == Int.MAX_VALUE -> {
+                                OutlinedButton(
+                                    onClick = { maxLines = preferences.jsonPreviewSize },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Collapse")
+                                }
+                            }
+                        }
                     }
-                    Spacer(Modifier.width(4.dp))
+                    Row(modifier = Modifier.align(Alignment.TopEnd)) {
+                        IconButton(
+                            onClick = { copyToClipboard(logContentView.str.toString()) },
+                            modifier = Modifier.size(16.dp),
+                        ) {
+                            Icon(Icons.Default.ContentCopy, "Copy the json")
+                        }
+                        Spacer(Modifier.width(4.dp))
+                    }
                 }
             }
         }

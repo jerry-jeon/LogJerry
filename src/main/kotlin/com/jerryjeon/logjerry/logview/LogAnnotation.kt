@@ -63,7 +63,13 @@ object LogAnnotation {
                             )
                         }
                     }
-                    LogContentView.Json(builder.toAnnotatedString(), JsonDetection.detectedStyle.background, logContent.jsonDetection)
+                    val lineCount = logContent.text.lines().size
+                    LogContentView.Json(
+                        builder.toAnnotatedString(),
+                        JsonDetection.detectedStyle.background,
+                        logContent.jsonDetection,
+                        lineCount
+                    )
                 }
                 is LogContent.Text -> {
                     val initial = AnnotatedString.Builder(logContent.text)

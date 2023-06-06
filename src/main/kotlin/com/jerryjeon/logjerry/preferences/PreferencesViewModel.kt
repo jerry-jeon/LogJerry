@@ -107,6 +107,14 @@ class PreferencesViewModel {
         this.showInvalidSentences.value = showInvalidSentences
     }
 
+    val jsonPreviewSizeString = MutableStateFlow(preferencesFlow.value.jsonPreviewSize.toString())
+    val jsonPreviewSize = jsonPreviewSizeString.map { it.toIntOrNull() }
+        .stateIn(preferenceScope, SharingStarted.Lazily, preferencesFlow.value.jsonPreviewSize)
+
+    fun changeJsonPreviewSize(jsonPreviewSize: String) {
+        this.jsonPreviewSizeString.value = jsonPreviewSize
+    }
+
     fun save() {
         val whiteSavingColors = whiteValidColorsByPriority.value
         val whiteSavingBackgroundColor = whiteBackgroundValidColor.value
@@ -119,6 +127,8 @@ class PreferencesViewModel {
         ) {
             return
         }
+        val jsonPreviewSizeValue = jsonPreviewSize.value ?: return
+
         preferencesFlow.value = preferencesFlow.value.copy(
             colorTheme = colorThemeFlow.value,
             lightColorByPriority = whiteSavingColors.mapValues { (_, color) -> color!! },
@@ -127,6 +137,7 @@ class PreferencesViewModel {
             darkBackgroundColor = darkSavingBackgroundColor,
             showExceptionDetection = showExceptionDetection.value,
             showInvalidSentences = showInvalidSentences.value,
+            jsonPreviewSize = jsonPreviewSizeValue
         )
 
         Preferences.file.outputStream().use {
@@ -141,6 +152,7 @@ class PreferencesViewModel {
         darkBackgroundColorString.value = Preferences.default.darkBackgroundColor.toColorString()
         showExceptionDetection.value = Preferences.default.showExceptionDetection
         showInvalidSentences.value = Preferences.default.showInvalidSentences
+        jsonPreviewSizeString.value = Preferences.default.jsonPreviewSize.toString()
     }
 
     private fun Color.toColorString() = String.format("#%x", this.toArgb())
