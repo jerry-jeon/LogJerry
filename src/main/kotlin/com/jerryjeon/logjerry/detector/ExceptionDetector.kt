@@ -1,6 +1,5 @@
 package com.jerryjeon.logjerry.detector
 
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import java.util.UUID
 
@@ -53,7 +52,7 @@ class ExceptionDetection(
     override val id: String = UUID.randomUUID().toString()
 
     companion object {
-        val detectedStyle = SpanStyle(background = Color(0x40EEEEA5))
+        val detectedStyle = SpanStyle()
     }
 
     override val key: DetectorKey
