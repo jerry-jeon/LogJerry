@@ -181,7 +181,7 @@ private fun PriorityFilterPopup(
                     layoutDirection: LayoutDirection,
                     popupContentSize: IntSize
                 ): IntOffset {
-                    return IntOffset(anchor.x.toInt(), (anchor.y + anchorBounds.height).toInt())
+                    return IntOffset(anchor.x.toInt(), (anchor.y + anchorBounds.height + 10).toInt())
                 }
             }
         ) {

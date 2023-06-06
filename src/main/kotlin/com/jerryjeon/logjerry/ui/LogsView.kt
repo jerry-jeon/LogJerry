@@ -38,6 +38,7 @@ import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.ui.focus.DetectionFocus
 import com.jerryjeon.logjerry.ui.focus.KeyboardFocus
 import com.jerryjeon.logjerry.ui.focus.LogFocus
+import com.jerryjeon.logjerry.util.copyToClipboard
 import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -218,6 +219,11 @@ fun LogsView(
 
                     keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.RightBracket && keyEvent.type == KeyEventType.KeyDown -> {
                         moveToNextMark()
+                        true
+                    }
+
+                    keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.C && keyEvent.type == KeyEventType.KeyDown -> {
+                        copyToClipboard(selectedLog?.refinedLog?.log?.log ?: "")
                         true
                     }
 

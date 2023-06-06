@@ -65,6 +65,18 @@ fun LogRow(
         }) {
             Text("Hide")
         }
+        DropdownMenuItem(onClick = {
+            copyToClipboard(refinedLog.log.log)
+            showContextMenu = null
+        }) {
+            Text("Copy the content")
+        }
+        DropdownMenuItem(onClick = {
+            refinedLog.log.time?.let { copyToClipboard(it) }
+            showContextMenu = null
+        }) {
+            Text("Copy the time")
+        }
     }
 
     MarkDialog(showMarkDialog, setMark)
