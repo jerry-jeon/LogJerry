@@ -23,7 +23,8 @@ data class Preferences(
     val darkColorByPriority: Map<Priority, @Serializable(with = ColorAsLongSerializer::class) Color>,
     val darkBackgroundColor: @Serializable(with = ColorAsLongSerializer::class) Color,
     val showExceptionDetection: Boolean,
-    val showInvalidSentences: Boolean
+    val showInvalidSentences: Boolean,
+    val jsonPreviewSize: Int
 ) {
 
     // TODO should be optimized
@@ -64,6 +65,7 @@ data class Preferences(
             Color(0XFF121212),
             showExceptionDetection = false,
             showInvalidSentences = false,
+            jsonPreviewSize = 5
         )
         val file = File(System.getProperty("java.io.tmpdir"), "LogJerryPreferences.json")
     }

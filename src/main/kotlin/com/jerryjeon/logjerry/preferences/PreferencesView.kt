@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -21,6 +22,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
@@ -38,6 +40,8 @@ fun PreferencesView(
     val colorTheme by viewModel.colorThemeFlow.collectAsState()
     val showExceptionDetection by viewModel.showExceptionDetection.collectAsState()
     val showInvalidSentences by viewModel.showInvalidSentences.collectAsState()
+    val jsonPreviewSizeString by viewModel.jsonPreviewSizeString.collectAsState()
+    val jsonPreviewSize by viewModel.jsonPreviewSize.collectAsState()
 
     if (isOpen.value) {
         Window(
@@ -68,6 +72,19 @@ fun PreferencesView(
                             Text("Show invalid sentences")
                             Spacer(Modifier.width(4.dp))
                             Checkbox(showInvalidSentences, onCheckedChange = viewModel::changeShowInvalidSentences)
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Collapse Json if lines are more than: ")
+                            Spacer(Modifier.width(4.dp))
+                            TextField(
+                                value = jsonPreviewSizeString,
+                                onValueChange = viewModel::changeJsonPreviewSize,
+                                modifier = Modifier.width(120.dp),
+                                singleLine = true,
+                                isError = jsonPreviewSize == null,
+                                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Decimal)
+                            )
                         }
 
                         Spacer(Modifier.height(8.dp))
