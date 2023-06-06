@@ -63,7 +63,7 @@ data class Preferences(
                 Priority.Error to Color(0xFFFF6B68),
             ),
             Color(0XFF121212),
-            showExceptionDetection = false,
+            showExceptionDetection = true,
             showInvalidSentences = false,
             jsonPreviewSize = 20
         )
