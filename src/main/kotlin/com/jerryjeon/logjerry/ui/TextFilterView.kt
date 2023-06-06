@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -20,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.jerryjeon.logjerry.filter.TextFilter
+import com.jerryjeon.logjerry.filter.TextFilterType
 import com.jerryjeon.logjerry.table.ColumnType
 
 @Composable
@@ -29,7 +31,7 @@ fun TextFilterView(
 ) {
     Column(
         Modifier.border(1.dp, Color.LightGray, RoundedCornerShape(4.dp)).background(MaterialTheme.colors.background)
-            .padding(8.dp)
+            .padding(16.dp)
     ) {
         CompositionLocalProvider(
             LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp)
@@ -46,34 +48,70 @@ private fun AddTextFilterView(
 ) {
     var text by remember { mutableStateOf("") }
     val columnTypeState = remember { mutableStateOf(ColumnType.Log) }
-    Column(
-        modifier = Modifier.height(IntrinsicSize.Min).onPreviewKeyEvent {
-            when {
-                it.key == Key.Enter && it.type == KeyEventType.KeyDown -> {
-                    if (text.isNotBlank()) {
-                        addFilter(TextFilter(columnTypeState.value, text))
+    val radioOptions = TextFilterType.values().map { it.name }
+    val selectedOption = remember { mutableStateOf(radioOptions[0]) }
+    Column {
+        Row(
+            modifier = Modifier.onPreviewKeyEvent {
+                when {
+                    it.key == Key.Escape && it.type == KeyEventType.KeyDown -> {
                         text = ""
+                        dismiss()
+                        true
                     }
-                    true
+                    it.key == Key.Enter && it.type == KeyEventType.KeyDown -> {
+                        if (text.isNotBlank()) {
+                            addFilter(TextFilter(columnTypeState.value, TextFilterType.valueOf(selectedOption.value), text))
+                            text = ""
+                        }
+                        true
+                    }
+
+                    else -> false
                 }
-                else -> false
+            }
+        ) {
+            Column {
+                radioOptions.forEach { text ->
+                    Row(
+                        Modifier
+                            .padding(all = 8.dp)
+                            .selectable(
+                                selected = (text == selectedOption.value),
+                                onClick = { selectedOption.value = text }
+                            ),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = (text == selectedOption.value),
+                            onClick = null
+                        )
+                        Text(
+                            text = text,
+                            modifier = Modifier.padding(start = 8.dp),
+                            color = if (text == "Include") MaterialTheme.colors.secondary else MaterialTheme.colors.error
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.width(8.dp))
+            Column {
+                TextField(
+                    modifier = Modifier.height(60.dp),
+                    value = text,
+                    onValueChange = {
+                        text = it
+                    },
+                    singleLine = true,
+                    leadingIcon = {
+                        SelectColumnTypeView(columnTypeState)
+                    },
+                    colors = TextFieldDefaults.textFieldColors(
+                        backgroundColor = Color.Transparent
+                    )
+                )
             }
         }
-    ) {
-        TextField(
-            modifier = Modifier.height(60.dp),
-            value = text,
-            onValueChange = {
-                text = it
-            },
-            singleLine = true,
-            leadingIcon = {
-                SelectColumnTypeView(columnTypeState)
-            },
-            colors = TextFieldDefaults.textFieldColors(
-                backgroundColor = Color.Transparent
-            )
-        )
 
         Row(modifier = Modifier.align(Alignment.End)) {
             TextButton(
@@ -86,7 +124,7 @@ private fun AddTextFilterView(
             }
             TextButton(
                 onClick = {
-                    addFilter(TextFilter(columnTypeState.value, text))
+                    addFilter(TextFilter(columnTypeState.value, TextFilterType.valueOf(selectedOption.value), text))
                     dismiss()
                     text = ""
                 }

@@ -27,7 +27,7 @@ fun PriorityFilterView(
         Modifier.width(IntrinsicSize.Min)
             .border(1.dp, Color.LightGray, RoundedCornerShape(4.dp))
             .background(MaterialTheme.colors.background)
-            .padding(8.dp)
+            .padding(16.dp)
     ) {
         Text("Log level")
         Spacer(Modifier.height(8.dp))

@@ -70,7 +70,7 @@ fun ParseCompletedView(
         }
 
         val textFilters by filterManager.textFiltersFlow.collectAsState()
-        Column {
+        Column(modifier = Modifier.padding(horizontal = 12.dp)) {
             textFilters.chunked(2).forEach {
                 Row {
                     it.forEach { filter ->
@@ -80,6 +80,7 @@ fun ParseCompletedView(
                 }
             }
         }
+        Spacer(Modifier.height(8.dp))
 
         LogsView(
             refineResult = refineResult,
@@ -141,7 +142,8 @@ private fun FilterView(filterManager: FilterManager) {
                     layoutDirection: LayoutDirection,
                     popupContentSize: IntSize
                 ): IntOffset {
-                    return IntOffset(textFilterAnchor.x.toInt(), (textFilterAnchor.y + anchorBounds.height).toInt())
+                    val additionalMargin = 10
+                    return IntOffset(textFilterAnchor.x.toInt(), (textFilterAnchor.y + anchorBounds.height + additionalMargin).toInt())
                 }
             }
         ) {

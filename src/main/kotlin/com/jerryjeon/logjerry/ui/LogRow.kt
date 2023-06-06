@@ -285,7 +285,7 @@ private fun RowScope.LogCell(
                                     onClick = { maxLines = Int.MAX_VALUE },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("Expand")
+                                    Text("Expand: ${logContentView.lineCount} lines")
                                 }
                             }
                             maxLines == Int.MAX_VALUE -> {

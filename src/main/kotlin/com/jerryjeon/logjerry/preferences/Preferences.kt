@@ -65,7 +65,7 @@ data class Preferences(
             Color(0XFF121212),
             showExceptionDetection = false,
             showInvalidSentences = false,
-            jsonPreviewSize = 5
+            jsonPreviewSize = 20
         )
         val file = File(System.getProperty("java.io.tmpdir"), "LogJerryPreferences.json")
     }
