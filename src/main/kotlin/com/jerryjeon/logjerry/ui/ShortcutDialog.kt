@@ -2,11 +2,14 @@
 
 package com.jerryjeon.logjerry.ui
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
@@ -16,10 +19,6 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowState
-import com.jerryjeon.logjerry.preferences.DarkThemeView
-import com.jerryjeon.logjerry.preferences.PreferencesViewModel
-import com.jerryjeon.logjerry.preferences.ThemeSelector
-import com.jerryjeon.logjerry.preferences.WhiteThemeView
 import com.jerryjeon.logjerry.util.isCtrlOrMetaPressed
 
 @Composable
@@ -50,6 +49,7 @@ fun ShortcutDialog(
                                ⌘ + [ - Move to previous mark
                                ⌘ + ] - Move to next mark
                                ⌘ + F - Find..
+                               ⌘ + C - Copy the content of the selected log
                                
                                Navigation
                                ↑ - Move to previous log
@@ -58,7 +58,7 @@ fun ShortcutDialog(
                                PgDown - Move to next page
                                Home - Move to the top
                                End - Move to the bottom
-                            """.trimIndent()
+                        """.trimIndent()
                     )
                 }
             }
