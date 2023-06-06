@@ -84,7 +84,7 @@ private fun AddTextFilterView(
                         Text(
                             text = text,
                             modifier = Modifier.padding(start = 8.dp),
-                            color = if (text == "Include") Color.Green else Color.Red
+                            color = if (text == "Include") MaterialTheme.colors.secondary else MaterialTheme.colors.error
                         )
                     }
                 }
