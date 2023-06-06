@@ -54,6 +54,11 @@ private fun AddTextFilterView(
         Row(
             modifier = Modifier.onPreviewKeyEvent {
                 when {
+                    it.key == Key.Escape && it.type == KeyEventType.KeyDown -> {
+                        text = ""
+                        dismiss()
+                        true
+                    }
                     it.key == Key.Enter && it.type == KeyEventType.KeyDown -> {
                         if (text.isNotBlank()) {
                             addFilter(TextFilter(columnTypeState.value, TextFilterType.valueOf(selectedOption.value), text))
