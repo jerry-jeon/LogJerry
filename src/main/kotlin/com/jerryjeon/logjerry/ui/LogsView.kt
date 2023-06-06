@@ -133,14 +133,14 @@ fun LogsView(
     // TODO move to other class
     var selectedLog by remember { mutableStateOf<LogSelection?>(null) }
 
-    fun LogSelection.next(): LogSelection {
-        val nextIndex = (this.index + 1).coerceAtMost(refinedLogs.lastIndex)
+    fun LogSelection.next(amount: Int = 1): LogSelection {
+        val nextIndex = (this.index + amount).coerceAtMost(refinedLogs.lastIndex)
         val nextLog = refinedLogs[nextIndex]
         return LogSelection(nextLog, nextIndex)
     }
 
-    fun LogSelection.prev(): LogSelection {
-        val nextIndex = (this.index - 1).coerceAtLeast(0)
+    fun LogSelection.prev(amount: Int = 1): LogSelection {
+        val nextIndex = (this.index - amount).coerceAtLeast(0)
         val nextLog = refinedLogs[nextIndex]
         return LogSelection(nextLog, nextIndex)
     }
@@ -153,10 +153,52 @@ fun LogsView(
             .fillMaxSize()
             .onPreviewKeyEvent { keyEvent ->
                 when {
+                    (keyEvent.isAltPressed && keyEvent.key == Key.DirectionDown) && keyEvent.type == KeyEventType.KeyDown -> {
+                        if (refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                        // I can't figure out how I can get the last visible item index...
+                        // So I just pass 10 logs to scroll.
+                        val currentLog = selectedLog
+                        val nextLog = currentLog?.next(10) ?: LogSelection(refinedLogs.first(), 0)
+                        selectedLog = nextLog
+                        changeFocus(KeyboardFocus(nextLog.index))
+                        true
+                    }
+
+                    (keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.DirectionDown) && keyEvent.type == KeyEventType.KeyDown -> {
+                        if (refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                        // I can't figure out how I can get the last visible item index...
+                        // So I just pass 10 logs to scroll.
+                        val nextLog = LogSelection(refinedLogs.last(), refinedLogs.size - 1)
+                        selectedLog = nextLog
+                        changeFocus(KeyboardFocus(nextLog.index))
+                        true
+                    }
+
                     keyEvent.key == Key.DirectionDown && keyEvent.type == KeyEventType.KeyDown -> {
                         if (refinedLogs.isEmpty()) return@onPreviewKeyEvent false
                         val currentLog = selectedLog
                         val nextLog = currentLog?.next() ?: LogSelection(refinedLogs.first(), 0)
+                        selectedLog = nextLog
+                        changeFocus(KeyboardFocus(nextLog.index))
+                        true
+                    }
+
+                    (keyEvent.isAltPressed && keyEvent.key == Key.DirectionUp) && keyEvent.type == KeyEventType.KeyDown -> {
+                        if (refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                        // I can't figure out how I can get the last visible item index...
+                        // So I just pass 10 logs to scroll.
+                        val currentLog = selectedLog
+                        val nextLog = currentLog?.prev(10) ?: LogSelection(refinedLogs.first(), 0)
+                        selectedLog = nextLog
+                        changeFocus(KeyboardFocus(nextLog.index))
+                        true
+                    }
+
+                    (keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.DirectionUp) && keyEvent.type == KeyEventType.KeyDown -> {
+                        if (refinedLogs.isEmpty()) return@onPreviewKeyEvent false
+                        // I can't figure out how I can get the last visible item index...
+                        // So I just pass 10 logs to scroll.
+                        val nextLog = LogSelection(refinedLogs.first(), 0)
                         selectedLog = nextLog
                         changeFocus(KeyboardFocus(nextLog.index))
                         true
