@@ -51,7 +51,8 @@ class SourceManager(
 
     private fun chooseParser(lines: List<String>): LogParser {
         return lines.firstNotNullOfOrNull {
-            StudioLogcatBelowChipmunkParser.create(it)
+            CustomParser.create(it)
+                ?: StudioLogcatBelowChipmunkParser.create(it)
                 ?: StudioLogcatAboveDolphinParser.create(it)
         } ?: studioLogcatBelowChipmunkParser // TODO would be better if show failure message that the parser doesn't exist that can parse the content
     }
