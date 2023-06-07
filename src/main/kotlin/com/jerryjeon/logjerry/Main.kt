@@ -223,7 +223,7 @@ fun main() = application {
     Window(
         title = "LogJerry",
         icon = painterResource("LogJerry.png"),
-        state = WindowState(width = Dp.Unspecified, height = Dp.Unspecified),
+        state = WindowState(width = 900.dp, height = 900.dp),
         onCloseRequest = ::exitApplication,
         onPreviewKeyEvent = { keyEvent ->
             if (keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.F && keyEvent.type == KeyEventType.KeyDown) {
