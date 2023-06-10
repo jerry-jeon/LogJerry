@@ -13,13 +13,18 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 
+@OptIn(ExperimentalSerializationApi::class)
 class PreferencesViewModel {
     private val preferenceScope = CoroutineScope(Dispatchers.Default)
+
+    private val json = Json {
+        ignoreUnknownKeys = true
+    }
 
     // TODO not to read on the main thread
     val preferencesFlow = MutableStateFlow(
         try {
-            Preferences.file.inputStream().use { Json.decodeFromStream(it) }
+            Preferences.file.inputStream().use { json.decodeFromStream(it) }
         } catch (e: Exception) {
             Preferences.default
         }
@@ -141,7 +146,7 @@ class PreferencesViewModel {
         )
 
         Preferences.file.outputStream().use {
-            Json.encodeToStream(preferencesFlow.value, it)
+            json.encodeToStream(preferencesFlow.value, it)
         }
     }
 

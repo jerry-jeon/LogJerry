@@ -6,7 +6,7 @@ kotlinx-serialization-json = "1.4.0"
 compose = "1.4.0"
 ktlint = "10.2.0"
 compose-material-icons = "1.2.0-beta01"
-jupiter = "5.9.0"
+jupiter = "5.9.3"
 kotest = "5.4.1"
 
 [libraries]
