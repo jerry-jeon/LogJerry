@@ -19,6 +19,7 @@ import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.ParseCompleted
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header
+import com.jerryjeon.logjerry.ui.popup.PackageFilterPopup
 import com.jerryjeon.logjerry.ui.popup.PriorityFilterPopup
 import com.jerryjeon.logjerry.ui.popup.TextFilterPopup
 import kotlinx.coroutines.flow.StateFlow
@@ -106,9 +107,14 @@ fun ParseCompletedView(
 private fun FilterView(filterManager: FilterManager) {
     var showTextFilterPopup by remember { mutableStateOf(false) }
     var textFilterAnchor by remember { mutableStateOf(Offset.Zero) }
+
     var showLogLevelPopup by remember { mutableStateOf(false) }
     var logLevelAnchor by remember { mutableStateOf(Offset.Zero) }
     val priorityFilter by filterManager.priorityFilterFlow.collectAsState()
+
+    var showPackageFilterPopup by remember { mutableStateOf(false) }
+    var packageFilterAnchor by remember { mutableStateOf(Offset.Zero) }
+    val packageFilters by filterManager.packageFiltersFlow.collectAsState()
 
     OutlinedButton(
         onClick = {
@@ -122,9 +128,7 @@ private fun FilterView(filterManager: FilterManager) {
     ) {
         Text("Add Filter")
     }
-
     Spacer(Modifier.width(8.dp))
-
     OutlinedButton(
         onClick = {
             showLogLevelPopup = true
@@ -137,19 +141,44 @@ private fun FilterView(filterManager: FilterManager) {
     ) {
         Text("Log Level | ${priorityFilter.priority.name}")
     }
+    Spacer(Modifier.width(8.dp))
+    OutlinedButton(
+        onClick = {
+            showPackageFilterPopup = true
+        },
+        modifier = Modifier
+            .height(48.dp)
+            .onGloballyPositioned { coordinates ->
+                packageFilterAnchor = coordinates.positionInRoot()
+            },
+    ) {
+        Row {
+            Text("Packages")
+            Spacer(Modifier.width(4.dp))
+            Text(
+                text = "(${packageFilters.filters.count { it.include }}/${packageFilters.filters.size})",
+            )
+        }
+    }
 
     TextFilterPopup(
-        showTextFilterPopup,
-        textFilterAnchor,
-        dismissPopup = { showTextFilterPopup = false },
+        showTextFilterPopup = showTextFilterPopup,
+        textFilterAnchor = textFilterAnchor,
+        dismiss = { showTextFilterPopup = false },
         addTextFilter = filterManager::addTextFilter
     )
-
     PriorityFilterPopup(
-        priorityFilter,
-        logLevelAnchor,
-        showLogLevelPopup,
-        dismissPopup = { showLogLevelPopup = false },
+        showPopup = showLogLevelPopup,
+        anchor = logLevelAnchor,
+        priorityFilter = priorityFilter,
+        dismiss = { showLogLevelPopup = false },
         setPriorityFilter = filterManager::setPriorityFilter
+    )
+    PackageFilterPopup(
+        showPackageFilterPopup = showPackageFilterPopup,
+        packageFilterAnchor = packageFilterAnchor,
+        dismiss = { showPackageFilterPopup = false },
+        packageFilters = packageFilters,
+        togglePackageFilter = filterManager::togglePackageFilter
     )
 }

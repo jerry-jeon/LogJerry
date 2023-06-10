@@ -2,12 +2,9 @@
 
 package com.jerryjeon.logjerry.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -29,10 +26,7 @@ fun TextFilterView(
     addFilter: (TextFilter) -> Unit,
     dismiss: () -> Unit
 ) {
-    Column(
-        Modifier.border(1.dp, Color.LightGray, RoundedCornerShape(4.dp)).background(MaterialTheme.colors.background)
-            .padding(16.dp)
-    ) {
+    Column {
         CompositionLocalProvider(
             LocalTextStyle provides LocalTextStyle.current.copy(fontSize = 12.sp)
         ) {

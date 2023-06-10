@@ -24,7 +24,7 @@ class ParseCompleted(
     preferences: Preferences
 ) {
     private val refineScope = CoroutineScope(Dispatchers.Default)
-    val filterManager = FilterManager()
+    val filterManager = FilterManager(originalLogsFlow)
     val detectorManager = DetectorManager(preferences)
 
     private val filteredLogsFlow = combine(originalLogsFlow, filterManager.filtersFlow) { originalLogs, filters ->
