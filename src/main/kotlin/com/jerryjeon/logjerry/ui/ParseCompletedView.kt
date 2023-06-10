@@ -21,6 +21,7 @@ import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header
 import com.jerryjeon.logjerry.ui.popup.PackageFilterPopup
 import com.jerryjeon.logjerry.ui.popup.PriorityFilterPopup
+import com.jerryjeon.logjerry.ui.popup.TagFilterPopup
 import com.jerryjeon.logjerry.ui.popup.TextFilterPopup
 import kotlinx.coroutines.flow.StateFlow
 
@@ -116,6 +117,10 @@ private fun FilterView(filterManager: FilterManager) {
     var packageFilterAnchor by remember { mutableStateOf(Offset.Zero) }
     val packageFilters by filterManager.packageFiltersFlow.collectAsState()
 
+    var showTagFilterPopup by remember { mutableStateOf(false) }
+    var tagFilterAnchor by remember { mutableStateOf(Offset.Zero) }
+    val tagFilters by filterManager.tagFiltersFlow.collectAsState()
+
     OutlinedButton(
         onClick = {
             showTextFilterPopup = true
@@ -160,6 +165,25 @@ private fun FilterView(filterManager: FilterManager) {
             )
         }
     }
+    Spacer(Modifier.width(8.dp))
+    OutlinedButton(
+        onClick = {
+            showTagFilterPopup = true
+        },
+        modifier = Modifier
+            .height(48.dp)
+            .onGloballyPositioned { coordinates ->
+                tagFilterAnchor = coordinates.positionInRoot()
+            },
+    ) {
+        Row {
+            Text("Tags")
+            Spacer(Modifier.width(4.dp))
+            Text(
+                text = "(${tagFilters.filters.count { it.include }}/${tagFilters.filters.size})",
+            )
+        }
+    }
 
     TextFilterPopup(
         showTextFilterPopup = showTextFilterPopup,
@@ -180,5 +204,12 @@ private fun FilterView(filterManager: FilterManager) {
         dismiss = { showPackageFilterPopup = false },
         packageFilters = packageFilters,
         togglePackageFilter = filterManager::togglePackageFilter
+    )
+    TagFilterPopup(
+        showTagFilterPopup = showTagFilterPopup,
+        tagFilterAnchor = tagFilterAnchor,
+        dismiss = { showTagFilterPopup = false },
+        tagFilters = tagFilters,
+        toggleTagFilter = filterManager::toggleTagFilter
     )
 }

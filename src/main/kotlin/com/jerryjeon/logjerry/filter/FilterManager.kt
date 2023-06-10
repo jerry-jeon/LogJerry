@@ -14,15 +14,17 @@ class FilterManager(
     val textFiltersFlow: MutableStateFlow<List<TextFilter>> = MutableStateFlow(emptyList())
     val priorityFilterFlow: MutableStateFlow<PriorityFilter> = MutableStateFlow(PriorityFilter(Priority.Verbose))
     val hiddenLogIndicesFlow: MutableStateFlow<HiddenFilter> = MutableStateFlow(HiddenFilter(emptySet()))
-    val packageFiltersFlow = MutableStateFlow<PackageFilters>(PackageFilters(emptyList()))
+    val packageFiltersFlow = MutableStateFlow(PackageFilters(emptyList()))
+    val tagFiltersFlow = MutableStateFlow(TagFilters(emptyList()))
 
     val filtersFlow = combine(
         textFiltersFlow,
         priorityFilterFlow,
         hiddenLogIndicesFlow,
-        packageFiltersFlow
-    ) { textFilters, priorityFilter, hiddenLogIndices, packageFilters ->
-        textFilters + listOf(priorityFilter, hiddenLogIndices) + packageFilters
+        packageFiltersFlow,
+        tagFiltersFlow,
+    ) { textFilters, priorityFilter, hiddenLogIndices, packageFilters, tagFilters ->
+        textFilters + listOf(priorityFilter, hiddenLogIndices) + packageFilters + tagFilters
     }
 
     init {
@@ -34,6 +36,17 @@ class FilterManager(
                 .sortedByDescending { it.frequency }
                 .let { PackageFilters(it) }
             packageFiltersFlow.value = packageFilters
+        }
+            .launchIn(filterScope)
+
+        originalLogsFlow.onEach { originalLogs ->
+            val tagFilters = originalLogs.groupingBy { it.tag }.eachCount()
+                .map { (tag, frequency) ->
+                    TagFilter(tag, frequency, true)
+                }
+                .sortedByDescending { it.frequency }
+                .let { TagFilters(it) }
+            tagFiltersFlow.value = tagFilters
         }
             .launchIn(filterScope)
     }
@@ -63,6 +76,20 @@ class FilterManager(
             packageFilters.copy(
                 filters = packageFilters.filters.map {
                     if (it.packageName == packageFilter.packageName) {
+                        it.copy(include = !it.include)
+                    } else {
+                        it
+                    }
+                }
+            )
+        }
+    }
+
+    fun toggleTagFilter(tagFilter: TagFilter) {
+        tagFiltersFlow.update { tagFilters ->
+            tagFilters.copy(
+                filters = tagFilters.filters.map {
+                    if (it.tag == tagFilter.tag) {
                         it.copy(include = !it.include)
                     } else {
                         it

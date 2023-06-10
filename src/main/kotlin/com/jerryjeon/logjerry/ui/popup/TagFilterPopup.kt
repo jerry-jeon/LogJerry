@@ -10,30 +10,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
-import com.jerryjeon.logjerry.filter.PackageFilter
-import com.jerryjeon.logjerry.filter.PackageFilters
+import com.jerryjeon.logjerry.filter.TagFilter
+import com.jerryjeon.logjerry.filter.TagFilters
 
 @Composable
-fun PackageFilterPopup(
-    showPackageFilterPopup: Boolean,
-    packageFilterAnchor: Offset,
-    packageFilters: PackageFilters,
+fun TagFilterPopup(
+    showTagFilterPopup: Boolean,
+    tagFilterAnchor: Offset,
+    tagFilters: TagFilters,
     dismiss: () -> Unit,
-    togglePackageFilter: (PackageFilter) -> Unit
+    toggleTagFilter: (TagFilter) -> Unit
 ) {
-    BasePopup(showPackageFilterPopup, packageFilterAnchor, dismiss) {
-        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            packageFilters.filters.forEachIndexed { index, packageFilter ->
+    val scrollState = rememberScrollState()
+    BasePopup(showTagFilterPopup, tagFilterAnchor, dismiss) {
+        Column(modifier = Modifier.verticalScroll(scrollState)) {
+            tagFilters.filters.forEachIndexed { index, tagFilter ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(
-                        checked = packageFilter.include,
+                        checked = tagFilter.include,
                         onCheckedChange = {
-                            togglePackageFilter(packageFilter)
+                            toggleTagFilter(tagFilter)
                         },
                         modifier = Modifier.padding(8.dp)
                     )
                     Text(
-                        text = "${packageFilter.packageName ?: "?"} (${packageFilter.frequency})",
+                        text = "${tagFilter.tag ?: "?"} (${tagFilter.frequency})",
                         modifier = Modifier
                             .padding(8.dp)
                     )
