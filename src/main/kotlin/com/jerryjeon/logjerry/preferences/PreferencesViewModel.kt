@@ -5,21 +5,25 @@ package com.jerryjeon.logjerry.preferences
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.jerryjeon.logjerry.log.Priority
+import com.jerryjeon.logjerry.table.ColumnInfo
+import com.jerryjeon.logjerry.table.Header
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 
+@OptIn(ExperimentalSerializationApi::class)
 class PreferencesViewModel {
     private val preferenceScope = CoroutineScope(Dispatchers.Default)
 
     // TODO not to read on the main thread
     val preferencesFlow = MutableStateFlow(
         try {
-            Preferences.file.inputStream().use { Json.decodeFromStream(it) }
+            Preferences.file.inputStream().use { json.decodeFromStream(it) }
         } catch (e: Exception) {
             Preferences.default
         }
@@ -137,11 +141,11 @@ class PreferencesViewModel {
             darkBackgroundColor = darkSavingBackgroundColor,
             showExceptionDetection = showExceptionDetection.value,
             showInvalidSentences = showInvalidSentences.value,
-            jsonPreviewSize = jsonPreviewSizeValue
+            jsonPreviewSize = jsonPreviewSizeValue,
         )
 
         Preferences.file.outputStream().use {
-            Json.encodeToStream(preferencesFlow.value, it)
+            json.encodeToStream(preferencesFlow.value, it)
         }
     }
 
@@ -167,5 +171,20 @@ class PreferencesViewModel {
             return color.toInt()
         }
         throw IllegalArgumentException("Unknown color")
+    }
+
+    fun setColumnInfoVisibility(columnInfo: ColumnInfo, visible: Boolean) {
+        preferencesFlow.value.headerFlow.update { it.copyOf(columnInfo.columnType, columnInfo.copy(visible = visible)) }
+        preferenceScope.launch {
+            Header.file.outputStream().use {
+                json.encodeToStream(preferencesFlow.value.headerFlow.value, it)
+            }
+        }
+    }
+
+    companion object {
+        val json = Json {
+            ignoreUnknownKeys = true
+        }
     }
 }

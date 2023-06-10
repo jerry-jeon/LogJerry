@@ -7,7 +7,9 @@ import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -82,11 +84,20 @@ fun LogsView(
         }
     }
 
+    val statsBuilder = StringBuilder()
+    parseCompleted.singleDate.value?.let {
+        statsBuilder.append("Date : $it, ")
+    }
     val filteredSize = refineResult.refinedLogs.size
     val totalSize = parseCompleted.originalLogsFlow.value.size
-    val filteredSizeText =
-        (if (filteredSize != totalSize) "Filtered size : $filteredSize, " else "")
-    Text("${filteredSizeText}Total : $totalSize", modifier = Modifier.padding(8.dp))
+    if (filteredSize != totalSize) {
+        statsBuilder.append("Filtered size : $filteredSize, ")
+    }
+    statsBuilder.append("Total size : $totalSize")
+
+
+    Text(statsBuilder.toString(), modifier = Modifier.padding(start = 12.dp, bottom = 8.dp))
+    Divider()
 
     Box {
         LogsView(
@@ -281,44 +292,42 @@ fun LogsView(
             LazyColumn(modifier = Modifier.fillMaxSize().padding(end = endPadding), state = listState) {
                 item { HeaderRow(header, divider) }
                 item { HeaderDivider() }
-                refinedLogs.forEach { refinedLog ->
-                    item {
-                        Column {
-                            val logRow: @Composable () -> Unit = {
-                                LogRow(
-                                    refinedLog = refinedLog,
-                                    preferences = preferences,
-                                    header = header,
-                                    selected = refinedLog == selectedLog?.refinedLog,
-                                    divider = divider,
-                                    setMark = setMark,
-                                    deleteMark = deleteMark,
-                                    hide = hide,
-                                    selectLog = {
-                                        selectedLog = LogSelection(it, refinedLogs.indexOf(it))
-                                    }
-                                )
-                            }
-                            if (refinedLog.mark != null) {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth().wrapContentHeight()
-                                        .background(refinedLog.mark.color)
-                                        .padding(start = 6.dp, top = 0.dp, end = 6.dp, bottom = 6.dp)
-                                ) {
-                                    Text(
-                                        text = refinedLog.mark.note,
-                                        modifier = Modifier.wrapContentHeight().align(Alignment.CenterHorizontally)
-                                            .padding(8.dp),
-                                        color = Color.Black,
-                                        style = MaterialTheme.typography.h5,
-                                    )
-                                    Box(modifier = Modifier.background(MaterialTheme.colors.background)) {
-                                        logRow()
-                                    }
+                items(refinedLogs, key = { it.log.index }) { refinedLog ->
+                    Column {
+                        val logRow: @Composable () -> Unit = {
+                            LogRow(
+                                refinedLog = refinedLog,
+                                preferences = preferences,
+                                header = header,
+                                selected = refinedLog == selectedLog?.refinedLog,
+                                divider = divider,
+                                setMark = setMark,
+                                deleteMark = deleteMark,
+                                hide = hide,
+                                selectLog = {
+                                    selectedLog = LogSelection(it, refinedLogs.indexOf(it))
                                 }
-                            } else {
-                                logRow()
+                            )
+                        }
+                        if (refinedLog.mark != null) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth().wrapContentHeight()
+                                    .background(refinedLog.mark.color)
+                                    .padding(start = 6.dp, top = 0.dp, end = 6.dp, bottom = 6.dp)
+                            ) {
+                                Text(
+                                    text = refinedLog.mark.note,
+                                    modifier = Modifier.wrapContentHeight().align(Alignment.CenterHorizontally)
+                                        .padding(8.dp),
+                                    color = Color.Black,
+                                    style = MaterialTheme.typography.h5,
+                                )
+                                Box(modifier = Modifier.background(MaterialTheme.colors.background)) {
+                                    logRow()
+                                }
                             }
+                        } else {
+                            logRow()
                         }
                     }
                 }

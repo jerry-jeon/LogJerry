@@ -46,13 +46,12 @@ private fun ColumnCheckBox(columnInfo: ColumnInfo, headerState: MutableState<Hea
 }
 
 @Composable
-fun MenuScope.columnCheckboxItem(columnInfo: ColumnInfo, headerState: MutableState<Header>) {
-    var header by headerState
+fun MenuScope.columnCheckboxItem(columnInfo: ColumnInfo, setColumnInfoVisibility: (ColumnInfo, Boolean) -> Unit) {
     CheckboxItem(
         text = columnInfo.columnType.name,
         checked = columnInfo.visible,
         shortcut = columnInfo.columnType.shortcut
     ) {
-        header = header.copyOf(columnInfo.columnType, columnInfo.copy(visible = it))
+        setColumnInfoVisibility(columnInfo, it)
     }
 }

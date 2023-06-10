@@ -215,7 +215,7 @@ fun LightTheme(preferences: Preferences, content: @Composable () -> Unit) {
 fun main() = application {
     val preferencesViewModel = PreferencesViewModel()
     val preferences by preferencesViewModel.preferencesFlow.collectAsState()
-    val headerState = remember { mutableStateOf(Header.default) }
+    val header by preferences.headerFlow.collectAsState()
     val preferenceOpen = remember { mutableStateOf(false) }
     val shortcutDialogOpened = remember { mutableStateOf(false) }
     val tabManager = TabManager(preferences)
@@ -256,8 +256,8 @@ fun main() = application {
                     }
                 }
                 Menu("Columns") {
-                    headerState.value.asColumnList.forEach { columnInfo ->
-                        columnCheckboxItem(columnInfo, headerState)
+                    header.asColumnList.forEach { columnInfo ->
+                        columnCheckboxItem(columnInfo, preferencesViewModel::setColumnInfoVisibility)
                     }
                 }
                 Menu("Preferences") {
@@ -280,7 +280,7 @@ fun main() = application {
                     Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
                     ActiveTabView(
                         preferences,
-                        headerState.value,
+                        header,
                         tabsState.value.active,
                         openNewTab = { logsFlow: StateFlow<List<Log>> ->
                             tabManager.newTab("Marked rows", Source.LogsFlow(logsFlow))

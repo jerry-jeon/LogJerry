@@ -10,6 +10,10 @@ plugins {
 group = "com.jerryjeon"
 version = "1.4.0"
 
+tasks.test {
+    useJUnitPlatform()
+}
+
 repositories {
     google()
     mavenCentral()
@@ -36,11 +40,6 @@ tasks {
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "18"
     }
-}
-
-
-tasks.test {
-    useJUnitPlatform()
 }
 
 compose.desktop {
