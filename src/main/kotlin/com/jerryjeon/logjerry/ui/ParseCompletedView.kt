@@ -3,6 +3,7 @@
 package com.jerryjeon.logjerry.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -158,12 +159,17 @@ private fun FilterView(filterManager: FilterManager) {
                 packageFilterAnchor = coordinates.positionInRoot()
             },
     ) {
-        Row {
-            Text("Packages")
-            Spacer(Modifier.width(4.dp))
-            Text(
-                text = "(${packageFilters.filters.count { it.include }}/${packageFilters.filters.size})",
-            )
+        Column {
+            Row {
+                Text("Packages")
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = "(${packageFilters.filters.count { it.include }}/${packageFilters.filters.size})",
+                )
+            }
+            packageFilters.filters.singleOrNull { it.include }?.let {
+                Text(it.packageName ?: "?", style = MaterialTheme.typography.caption)
+            }
         }
     }
     Spacer(Modifier.width(8.dp))
@@ -177,12 +183,17 @@ private fun FilterView(filterManager: FilterManager) {
                 tagFilterAnchor = coordinates.positionInRoot()
             },
     ) {
-        Row {
-            Text("Tags")
-            Spacer(Modifier.width(4.dp))
-            Text(
-                text = "(${tagFilters.filters.count { it.include }}/${tagFilters.filters.size})",
-            )
+        Column {
+            Row {
+                Text("Tags")
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = "(${tagFilters.filters.count { it.include }}/${tagFilters.filters.size})",
+                )
+            }
+            tagFilters.filters.singleOrNull { it.include }?.let {
+                Text(it.tag ?: "?", style = MaterialTheme.typography.caption)
+            }
         }
     }
 
