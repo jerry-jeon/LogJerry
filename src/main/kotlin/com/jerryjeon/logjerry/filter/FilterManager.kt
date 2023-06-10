@@ -85,6 +85,16 @@ class FilterManager(
         }
     }
 
+    fun setAllPackageFilter(include: Boolean) {
+        packageFiltersFlow.update { packageFilters ->
+            packageFilters.copy(
+                filters = packageFilters.filters.map {
+                    it.copy(include = include)
+                }
+            )
+        }
+    }
+
     fun toggleTagFilter(tagFilter: TagFilter) {
         tagFiltersFlow.update { tagFilters ->
             tagFilters.copy(
@@ -94,6 +104,16 @@ class FilterManager(
                     } else {
                         it
                     }
+                }
+            )
+        }
+    }
+
+    fun setAllTagFilter(include: Boolean) {
+        tagFiltersFlow.update { tagFilters ->
+            tagFilters.copy(
+                filters = tagFilters.filters.map {
+                    it.copy(include = include)
                 }
             )
         }

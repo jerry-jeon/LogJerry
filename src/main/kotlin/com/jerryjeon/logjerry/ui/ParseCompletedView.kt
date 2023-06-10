@@ -204,13 +204,17 @@ private fun FilterView(filterManager: FilterManager) {
         packageFilterAnchor = packageFilterAnchor,
         dismiss = { showPackageFilterPopup = false },
         packageFilters = packageFilters,
-        togglePackageFilter = filterManager::togglePackageFilter
+        togglePackageFilter = filterManager::togglePackageFilter,
+        includeAll = { filterManager.setAllPackageFilter(true) },
+        excludeAll = { filterManager.setAllPackageFilter(false) },
     )
     TagFilterPopup(
         showTagFilterPopup = showTagFilterPopup,
         tagFilterAnchor = tagFilterAnchor,
         dismiss = { showTagFilterPopup = false },
         tagFilters = tagFilters,
-        toggleTagFilter = filterManager::toggleTagFilter
+        toggleTagFilter = filterManager::toggleTagFilter,
+        includeAll = { filterManager.setAllTagFilter(true) },
+        excludeAll = { filterManager.setAllTagFilter(false) },
     )
 }
