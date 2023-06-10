@@ -5,9 +5,12 @@ package com.jerryjeon.logjerry.preferences
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.jerryjeon.logjerry.log.Priority
+import com.jerryjeon.logjerry.table.ColumnInfo
+import com.jerryjeon.logjerry.table.Header
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -142,7 +145,7 @@ class PreferencesViewModel {
             darkBackgroundColor = darkSavingBackgroundColor,
             showExceptionDetection = showExceptionDetection.value,
             showInvalidSentences = showInvalidSentences.value,
-            jsonPreviewSize = jsonPreviewSizeValue
+            jsonPreviewSize = jsonPreviewSizeValue,
         )
 
         Preferences.file.outputStream().use {
@@ -172,5 +175,23 @@ class PreferencesViewModel {
             return color.toInt()
         }
         throw IllegalArgumentException("Unknown color")
+    }
+
+    // These are not need to be here, but I don't want to create another class for this
+    val headerFlow = MutableStateFlow(
+        try {
+            Header.file.inputStream().use { json.decodeFromStream(it) }
+        } catch (e: Exception) {
+            Header()
+        }
+    )
+
+    fun setColumnInfoVisibility(columnInfo: ColumnInfo, visible: Boolean) {
+        headerFlow.update { it.copyOf(columnInfo.columnType, columnInfo.copy(visible = visible)) }
+        preferenceScope.launch {
+            Header.file.outputStream().use {
+                json.encodeToStream(headerFlow.value, it)
+            }
+        }
     }
 }

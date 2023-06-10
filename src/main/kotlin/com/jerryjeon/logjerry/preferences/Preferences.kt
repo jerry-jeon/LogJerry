@@ -36,7 +36,7 @@ data class Preferences(
     val darkBackgroundColor: @Serializable(with = ColorAsLongSerializer::class) Color = Color(0XFF121212),
     val showExceptionDetection: Boolean = true,
     val showInvalidSentences: Boolean = true,
-    val jsonPreviewSize: Int = 20
+    val jsonPreviewSize: Int = 20,
 ) {
 
     // TODO should be optimized
