@@ -11,17 +11,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.unit.*
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.unit.dp
 import com.jerryjeon.logjerry.detector.DetectorKey
 import com.jerryjeon.logjerry.detector.KeywordDetectionView
 import com.jerryjeon.logjerry.filter.FilterManager
-import com.jerryjeon.logjerry.filter.PriorityFilter
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.ParseCompleted
 import com.jerryjeon.logjerry.preferences.Preferences
 import com.jerryjeon.logjerry.table.Header
+import com.jerryjeon.logjerry.ui.popup.PackageFilterPopup
+import com.jerryjeon.logjerry.ui.popup.PriorityFilterPopup
+import com.jerryjeon.logjerry.ui.popup.TagFilterPopup
+import com.jerryjeon.logjerry.ui.popup.TextFilterPopup
 import kotlinx.coroutines.flow.StateFlow
 
 @Composable
@@ -107,9 +108,18 @@ fun ParseCompletedView(
 private fun FilterView(filterManager: FilterManager) {
     var showTextFilterPopup by remember { mutableStateOf(false) }
     var textFilterAnchor by remember { mutableStateOf(Offset.Zero) }
+
     var showLogLevelPopup by remember { mutableStateOf(false) }
     var logLevelAnchor by remember { mutableStateOf(Offset.Zero) }
     val priorityFilter by filterManager.priorityFilterFlow.collectAsState()
+
+    var showPackageFilterPopup by remember { mutableStateOf(false) }
+    var packageFilterAnchor by remember { mutableStateOf(Offset.Zero) }
+    val packageFilters by filterManager.packageFiltersFlow.collectAsState()
+
+    var showTagFilterPopup by remember { mutableStateOf(false) }
+    var tagFilterAnchor by remember { mutableStateOf(Offset.Zero) }
+    val tagFilters by filterManager.tagFiltersFlow.collectAsState()
 
     OutlinedButton(
         onClick = {
@@ -123,9 +133,7 @@ private fun FilterView(filterManager: FilterManager) {
     ) {
         Text("Add Filter")
     }
-
     Spacer(Modifier.width(8.dp))
-
     OutlinedButton(
         onClick = {
             showLogLevelPopup = true
@@ -138,62 +146,70 @@ private fun FilterView(filterManager: FilterManager) {
     ) {
         Text("Log Level | ${priorityFilter.priority.name}")
     }
-
-    if (showTextFilterPopup) {
-        Popup(
-            onDismissRequest = { showTextFilterPopup = false },
-            focusable = true,
-            popupPositionProvider = object : PopupPositionProvider {
-                override fun calculatePosition(
-                    anchorBounds: IntRect,
-                    windowSize: IntSize,
-                    layoutDirection: LayoutDirection,
-                    popupContentSize: IntSize
-                ): IntOffset {
-                    val additionalMargin = 10
-                    return IntOffset(textFilterAnchor.x.toInt(), (textFilterAnchor.y + anchorBounds.height + additionalMargin).toInt())
-                }
-            }
-        ) {
-            TextFilterView(
-                filterManager::addTextFilter
-            ) { showTextFilterPopup = false }
+    Spacer(Modifier.width(8.dp))
+    OutlinedButton(
+        onClick = {
+            showPackageFilterPopup = true
+        },
+        modifier = Modifier
+            .height(48.dp)
+            .onGloballyPositioned { coordinates ->
+                packageFilterAnchor = coordinates.positionInRoot()
+            },
+    ) {
+        Row {
+            Text("Packages")
+            Spacer(Modifier.width(4.dp))
+            Text(
+                text = "(${packageFilters.filters.count { it.include }}/${packageFilters.filters.size})",
+            )
+        }
+    }
+    Spacer(Modifier.width(8.dp))
+    OutlinedButton(
+        onClick = {
+            showTagFilterPopup = true
+        },
+        modifier = Modifier
+            .height(48.dp)
+            .onGloballyPositioned { coordinates ->
+                tagFilterAnchor = coordinates.positionInRoot()
+            },
+    ) {
+        Row {
+            Text("Tags")
+            Spacer(Modifier.width(4.dp))
+            Text(
+                text = "(${tagFilters.filters.count { it.include }}/${tagFilters.filters.size})",
+            )
         }
     }
 
+    TextFilterPopup(
+        showTextFilterPopup = showTextFilterPopup,
+        textFilterAnchor = textFilterAnchor,
+        dismiss = { showTextFilterPopup = false },
+        addTextFilter = filterManager::addTextFilter
+    )
     PriorityFilterPopup(
-        priorityFilter,
-        logLevelAnchor,
-        showLogLevelPopup,
-        dismissPopup = { showLogLevelPopup = false },
+        showPopup = showLogLevelPopup,
+        anchor = logLevelAnchor,
+        priorityFilter = priorityFilter,
+        dismiss = { showLogLevelPopup = false },
         setPriorityFilter = filterManager::setPriorityFilter
     )
-}
-
-@Composable
-private fun PriorityFilterPopup(
-    priorityFilter: PriorityFilter,
-    anchor: Offset,
-    showPopup: Boolean,
-    dismissPopup: () -> Unit,
-    setPriorityFilter: (PriorityFilter) -> Unit
-) {
-    if (showPopup) {
-        Popup(
-            onDismissRequest = dismissPopup,
-            focusable = true,
-            popupPositionProvider = object : PopupPositionProvider {
-                override fun calculatePosition(
-                    anchorBounds: IntRect,
-                    windowSize: IntSize,
-                    layoutDirection: LayoutDirection,
-                    popupContentSize: IntSize
-                ): IntOffset {
-                    return IntOffset(anchor.x.toInt(), (anchor.y + anchorBounds.height + 10).toInt())
-                }
-            }
-        ) {
-            PriorityFilterView(priorityFilter, setPriorityFilter)
-        }
-    }
+    PackageFilterPopup(
+        showPackageFilterPopup = showPackageFilterPopup,
+        packageFilterAnchor = packageFilterAnchor,
+        dismiss = { showPackageFilterPopup = false },
+        packageFilters = packageFilters,
+        togglePackageFilter = filterManager::togglePackageFilter
+    )
+    TagFilterPopup(
+        showTagFilterPopup = showTagFilterPopup,
+        tagFilterAnchor = tagFilterAnchor,
+        dismiss = { showTagFilterPopup = false },
+        tagFilters = tagFilters,
+        toggleTagFilter = filterManager::toggleTagFilter
+    )
 }
