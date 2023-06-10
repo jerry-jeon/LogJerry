@@ -11,9 +11,14 @@ import androidx.compose.ui.unit.sp
 import com.jerryjeon.logjerry.log.Priority
 import com.jerryjeon.logjerry.serialization.ColorAsLongSerializer
 import com.jerryjeon.logjerry.serialization.TextUnitAsFloatSerializer
+import com.jerryjeon.logjerry.table.Header
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.decodeFromStream
 import java.io.File
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class Preferences(
     @Serializable(with = TextUnitAsFloatSerializer::class) val fontSize: TextUnit = 14.sp,
@@ -59,6 +64,15 @@ data class Preferences(
         val default = Preferences()
         val file = File(System.getProperty("java.io.tmpdir"), "LogJerryPreferences.json")
     }
+
+    // These are not need to be here, but I don't want to create another class for this
+    val headerFlow = MutableStateFlow(
+        try {
+            Header.file.inputStream().use { PreferencesViewModel.json.decodeFromStream(it) }
+        } catch (e: Exception) {
+            Header()
+        }
+    )
 }
 
 enum class ColorTheme {

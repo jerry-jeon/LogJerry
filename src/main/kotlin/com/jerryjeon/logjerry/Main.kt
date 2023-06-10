@@ -215,7 +215,7 @@ fun LightTheme(preferences: Preferences, content: @Composable () -> Unit) {
 fun main() = application {
     val preferencesViewModel = PreferencesViewModel()
     val preferences by preferencesViewModel.preferencesFlow.collectAsState()
-    val header by preferencesViewModel.headerFlow.collectAsState()
+    val header by preferences.headerFlow.collectAsState()
     val preferenceOpen = remember { mutableStateOf(false) }
     val shortcutDialogOpened = remember { mutableStateOf(false) }
     val tabManager = TabManager(preferences)

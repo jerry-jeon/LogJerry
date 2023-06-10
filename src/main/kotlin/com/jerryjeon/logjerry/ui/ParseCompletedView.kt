@@ -35,6 +35,7 @@ fun ParseCompletedView(
     val filterManager = parseCompleted.filterManager
     val detectorManager = parseCompleted.detectorManager
     val refineResult by parseCompleted.refineResultFlow.collectAsState()
+    val optimizedHeader by parseCompleted.optimizedHeader.collectAsState()
     Column(
         modifier = Modifier
     ) {
@@ -96,7 +97,7 @@ fun ParseCompletedView(
             parseCompleted = parseCompleted,
             preferences = preferences,
             detectorManager = detectorManager,
-            header = header,
+            header = optimizedHeader,
             hide = filterManager::hide,
             moveToPreviousMark = { refineResult.selectPreviousDetection(DetectorKey.Mark) },
             moveToNextMark = { refineResult.selectNextDetection(DetectorKey.Mark) }

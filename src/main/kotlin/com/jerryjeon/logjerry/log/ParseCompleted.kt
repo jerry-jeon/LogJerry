@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.stateIn
  */
 class ParseCompleted(
     val originalLogsFlow: StateFlow<List<Log>>,
-    preferences: Preferences
+    preferences: Preferences,
 ) {
     private val refineScope = CoroutineScope(Dispatchers.Default)
     val filterManager = FilterManager(originalLogsFlow)
@@ -78,4 +78,16 @@ class ParseCompleted(
         RefineResult(refinedLogs, allDetections)
     }
         .stateIn(refineScope, SharingStarted.Lazily, RefineResult(emptyList(), emptyMap()))
+
+    val optimizedHeader = combine(
+        preferences.headerFlow,
+        filterManager.tagFiltersFlow,
+        filterManager.packageFiltersFlow
+    ) { header, tagFilters, packageFilters ->
+        header.copy(
+            tag = header.tag.copy(visible = tagFilters.filters.filter { it.include }.size != 1),
+            packageName = header.packageName.copy(visible = packageFilters.filters.filter { it.include }.size != 1)
+        )
+    }
+        .stateIn(refineScope, SharingStarted.Lazily, preferences.headerFlow.value)
 }

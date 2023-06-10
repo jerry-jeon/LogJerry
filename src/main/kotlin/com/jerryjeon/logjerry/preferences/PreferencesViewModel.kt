@@ -20,10 +20,6 @@ import kotlinx.serialization.json.encodeToStream
 class PreferencesViewModel {
     private val preferenceScope = CoroutineScope(Dispatchers.Default)
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-    }
-
     // TODO not to read on the main thread
     val preferencesFlow = MutableStateFlow(
         try {
@@ -177,21 +173,18 @@ class PreferencesViewModel {
         throw IllegalArgumentException("Unknown color")
     }
 
-    // These are not need to be here, but I don't want to create another class for this
-    val headerFlow = MutableStateFlow(
-        try {
-            Header.file.inputStream().use { json.decodeFromStream(it) }
-        } catch (e: Exception) {
-            Header()
-        }
-    )
-
     fun setColumnInfoVisibility(columnInfo: ColumnInfo, visible: Boolean) {
-        headerFlow.update { it.copyOf(columnInfo.columnType, columnInfo.copy(visible = visible)) }
+        preferencesFlow.value.headerFlow.update { it.copyOf(columnInfo.columnType, columnInfo.copy(visible = visible)) }
         preferenceScope.launch {
             Header.file.outputStream().use {
-                json.encodeToStream(headerFlow.value, it)
+                json.encodeToStream(preferencesFlow.value.headerFlow.value, it)
             }
+        }
+    }
+
+    companion object {
+        val json = Json {
+            ignoreUnknownKeys = true
         }
     }
 }
