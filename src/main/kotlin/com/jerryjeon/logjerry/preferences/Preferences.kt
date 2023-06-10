@@ -16,15 +16,27 @@ import java.io.File
 
 @Serializable
 data class Preferences(
-    @Serializable(with = TextUnitAsFloatSerializer::class) val fontSize: TextUnit,
-    val colorTheme: ColorTheme,
-    val lightColorByPriority: Map<Priority, @Serializable(with = ColorAsLongSerializer::class) Color>,
-    val lightBackgroundColor: @Serializable(with = ColorAsLongSerializer::class) Color,
-    val darkColorByPriority: Map<Priority, @Serializable(with = ColorAsLongSerializer::class) Color>,
-    val darkBackgroundColor: @Serializable(with = ColorAsLongSerializer::class) Color,
-    val showExceptionDetection: Boolean,
-    val showInvalidSentences: Boolean,
-    val jsonPreviewSize: Int
+    @Serializable(with = TextUnitAsFloatSerializer::class) val fontSize: TextUnit = 14.sp,
+    val colorTheme: ColorTheme = ColorTheme.System,
+    val lightColorByPriority: Map<Priority, @Serializable(with = ColorAsLongSerializer::class) Color> = mutableMapOf(
+        Priority.Verbose to Color(0xFFBBBBBB),
+        Priority.Debug to Color(0xFFAAB895),
+        Priority.Info to Color(0xFF3EDE66),
+        Priority.Warning to Color(0xFFFF6B68),
+        Priority.Error to Color(0xFFFF6B68),
+    ),
+    val lightBackgroundColor: @Serializable(with = ColorAsLongSerializer::class) Color = Color.White,
+    val darkColorByPriority: Map<Priority, @Serializable(with = ColorAsLongSerializer::class) Color> = mutableMapOf(
+        Priority.Verbose to Color(0xFFBBBBBB),
+        Priority.Debug to Color(0xFFAAB895),
+        Priority.Info to Color(0xFF3EDE66),
+        Priority.Warning to Color(0xFFFF6B68),
+        Priority.Error to Color(0xFFFF6B68),
+    ),
+    val darkBackgroundColor: @Serializable(with = ColorAsLongSerializer::class) Color = Color(0XFF121212),
+    val showExceptionDetection: Boolean = true,
+    val showInvalidSentences: Boolean = true,
+    val jsonPreviewSize: Int = 20,
 ) {
 
     // TODO should be optimized
@@ -44,29 +56,7 @@ data class Preferences(
     }
 
     companion object {
-        val default = Preferences(
-            14.sp,
-            ColorTheme.System,
-            mutableMapOf(
-                Priority.Verbose to Color(0xFFBBBBBB),
-                Priority.Debug to Color(0xFFAAB895),
-                Priority.Info to Color(0xFF3EDE66),
-                Priority.Warning to Color(0xFFFF6B68),
-                Priority.Error to Color(0xFFFF6B68),
-            ),
-            Color.White,
-            mutableMapOf(
-                Priority.Verbose to Color(0xFFBBBBBB),
-                Priority.Debug to Color(0xFFAAB895),
-                Priority.Info to Color(0xFF3EDE66),
-                Priority.Warning to Color(0xFFFF6B68),
-                Priority.Error to Color(0xFFFF6B68),
-            ),
-            Color(0XFF121212),
-            showExceptionDetection = true,
-            showInvalidSentences = false,
-            jsonPreviewSize = 20
-        )
+        val default = Preferences()
         val file = File(System.getProperty("java.io.tmpdir"), "LogJerryPreferences.json")
     }
 }

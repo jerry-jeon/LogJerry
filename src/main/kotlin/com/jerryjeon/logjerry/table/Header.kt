@@ -1,15 +1,19 @@
 package com.jerryjeon.logjerry.table
 
+import kotlinx.serialization.Serializable
+import java.io.File
+
+@Serializable
 data class Header(
-    val number: ColumnInfo,
-    val date: ColumnInfo,
-    val time: ColumnInfo,
-    val pid: ColumnInfo,
-    val tid: ColumnInfo,
-    val packageName: ColumnInfo,
-    val priority: ColumnInfo,
-    val tag: ColumnInfo,
-    val log: ColumnInfo,
+    val number: ColumnInfo = ColumnInfo(ColumnType.Number, 50, true),
+    val date: ColumnInfo = ColumnInfo(ColumnType.Date, 100, false),
+    val time: ColumnInfo = ColumnInfo(ColumnType.Time, 100, true),
+    val pid: ColumnInfo = ColumnInfo(ColumnType.Pid, 50, false),
+    val tid: ColumnInfo = ColumnInfo(ColumnType.Tid, 50, false),
+    val packageName: ColumnInfo = ColumnInfo(ColumnType.PackageName, 130, true),
+    val priority: ColumnInfo = ColumnInfo(ColumnType.Priority, 40, true),
+    val tag: ColumnInfo = ColumnInfo(ColumnType.Tag, 200, true),
+    val log: ColumnInfo = ColumnInfo(ColumnType.Log, null, true),
 ) {
 
     val asColumnList: List<ColumnInfo> = listOf(number, date, time, pid, tid, packageName, priority, tag, log)
@@ -43,16 +47,6 @@ data class Header(
     }
 
     companion object {
-        val default = Header(
-            number = ColumnInfo(ColumnType.Number, 50, true),
-            date = ColumnInfo(ColumnType.Date, 100, false),
-            time = ColumnInfo(ColumnType.Time, 100, true),
-            pid = ColumnInfo(ColumnType.Pid, 50, false),
-            tid = ColumnInfo(ColumnType.Tid, 50, false),
-            packageName = ColumnInfo(ColumnType.PackageName, 130, true),
-            priority = ColumnInfo(ColumnType.Priority, 40, true),
-            tag = ColumnInfo(ColumnType.Tag, 200, true),
-            log = ColumnInfo(ColumnType.Log, null, true),
-        )
+        val file = File(System.getProperty("java.io.tmpdir"), "LogJerryPreferencesHeader.json")
     }
 }
