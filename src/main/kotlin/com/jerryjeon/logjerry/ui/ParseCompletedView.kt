@@ -91,7 +91,7 @@ fun ParseCompletedView(
                 }
             }
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
 
         LogsView(
             refineResult = refineResult,

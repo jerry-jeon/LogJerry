@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -83,11 +84,20 @@ fun LogsView(
         }
     }
 
+    val statsBuilder = StringBuilder()
+    parseCompleted.singleDate.value?.let {
+        statsBuilder.append("Date : $it, ")
+    }
     val filteredSize = refineResult.refinedLogs.size
     val totalSize = parseCompleted.originalLogsFlow.value.size
-    val filteredSizeText =
-        (if (filteredSize != totalSize) "Filtered size : $filteredSize, " else "")
-    Text("${filteredSizeText}Total : $totalSize", modifier = Modifier.padding(8.dp))
+    if (filteredSize != totalSize) {
+        statsBuilder.append("Filtered size : $filteredSize, ")
+    }
+    statsBuilder.append("Total size : $totalSize")
+
+
+    Text(statsBuilder.toString(), modifier = Modifier.padding(start = 12.dp, bottom = 8.dp))
+    Divider()
 
     Box {
         LogsView(

@@ -11,10 +11,7 @@ import com.jerryjeon.logjerry.logview.RefinedLog
 import com.jerryjeon.logjerry.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 
 /**
  * The class that is created after parsing is completed.
@@ -79,14 +76,21 @@ class ParseCompleted(
     }
         .stateIn(refineScope, SharingStarted.Lazily, RefineResult(emptyList(), emptyMap()))
 
+    val singleDate = originalLogsFlow.map { logs ->
+        logs.map { it.date }.toSet().singleOrNull()
+    }
+        .stateIn(refineScope, SharingStarted.Lazily, null)
+
     val optimizedHeader = combine(
         preferences.headerFlow,
         filterManager.tagFiltersFlow,
-        filterManager.packageFiltersFlow
-    ) { header, tagFilters, packageFilters ->
+        filterManager.packageFiltersFlow,
+        singleDate,
+    ) { header, tagFilters, packageFilters, singleDate ->
         header.copy(
             tag = header.tag.copy(visible = tagFilters.filters.filter { it.include }.size != 1),
-            packageName = header.packageName.copy(visible = packageFilters.filters.filter { it.include }.size != 1)
+            packageName = header.packageName.copy(visible = packageFilters.filters.filter { it.include }.size != 1),
+            date = header.date.copy(visible = singleDate == null)
         )
     }
         .stateIn(refineScope, SharingStarted.Lazily, preferences.headerFlow.value)
