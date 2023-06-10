@@ -3,6 +3,7 @@
 package com.jerryjeon.logjerry.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -35,6 +36,7 @@ fun ParseCompletedView(
     val filterManager = parseCompleted.filterManager
     val detectorManager = parseCompleted.detectorManager
     val refineResult by parseCompleted.refineResultFlow.collectAsState()
+    val optimizedHeader by parseCompleted.optimizedHeader.collectAsState()
     Column(
         modifier = Modifier
     ) {
@@ -89,14 +91,14 @@ fun ParseCompletedView(
                 }
             }
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(4.dp))
 
         LogsView(
             refineResult = refineResult,
             parseCompleted = parseCompleted,
             preferences = preferences,
             detectorManager = detectorManager,
-            header = header,
+            header = optimizedHeader,
             hide = filterManager::hide,
             moveToPreviousMark = { refineResult.selectPreviousDetection(DetectorKey.Mark) },
             moveToNextMark = { refineResult.selectNextDetection(DetectorKey.Mark) }
@@ -157,12 +159,17 @@ private fun FilterView(filterManager: FilterManager) {
                 packageFilterAnchor = coordinates.positionInRoot()
             },
     ) {
-        Row {
-            Text("Packages")
-            Spacer(Modifier.width(4.dp))
-            Text(
-                text = "(${packageFilters.filters.count { it.include }}/${packageFilters.filters.size})",
-            )
+        Column {
+            Row {
+                Text("Packages")
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = "(${packageFilters.filters.count { it.include }}/${packageFilters.filters.size})",
+                )
+            }
+            packageFilters.filters.singleOrNull { it.include }?.let {
+                Text(it.packageName ?: "?", style = MaterialTheme.typography.caption)
+            }
         }
     }
     Spacer(Modifier.width(8.dp))
@@ -176,12 +183,17 @@ private fun FilterView(filterManager: FilterManager) {
                 tagFilterAnchor = coordinates.positionInRoot()
             },
     ) {
-        Row {
-            Text("Tags")
-            Spacer(Modifier.width(4.dp))
-            Text(
-                text = "(${tagFilters.filters.count { it.include }}/${tagFilters.filters.size})",
-            )
+        Column {
+            Row {
+                Text("Tags")
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = "(${tagFilters.filters.count { it.include }}/${tagFilters.filters.size})",
+                )
+            }
+            tagFilters.filters.singleOrNull { it.include }?.let {
+                Text(it.tag ?: "?", style = MaterialTheme.typography.caption)
+            }
         }
     }
 
@@ -203,13 +215,17 @@ private fun FilterView(filterManager: FilterManager) {
         packageFilterAnchor = packageFilterAnchor,
         dismiss = { showPackageFilterPopup = false },
         packageFilters = packageFilters,
-        togglePackageFilter = filterManager::togglePackageFilter
+        togglePackageFilter = filterManager::togglePackageFilter,
+        includeAll = { filterManager.setAllPackageFilter(true) },
+        excludeAll = { filterManager.setAllPackageFilter(false) },
     )
     TagFilterPopup(
         showTagFilterPopup = showTagFilterPopup,
         tagFilterAnchor = tagFilterAnchor,
         dismiss = { showTagFilterPopup = false },
         tagFilters = tagFilters,
-        toggleTagFilter = filterManager::toggleTagFilter
+        toggleTagFilter = filterManager::toggleTagFilter,
+        includeAll = { filterManager.setAllTagFilter(true) },
+        excludeAll = { filterManager.setAllTagFilter(false) },
     )
 }
