@@ -220,10 +220,14 @@ fun main() = application {
     val shortcutDialogOpened = remember { mutableStateOf(false) }
     val tabManager = TabManager(preferences)
     val tabsState = tabManager.tabs.collectAsState()
+
+    val width = preferences.windowSizeWhenOpened?.width?.dp ?: Dp.Unspecified
+    val height = preferences.windowSizeWhenOpened?.height?.dp ?: Dp.Unspecified
+
     Window(
         title = "LogJerry",
         icon = painterResource("LogJerry.png"),
-        state = WindowState(width = Dp.Unspecified, height = Dp.Unspecified),
+        state = WindowState(width = width, height = height),
         onCloseRequest = ::exitApplication,
         onPreviewKeyEvent = { keyEvent ->
             if (keyEvent.isCtrlOrMetaPressed && keyEvent.key == Key.F && keyEvent.type == KeyEventType.KeyDown) {

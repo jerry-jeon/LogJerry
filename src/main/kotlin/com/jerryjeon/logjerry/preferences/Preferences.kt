@@ -15,6 +15,7 @@ import com.jerryjeon.logjerry.table.Header
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.json.decodeFromStream
 import java.io.File
 
@@ -42,6 +43,7 @@ data class Preferences(
     val showExceptionDetection: Boolean = true,
     val showInvalidSentences: Boolean = true,
     val jsonPreviewSize: Int = 20,
+    val windowSizeWhenOpened: WindowSize? = null, // (width, height), null to maximize
 ) {
 
     // TODO should be optimized
@@ -66,6 +68,7 @@ data class Preferences(
     }
 
     // These are not need to be here, but I don't want to create another class for this
+    @Transient
     val headerFlow = MutableStateFlow(
         try {
             Header.file.inputStream().use { PreferencesViewModel.json.decodeFromStream(it) }

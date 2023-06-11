@@ -119,6 +119,27 @@ class PreferencesViewModel {
         this.jsonPreviewSizeString.value = jsonPreviewSize
     }
 
+    val maximizeWindow = MutableStateFlow(preferencesFlow.value.windowSizeWhenOpened == null)
+    fun changeMaximizeWindow(maximizeWindow: Boolean) {
+        this.maximizeWindow.value = maximizeWindow
+    }
+
+    val widthWhenOpenedString = MutableStateFlow(preferencesFlow.value.windowSizeWhenOpened?.width?.toString() ?: "900")
+    val widthWhenOpened = widthWhenOpenedString.map { it.toIntOrNull() }
+        .stateIn(preferenceScope, SharingStarted.Lazily, preferencesFlow.value.windowSizeWhenOpened?.width)
+
+    fun changeWidthWhenOpened(widthWhenOpened: String) {
+        this.widthWhenOpenedString.value = widthWhenOpened
+    }
+
+    val heightWhenOpenedString = MutableStateFlow(preferencesFlow.value.windowSizeWhenOpened?.height?.toString() ?: "900")
+    val heightWhenOpened = heightWhenOpenedString.map { it.toIntOrNull() }
+        .stateIn(preferenceScope, SharingStarted.Lazily, preferencesFlow.value.windowSizeWhenOpened?.height)
+
+    fun changeHeightWhenOpened(heightWhenOpened: String) {
+        this.heightWhenOpenedString.value = heightWhenOpened
+    }
+
     fun save() {
         val whiteSavingColors = whiteValidColorsByPriority.value
         val whiteSavingBackgroundColor = whiteBackgroundValidColor.value
@@ -133,6 +154,15 @@ class PreferencesViewModel {
         }
         val jsonPreviewSizeValue = jsonPreviewSize.value ?: return
 
+        val maximizeWindow = maximizeWindow.value
+        val windowSizeWhenOpened = if (maximizeWindow) {
+            null
+        } else {
+            val widthWhenOpened = widthWhenOpened.value ?: return
+            val heightWhenOpened = heightWhenOpened.value ?: return
+            WindowSize(widthWhenOpened, heightWhenOpened)
+        }
+
         preferencesFlow.value = preferencesFlow.value.copy(
             colorTheme = colorThemeFlow.value,
             lightColorByPriority = whiteSavingColors.mapValues { (_, color) -> color!! },
@@ -142,7 +172,10 @@ class PreferencesViewModel {
             showExceptionDetection = showExceptionDetection.value,
             showInvalidSentences = showInvalidSentences.value,
             jsonPreviewSize = jsonPreviewSizeValue,
+            windowSizeWhenOpened = windowSizeWhenOpened
         )
+
+        println("HMMMM? ${preferencesFlow.value}")
 
         Preferences.file.outputStream().use {
             json.encodeToStream(preferencesFlow.value, it)
