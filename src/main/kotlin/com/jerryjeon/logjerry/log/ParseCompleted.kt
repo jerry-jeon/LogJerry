@@ -76,21 +76,24 @@ class ParseCompleted(
     }
         .stateIn(refineScope, SharingStarted.Lazily, RefineResult(emptyList(), emptyMap()))
 
-    val singleDate = originalLogsFlow.map { logs ->
-        logs.map { it.date }.toSet().singleOrNull()
+    val dateSet = originalLogsFlow.map { logs ->
+        logs.map { it.date }.toSet()
     }
+        .stateIn(refineScope, SharingStarted.Lazily, emptySet())
+
+    val singleDate = dateSet.map { it.singleOrNull() }
         .stateIn(refineScope, SharingStarted.Lazily, null)
 
     val optimizedHeader = combine(
         preferences.headerFlow,
         filterManager.tagFiltersFlow,
         filterManager.packageFiltersFlow,
-        singleDate,
-    ) { header, tagFilters, packageFilters, singleDate ->
+        dateSet,
+    ) { header, tagFilters, packageFilters, dateSet ->
         header.copy(
             tag = header.tag.copy(visible = tagFilters.filters.filter { it.include }.size != 1),
             packageName = header.packageName.copy(visible = packageFilters.filters.filter { it.include }.size != 1),
-            date = header.date.copy(visible = singleDate == null)
+            date = header.date.copy(visible = dateSet.size > 1)
         )
     }
         .stateIn(refineScope, SharingStarted.Lazily, preferences.headerFlow.value)

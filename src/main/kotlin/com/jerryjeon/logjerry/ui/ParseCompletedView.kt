@@ -57,6 +57,7 @@ fun ParseCompletedView(
                         moveToNextOccurrence = refineResult::selectNextDetection,
                     )
                 }
+                Spacer(Modifier.width(8.dp))
                 statusByKey[DetectorKey.Exception]?.let {
                     ExceptionDetectionView(
                         modifier = Modifier.fillMaxHeight(),
