@@ -43,6 +43,12 @@ fun PreferencesView(
     val jsonPreviewSizeString by viewModel.jsonPreviewSizeString.collectAsState()
     val jsonPreviewSize by viewModel.jsonPreviewSize.collectAsState()
 
+    val maximizeWindow by viewModel.maximizeWindow.collectAsState()
+    val widthWhenOpenedString by viewModel.widthWhenOpenedString.collectAsState()
+    val widthWhenOpened by viewModel.widthWhenOpened.collectAsState()
+    val heightWhenOpenedString by viewModel.heightWhenOpenedString.collectAsState()
+    val heightWhenOpened by viewModel.heightWhenOpened.collectAsState()
+
     if (isOpen.value) {
         Window(
             state = WindowState(width = 1200.dp, height = 1200.dp),
@@ -85,6 +91,43 @@ fun PreferencesView(
                                 isError = jsonPreviewSize == null,
                                 keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Decimal)
                             )
+                        }
+                        Spacer(Modifier.height(8.dp))
+
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(IntrinsicSize.Min)) {
+                            Text("Window size")
+                            Spacer(Modifier.width(4.dp))
+                            Divider(Modifier.width(1.dp).fillMaxHeight().alpha(0.5f))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Maximize")
+                            Checkbox(maximizeWindow, onCheckedChange = viewModel::changeMaximizeWindow)
+                            Spacer(Modifier.width(4.dp))
+                            Divider(Modifier.width(1.dp).fillMaxHeight().alpha(0.5f))
+                            Spacer(Modifier.width(4.dp))
+                            Text("Width")
+                            Spacer(Modifier.width(4.dp))
+                            TextField(
+                                value = widthWhenOpenedString,
+                                onValueChange = viewModel::changeWidthWhenOpened,
+                                modifier = Modifier.width(120.dp),
+                                singleLine = true,
+                                isError = widthWhenOpened == null,
+                                enabled = !maximizeWindow,
+                                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Decimal)
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text("Height")
+                            Spacer(Modifier.width(4.dp))
+                            TextField(
+                                value = heightWhenOpenedString,
+                                onValueChange = viewModel::changeHeightWhenOpened,
+                                modifier = Modifier.width(120.dp),
+                                singleLine = true,
+                                isError = heightWhenOpened == null,
+                                enabled = !maximizeWindow,
+                                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Decimal)
+                            )
+
                         }
 
                         Spacer(Modifier.height(8.dp))
