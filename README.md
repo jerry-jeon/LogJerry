@@ -2,18 +2,17 @@
 
 LogJerry is a desktop investigation tool for android logs.
 
-It's useful when you should take a at the logs without logcat. It will help you to find information such as JSON easily in the log.  
-I frequently investigate android logs and I found there's no proper tool for doing it.
-Editors like VS Code, it's hard to see the logs because I can see all the columns and I can't filter out logs.  
-So that's why I am making this project. Any feedbacks are welcome!
+Instead of relying on extensive editors like VS Code, LogJerry simplifies log analysis by offering easy-to-navigate columns and log filtering.
+his tool is particularly handy for quickly locating information like JSON in your logs. 
+Born out of a personal need for a better log investigation tool, we welcome all feedback as we continue to develop and improve LogJerry.
 
 ## Main features
 
-- Filters
-- Find keywords in logs
-- Toggle columns
 - Auto-detect exceptions, JSON objects
 - Prettify JSON
+- Filters
+- Find keywords in logs
+- Make a note for each log
 
 ![logjerry_temp_720](https://user-images.githubusercontent.com/5154440/192139287-c049b3f1-9a6e-49f9-a15b-6817ef51a2ee.gif)
     
@@ -28,15 +27,6 @@ The other platforms except Mac ARM64, you can build an application that runs on 
 1. Clone this repository
 2. Execute `createReleaseDistributable` gradle task. Run command `./gradlew createReleaseDistributable` on the project top directory 
 3. Check `build/compose/binaries/main/app` folder
-
-### Next features
-
-- More color configurations
-- Easy scroll like VS code Map Mode
-- Merge cells
-- Make possible to change the column size
-- Make font size configurable
-- Support showing ADB logcat buffer
 
 # License
 ```
