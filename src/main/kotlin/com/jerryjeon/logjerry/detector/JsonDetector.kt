@@ -12,25 +12,29 @@ class JsonDetector() : Detector<JsonDetection> {
 
     override fun detect(logStr: String, logIndex: Int): List<JsonDetection> {
         // Find bracket pairs, { } and check this is json or not
-        val stack = ArrayDeque<Pair<Int, Char>>()
         val bracketRanges = mutableListOf<IntRange>()
-        var inString = false
-        logStr.forEachIndexed { index, c ->
-            if (c == '"' && (index == 0 || logStr[index - 1] != '\\')) {
-                inString = !inString
-            }
-            if (!inString) {
-                if (c == '{') stack.addLast(index to '{')
-                else if (c == '}') {
-                    val lastOrNull = stack.lastOrNull() ?: return@forEachIndexed
-                    if (lastOrNull.second == '{') {
-                        val (openIndex, _) = stack.removeLast()
-                        if (stack.isEmpty()) { // It's most outside part of bracket
-                            bracketRanges.add(openIndex..index)
-                        }
-                    }
+
+        var startIndex = -1
+        var openBraceCount = 0
+
+        var currentIndex = 0
+        while (currentIndex < logStr.length) {
+            val currentChar = logStr[currentIndex]
+            if (currentChar == '{') {
+                if (startIndex == -1) {
+                    startIndex = currentIndex
+                }
+                openBraceCount++
+            } else if (currentChar == '}') {
+                openBraceCount--
+                if (openBraceCount == 0 && startIndex != -1) {
+                    val endIndex = currentIndex
+                    bracketRanges.add(IntRange(startIndex, endIndex))
+                    startIndex = -1
                 }
             }
+
+            currentIndex++
         }
         if (bracketRanges.isEmpty()) return emptyList()
 
