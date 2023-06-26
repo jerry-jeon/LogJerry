@@ -38,7 +38,7 @@ class DetectorManager(preferences: Preferences) {
         .stateIn(detectionScope, SharingStarted.Lazily, emptyList())
 
     val detectorsFlow = combine(
-        keywordDetectionRequestFlow.debounce(100L), markDetectorFlow
+        keywordDetectionRequestFlow, markDetectorFlow
     ) { keywordDetectionRequest, markDetector ->
         when (keywordDetectionRequest) {
             is KeywordDetectionRequest.TurnedOn -> defaultDetectors + listOf(KeywordDetector(keywordDetectionRequest.keyword)) + markDetector
