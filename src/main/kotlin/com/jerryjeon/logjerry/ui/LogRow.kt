@@ -1,16 +1,40 @@
-@file:OptIn(ExperimentalComposeUiApi::class, ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
+@file:OptIn(
+    ExperimentalComposeUiApi::class,
+    ExperimentalComposeUiApi::class,
+    ExperimentalFoundationApi::class
+)
 
 package com.jerryjeon.logjerry.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.PointerMatcher
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.onClick
-import androidx.compose.material.*
+import androidx.compose.material.CursorDropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedButton
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -64,6 +88,30 @@ fun LogRow(
             showContextMenu = null
         }) {
             Text("Hide")
+        }
+        DropdownMenuItem(onClick = {
+            val logData = listOfNotNull(
+                refinedLog.log.date?.takeIf { preferences.headerFlow.value.date.visible }
+                    ?.run { this },
+                refinedLog.log.time?.takeIf { preferences.headerFlow.value.time.visible }
+                    ?.run { this },
+                refinedLog.log.pid?.takeIf { preferences.headerFlow.value.pid.visible }
+                    ?.run { "Pid-$this" },
+                refinedLog.log.tid?.takeIf { preferences.headerFlow.value.tid.visible }
+                    ?.run { "Tid-$this" },
+                refinedLog.log.packageName.takeIf { preferences.headerFlow.value.packageName.visible }
+                    ?.run { this },
+                refinedLog.log.priority.takeIf { preferences.headerFlow.value.priority.visible }
+                    ?.run { "P:$this" },
+                refinedLog.log.tag.takeIf { preferences.headerFlow.value.tag.visible }
+                    ?.run { "T:$this" },
+                refinedLog.log.log.takeIf { preferences.headerFlow.value.log.visible }
+                    ?.run { "\n$this" },
+            )
+            copyToClipboard(logData.joinToString(" "))
+            showContextMenu = null
+        }) {
+            Text("Copy the log line")
         }
         DropdownMenuItem(onClick = {
             copyToClipboard(refinedLog.log.log)
@@ -261,7 +309,8 @@ private fun RowScope.LogCell(
     }
 }
 
-@Composable fun AnnotatedLogView(
+@Composable
+fun AnnotatedLogView(
     preferences: Preferences,
     logContentView: LogContentView,
     refinedLog: RefinedLog,
@@ -276,8 +325,10 @@ private fun RowScope.LogCell(
                 ),
             )
         }
+
         is LogContentView.Json -> {
-            val modifier = logContentView.background?.let { Modifier.background(color = it) } ?: Modifier
+            val modifier =
+                logContentView.background?.let { Modifier.background(color = it) } ?: Modifier
             var maxLines by remember { mutableStateOf(preferences.jsonPreviewSize) }
             Box(modifier = modifier.width(IntrinsicSize.Max)) {
                 Box(modifier = Modifier.padding(4.dp)) {
@@ -286,7 +337,8 @@ private fun RowScope.LogCell(
                             text = logContentView.str,
                             style = MaterialTheme.typography.body2.copy(
                                 fontSize = preferences.fontSize,
-                                color = preferences.colorByPriority().getValue(refinedLog.log.priority)
+                                color = preferences.colorByPriority()
+                                    .getValue(refinedLog.log.priority)
                             ),
                             modifier = Modifier.padding(end = 32.dp),
                             maxLines = maxLines
@@ -300,6 +352,7 @@ private fun RowScope.LogCell(
                                     Text("Expand: ${logContentView.lineCount} lines")
                                 }
                             }
+
                             maxLines == Int.MAX_VALUE -> {
                                 OutlinedButton(
                                     onClick = { maxLines = preferences.jsonPreviewSize },
