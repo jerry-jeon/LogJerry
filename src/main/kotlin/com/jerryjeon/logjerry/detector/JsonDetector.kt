@@ -15,25 +15,33 @@ class JsonDetector() : Detector<JsonDetection> {
         val bracketRanges = mutableListOf<IntRange>()
 
         var startIndex = -1
-        var openBraceCount = 0
+        var braceCount = 0
+        var isInString = false
+        var isEscaped = false
 
         var currentIndex = 0
         while (currentIndex < logStr.length) {
             val currentChar = logStr[currentIndex]
-            if (currentChar == '{') {
-                if (startIndex == -1) {
-                    startIndex = currentIndex
-                }
-                openBraceCount++
-            } else if (currentChar == '}') {
-                openBraceCount--
-                if (openBraceCount == 0 && startIndex != -1) {
-                    val endIndex = currentIndex
-                    bracketRanges.add(IntRange(startIndex, endIndex))
-                    startIndex = -1
+            if (!isEscaped) {
+                if (currentChar == '{' && !isInString) {
+                    if (startIndex == -1) {
+                        startIndex = currentIndex
+                    }
+                    braceCount++
+                } else if (currentChar == '}' && !isInString) {
+                    braceCount--
+                    if (braceCount == 0 && startIndex != -1) {
+                        val endIndex = currentIndex
+                        bracketRanges.add(IntRange(startIndex, endIndex))
+                        startIndex = -1
+                    }
+                } else if (currentChar == '"') {
+                    if (currentIndex > 0) {
+                        isInString = !isInString
+                    }
                 }
             }
-
+            isEscaped = currentChar == '\\' && !isEscaped
             currentIndex++
         }
         if (bracketRanges.isEmpty()) return emptyList()
