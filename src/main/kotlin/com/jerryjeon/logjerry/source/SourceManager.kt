@@ -54,6 +54,7 @@ class SourceManager(
             CustomParser.create(it)
                 ?: StudioLogcatBelowChipmunkParser.create(it)
                 ?: StudioLogcatAboveDolphinParser.create(it)
+                ?: AdbLogcatDefaultFormatParser.create(it)
         } ?: studioLogcatBelowChipmunkParser // TODO would be better if show failure message that the parser doesn't exist that can parse the content
     }
 
