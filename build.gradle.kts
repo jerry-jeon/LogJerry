@@ -45,5 +45,8 @@ tasks {
 compose.desktop {
     application {
         mainClass = "com.jerryjeon.logjerry.MainKt"
+        buildTypes.release.proguard {
+            configurationFiles.from("proguard-rules.pro")
+        }
     }
 }
