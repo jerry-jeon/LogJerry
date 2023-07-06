@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "com.jerryjeon"
-version = "1.5.1"
+version = "1.5.2"
 
 tasks.test {
     useJUnitPlatform()
