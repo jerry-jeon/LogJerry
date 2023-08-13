@@ -5,6 +5,7 @@ import java.util.UUID
 
 class ExceptionDetector : Detector<ExceptionDetection> {
     override val key = DetectorKey.Exception
+    override val shownAsBlock: Boolean = false
     override fun detect(logStr: String, logIndex: Int): List<ExceptionDetection> {
         val lines = logStr.split("\n")
         val stackStartLine = lines.indexOfFirst { isStackTrace(it) }

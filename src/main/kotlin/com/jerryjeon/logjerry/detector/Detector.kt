@@ -4,6 +4,7 @@ import androidx.compose.ui.text.SpanStyle
 
 interface Detector<T : Detection> {
     val key: DetectorKey
+    val shownAsBlock: Boolean
     fun detect(logStr: String, logIndex: Int): List<T>
 }
 

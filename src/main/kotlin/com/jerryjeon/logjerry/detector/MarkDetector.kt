@@ -9,6 +9,7 @@ class MarkDetector(
     val logMarks: Map<Int, LogMark>,
 ) : Detector<MarkDetection> {
     override val key = DetectorKey.Mark
+    override val shownAsBlock: Boolean = false
 
     fun setMark(logMark: LogMark): MarkDetector {
         return MarkDetector(logMarks + (logMark.log.index to logMark))

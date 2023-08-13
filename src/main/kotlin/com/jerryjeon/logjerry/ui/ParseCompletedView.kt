@@ -58,6 +58,15 @@ fun ParseCompletedView(
                     )
                 }
                 Spacer(Modifier.width(8.dp))
+                statusByKey[DetectorKey.DataClass]?.let {
+                    DataClassDetectionView(
+                        modifier = Modifier.fillMaxHeight(),
+                        detectionStatus = it,
+                        moveToPreviousOccurrence = refineResult::selectPreviousDetection,
+                        moveToNextOccurrence = refineResult::selectNextDetection,
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
                 statusByKey[DetectorKey.Exception]?.let {
                     ExceptionDetectionView(
                         modifier = Modifier.fillMaxHeight(),
