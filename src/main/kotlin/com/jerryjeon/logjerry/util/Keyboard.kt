@@ -16,9 +16,9 @@ val KeyEvent.isCtrlOrMetaPressed: Boolean
 
 object KeyShortcuts {
    val newTab = if(isMac) {
-      KeyShortcut(Key.N, meta = true)
+      KeyShortcut(Key.T, meta = true)
    } else {
-      KeyShortcut(Key.N, ctrl = true)
+      KeyShortcut(Key.T, ctrl = true)
    }
    val openFile = if(isMac) {
       KeyShortcut(Key.O, meta = true)
