@@ -50,27 +50,30 @@ fun ParseCompletedView(
                 FilterView(filterManager)
                 Spacer(Modifier.width(8.dp))
                 statusByKey[DetectorKey.Json]?.let {
-                    JsonDetectionView(
+                    DetectionView(
                         modifier = Modifier.fillMaxHeight(),
                         detectionStatus = it,
+                        title = "JSON",
                         moveToPreviousOccurrence = refineResult::selectPreviousDetection,
                         moveToNextOccurrence = refineResult::selectNextDetection,
                     )
                 }
                 Spacer(Modifier.width(8.dp))
                 statusByKey[DetectorKey.DataClass]?.let {
-                    DataClassDetectionView(
+                    DetectionView(
                         modifier = Modifier.fillMaxHeight(),
                         detectionStatus = it,
+                        title = "Data class",
                         moveToPreviousOccurrence = refineResult::selectPreviousDetection,
                         moveToNextOccurrence = refineResult::selectNextDetection,
                     )
                 }
                 Spacer(Modifier.width(8.dp))
                 statusByKey[DetectorKey.Exception]?.let {
-                    ExceptionDetectionView(
+                    DetectionView(
                         modifier = Modifier.fillMaxHeight(),
                         detectionStatus = it,
+                        title = "Exception",
                         moveToPreviousOccurrence = refineResult::selectPreviousDetection,
                         moveToNextOccurrence = refineResult::selectNextDetection,
                     )

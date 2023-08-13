@@ -15,9 +15,10 @@ import androidx.compose.ui.unit.sp
 import com.jerryjeon.logjerry.detector.DetectionStatus
 
 @Composable
-fun DataClassDetectionView(
+fun DetectionView(
     modifier: Modifier = Modifier,
     detectionStatus: DetectionStatus,
+    title: String,
     moveToPreviousOccurrence: (DetectionStatus) -> Unit,
     moveToNextOccurrence: (DetectionStatus) -> Unit,
 ) {
@@ -32,15 +33,15 @@ fun DataClassDetectionView(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Data Class")
+            Text(title)
             Spacer(modifier = Modifier.width(8.dp))
-            DataClassDetectionSelectionExist(detectionStatus, moveToPreviousOccurrence, moveToNextOccurrence)
+            DetectionSelectionExist(detectionStatus, moveToPreviousOccurrence, moveToNextOccurrence)
         }
     }
 }
 
 @Composable
-fun DataClassDetectionSelectionExist(
+fun DetectionSelectionExist(
     selection: DetectionStatus,
     moveToPreviousOccurrence: (DetectionStatus) -> Unit,
     moveToNextOccurrence: (DetectionStatus) -> Unit
