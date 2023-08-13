@@ -82,7 +82,7 @@ object LogAnnotation {
                             addStyle(
                                 next.style,
                                 next.range.first,
-                                next.range.last + 1
+                                next.range.last
                             )
                             if (next is JsonDetection) {
                                 addStringAnnotation("Json", next.id, next.range.first, next.range.last + 1)

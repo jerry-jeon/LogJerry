@@ -12,16 +12,15 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -66,6 +65,9 @@ private fun KeywordDetectionRequestViewTurnedOn(
     moveToNextOccurrence: (DetectionStatus) -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
+    val textFieldValue by derivedStateOf {
+        TextFieldValue(text = keywordDetectionRequest.keyword, selection = TextRange(keywordDetectionRequest.keyword.length))
+    }
 
     Box(modifier.padding(8.dp)) {
         OutlinedTextField(
@@ -88,8 +90,8 @@ private fun KeywordDetectionRequestViewTurnedOn(
                     else -> false
                 }
             },
-            value = keywordDetectionRequest.keyword,
-            onValueChange = { find(it) },
+            value = textFieldValue,
+            onValueChange = { find(it.text) },
             leadingIcon = { Icon(Icons.Default.Search, "Search") },
             trailingIcon = {
                 Row {
