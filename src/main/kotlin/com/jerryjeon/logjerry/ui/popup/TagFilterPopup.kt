@@ -6,28 +6,33 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Checkbox
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedButton
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Sort
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
-import com.jerryjeon.logjerry.filter.TagFilter
-import com.jerryjeon.logjerry.filter.TagFilters
+import com.jerryjeon.logjerry.filter.*
 
 @Composable
 fun TagFilterPopup(
     showTagFilterPopup: Boolean,
     tagFilterAnchor: Offset,
     tagFilters: TagFilters,
+    tagFilterSortOption: Pair<FilterSortOption, SortOrder>,
     dismiss: () -> Unit,
     toggleTagFilter: (TagFilter) -> Unit,
     includeAll: () -> Unit,
     excludeAll: () -> Unit,
+    setTagFilterSortOption: (FilterSortOption, SortOrder) -> Unit,
 ) {
+    var showSortOptionDialog by remember { mutableStateOf(false) }
+    if (showSortOptionDialog) {
+        SortOptionDialog(tagFilterSortOption, setTagFilterSortOption, closeDialog = { showSortOptionDialog = false })
+    }
+
     val scrollState = rememberScrollState()
     BasePopup(showTagFilterPopup, tagFilterAnchor, dismiss) {
         Column(modifier = Modifier.verticalScroll(scrollState)) {
@@ -45,6 +50,15 @@ fun TagFilterPopup(
                         text = "Uncheck All",
                         modifier = Modifier,
                         style = MaterialTheme.typography.body2
+                    )
+                }
+                Spacer(Modifier.width(4.dp))
+                IconButton(onClick = {
+                    showSortOptionDialog = true
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Sort,
+                        contentDescription = "Sort",
                     )
                 }
             }
@@ -66,3 +80,4 @@ fun TagFilterPopup(
         }
     }
 }
+

@@ -124,6 +124,11 @@ private fun FilterView(filterManager: FilterManager) {
     var tagFilterAnchor by remember { mutableStateOf(Offset.Zero) }
     val tagFilters by filterManager.tagFiltersFlow.collectAsState()
 
+    val sortedTagFilters by filterManager.sortedTagFiltersFlow.collectAsState()
+    val tagFilterSortOption by filterManager.tagFilterSortOptionFlow.collectAsState()
+    val sortedPackageFilters by filterManager.sortedPackageFiltersFlow.collectAsState()
+    val packageFilterSortOption by filterManager.packageFilterSortOptionFlow.collectAsState()
+
     OutlinedButton(
         onClick = {
             showTextFilterPopup = true
@@ -215,18 +220,22 @@ private fun FilterView(filterManager: FilterManager) {
         showPackageFilterPopup = showPackageFilterPopup,
         packageFilterAnchor = packageFilterAnchor,
         dismiss = { showPackageFilterPopup = false },
-        packageFilters = packageFilters,
+        packageFilters = sortedPackageFilters,
+        packageFilterSortOption = packageFilterSortOption,
         togglePackageFilter = filterManager::togglePackageFilter,
         includeAll = { filterManager.setAllPackageFilter(true) },
         excludeAll = { filterManager.setAllPackageFilter(false) },
+        setPackageFilterSortOption = filterManager::setPackageFilterSortOption,
     )
     TagFilterPopup(
         showTagFilterPopup = showTagFilterPopup,
         tagFilterAnchor = tagFilterAnchor,
         dismiss = { showTagFilterPopup = false },
-        tagFilters = tagFilters,
+        tagFilters = sortedTagFilters,
+        tagFilterSortOption = tagFilterSortOption,
         toggleTagFilter = filterManager::toggleTagFilter,
         includeAll = { filterManager.setAllTagFilter(true) },
         excludeAll = { filterManager.setAllTagFilter(false) },
+        setTagFilterSortOption = filterManager::setTagFilterSortOption,
     )
 }

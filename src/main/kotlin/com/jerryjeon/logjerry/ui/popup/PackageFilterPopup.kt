@@ -6,28 +6,33 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Checkbox
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedButton
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Sort
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
-import com.jerryjeon.logjerry.filter.PackageFilter
-import com.jerryjeon.logjerry.filter.PackageFilters
+import com.jerryjeon.logjerry.filter.*
 
 @Composable
 fun PackageFilterPopup(
     showPackageFilterPopup: Boolean,
     packageFilterAnchor: Offset,
     packageFilters: PackageFilters,
+    packageFilterSortOption: Pair<FilterSortOption, SortOrder>,
     dismiss: () -> Unit,
     togglePackageFilter: (PackageFilter) -> Unit,
     includeAll: () -> Unit,
     excludeAll: () -> Unit,
+    setPackageFilterSortOption: (FilterSortOption, SortOrder) -> Unit,
 ) {
+    var showSortOptionDialog by remember { mutableStateOf(false) }
+    if (showSortOptionDialog) {
+        SortOptionDialog(packageFilterSortOption, setPackageFilterSortOption, closeDialog = { showSortOptionDialog = false })
+    }
+
     BasePopup(showPackageFilterPopup, packageFilterAnchor, dismiss) {
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -44,6 +49,15 @@ fun PackageFilterPopup(
                         text = "Uncheck All",
                         modifier = Modifier,
                         style = MaterialTheme.typography.body2
+                    )
+                }
+                Spacer(Modifier.width(4.dp))
+                IconButton(onClick = {
+                    showSortOptionDialog = true
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Sort,
+                        contentDescription = "Sort",
                     )
                 }
             }
