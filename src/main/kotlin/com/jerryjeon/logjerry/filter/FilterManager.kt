@@ -2,12 +2,14 @@ package com.jerryjeon.logjerry.filter
 
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.Priority
+import com.jerryjeon.logjerry.preferences.SortOrderPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 
 class FilterManager(
     originalLogsFlow: StateFlow<List<Log>>,
+    defaultSortOption: SortOrderPreferences = SortOrderPreferences.load(),
 ) {
     private val filterScope = CoroutineScope(Dispatchers.Default)
 
@@ -16,6 +18,50 @@ class FilterManager(
     val hiddenLogIndicesFlow: MutableStateFlow<HiddenFilter> = MutableStateFlow(HiddenFilter(emptySet()))
     val packageFiltersFlow = MutableStateFlow(PackageFilters(emptyList()))
     val tagFiltersFlow = MutableStateFlow(TagFilters(emptyList()))
+
+    val packageFilterSortOptionFlow = MutableStateFlow(
+        defaultSortOption.packageFilterSortOption to defaultSortOption.packageFilterSortOrder
+    )
+    val tagFilterSortOptionFlow = MutableStateFlow(
+        defaultSortOption.tagFilterSortOption to defaultSortOption.tagFilterSortOrder
+    )
+
+    private val packageFilterComparator = packageFilterSortOptionFlow.map {
+        val (option, order) = it
+        when (option) {
+            FilterSortOption.Frequency -> compareByDescending<PackageFilter> { it.frequency }
+            FilterSortOption.Name -> compareByDescending { it.packageName }
+        }.let { comparator ->
+            if (order == SortOrder.Ascending) {
+                comparator.reversed()
+            } else {
+                comparator
+            }
+        }
+    }
+
+    private val tagFilterComparator = tagFilterSortOptionFlow.map { it ->
+        val (option, order) = it
+        when (option) {
+            FilterSortOption.Frequency -> compareByDescending<TagFilter> { it.frequency }
+            FilterSortOption.Name -> compareByDescending { it.tag }
+        }.let { comparator ->
+            if (order == SortOrder.Ascending) {
+                comparator.reversed()
+            } else {
+                comparator
+            }
+        }
+    }
+
+    val sortedPackageFiltersFlow = packageFiltersFlow.combine(packageFilterComparator) { packageFilters, comparator ->
+        packageFilters.copy(filters = packageFilters.filters.sortedWith(comparator))
+    }
+        .stateIn(filterScope, SharingStarted.Eagerly, PackageFilters(emptyList()))
+    val sortedTagFiltersFlow = tagFiltersFlow.combine(tagFilterComparator) { tagFilters, comparator ->
+        tagFilters.copy(filters = tagFilters.filters.sortedWith(comparator))
+    }
+        .stateIn(filterScope, SharingStarted.Eagerly, TagFilters(emptyList()))
 
     val filtersFlow = combine(
         textFiltersFlow,
@@ -33,7 +79,6 @@ class FilterManager(
                 .map { (packageName, frequency) ->
                     PackageFilter(packageName, frequency, true)
                 }
-                .sortedByDescending { it.frequency }
                 .let { PackageFilters(it) }
             packageFiltersFlow.value = packageFilters
         }
@@ -44,7 +89,6 @@ class FilterManager(
                 .map { (tag, frequency) ->
                     TagFilter(tag, frequency, true)
                 }
-                .sortedByDescending { it.frequency }
                 .let { TagFilters(it) }
             tagFiltersFlow.value = tagFilters
         }
@@ -117,5 +161,29 @@ class FilterManager(
                 }
             )
         }
+    }
+
+    fun setPackageFilterSortOption(option: FilterSortOption, order: SortOrder) {
+        packageFilterSortOptionFlow.value = option to order
+        SortOrderPreferences.save(
+            SortOrderPreferences(
+                tagFilterSortOptionFlow.value.first,
+                tagFilterSortOptionFlow.value.second,
+                option,
+                order,
+            )
+        )
+    }
+
+    fun setTagFilterSortOption(option: FilterSortOption, order: SortOrder) {
+        tagFilterSortOptionFlow.value = option to order
+        SortOrderPreferences.save(
+            SortOrderPreferences(
+                option,
+                order,
+                packageFilterSortOptionFlow.value.first,
+                packageFilterSortOptionFlow.value.second,
+            )
+        )
     }
 }
