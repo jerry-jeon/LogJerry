@@ -15,9 +15,10 @@ import androidx.compose.ui.unit.sp
 import com.jerryjeon.logjerry.detector.DetectionStatus
 
 @Composable
-fun ExceptionDetectionView(
-    modifier: Modifier,
+fun DetectionView(
+    modifier: Modifier = Modifier,
     detectionStatus: DetectionStatus,
+    title: String,
     moveToPreviousOccurrence: (DetectionStatus) -> Unit,
     moveToNextOccurrence: (DetectionStatus) -> Unit,
 ) {
@@ -32,36 +33,38 @@ fun ExceptionDetectionView(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Exception")
+            Text(title)
             Spacer(modifier = Modifier.width(8.dp))
-            ExceptionDetectionSelectionExist(detectionStatus, moveToPreviousOccurrence, moveToNextOccurrence)
+            DetectionSelectionExist(detectionStatus, moveToPreviousOccurrence, moveToNextOccurrence)
         }
     }
 }
 
 @Composable
-fun ExceptionDetectionSelectionExist(
+fun DetectionSelectionExist(
     selection: DetectionStatus,
     moveToPreviousOccurrence: (DetectionStatus) -> Unit,
     moveToNextOccurrence: (DetectionStatus) -> Unit
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        if (selection.selected == null) {
-            Text(
-                "     ${selection.allDetections.size} results",
-                modifier = Modifier.align(Alignment.CenterVertically)
-            )
-        } else {
-            Text(
-                "${selection.currentIndexInView} / ${selection.totalCount}",
-                modifier = Modifier.align(Alignment.CenterVertically)
-            )
+        Row(modifier = Modifier) {
+            if (selection.selected == null) {
+                Text(
+                    "     ${selection.allDetections.size}",
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            } else {
+                Text(
+                    "${selection.currentIndexInView} / ${selection.totalCount}",
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            }
         }
-    }
-    IconButton(onClick = { moveToPreviousOccurrence(selection) }) {
-        Icon(Icons.Default.KeyboardArrowUp, "Previous Occurrence")
-    }
-    IconButton(onClick = { moveToNextOccurrence(selection) }) {
-        Icon(Icons.Default.KeyboardArrowDown, "Next Occurrence")
+        IconButton(onClick = { moveToPreviousOccurrence(selection) }) {
+            Icon(Icons.Default.KeyboardArrowUp, "Previous Occurrence")
+        }
+        IconButton(onClick = { moveToNextOccurrence(selection) }) {
+            Icon(Icons.Default.KeyboardArrowDown, "Next Occurrence")
+        }
     }
 }

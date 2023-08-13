@@ -12,7 +12,7 @@ class DetectorManager(preferences: Preferences) {
     private val detectionScope = CoroutineScope(Dispatchers.Default)
 
     private val defaultDetectors =
-        listOf(JsonDetector()) + (if (preferences.showExceptionDetection) listOf(ExceptionDetector()) else emptyList())
+        listOf(JsonDetector(), DataClassDetector()) + (if (preferences.showExceptionDetection) listOf(ExceptionDetector()) else emptyList())
     private val keywordDetectorEnabledStateFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     private val detectingKeywordFlow = MutableStateFlow("")
     val keywordDetectionRequestFlow =

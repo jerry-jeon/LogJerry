@@ -2,10 +2,10 @@ package com.jerryjeon.logjerry.logview
 
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import com.jerryjeon.logjerry.detector.DataClassDetection
 import com.jerryjeon.logjerry.detector.Detection
 import com.jerryjeon.logjerry.detector.Detector
 import com.jerryjeon.logjerry.detector.JsonDetection
-import com.jerryjeon.logjerry.detector.JsonDetector
 import com.jerryjeon.logjerry.log.Log
 import com.jerryjeon.logjerry.log.LogContent
 import com.jerryjeon.logjerry.log.LogContentView
@@ -26,21 +26,31 @@ object LogAnnotation {
             val newStart = it.range.first
             val newEnd = it.range.last
             // Assume that there are no overlapping areas.
-            if (it is JsonDetection) {
-                if (lastEnded != newStart) {
-                    logContents.add(LogContent.Text(originalLog.substring(lastEnded, newStart), jsonDetections.toList()))
-                }
-                logContents.add(
-                    LogContent.ExpandedJson(
-                        json.encodeToString(JsonObject.serializer(), it.json), it
+            when (it) {
+                is JsonDetection -> {
+                    if (lastEnded != newStart) {
+                        logContents.add(LogContent.Text(originalLog.substring(lastEnded, newStart)))
+                    }
+                    logContents.add(
+                        LogContent.Json(
+                            json.encodeToString(JsonObject.serializer(), it.json)
+                        )
                     )
-                )
-                jsonDetections.clear()
-                lastEnded = newEnd + 1
+                    jsonDetections.clear()
+                    lastEnded = newEnd + 1
+                }
+
+                is DataClassDetection -> {
+                    if (lastEnded != newStart) {
+                        logContents.add(LogContent.Text(originalLog.substring(lastEnded, newStart)))
+                    }
+                    logContents.add(LogContent.DataClass(prettifyDataClass(it.map)))
+                    lastEnded = newEnd + 1
+                }
             }
         }
         if (lastEnded < originalLog.length) {
-            logContents.add(LogContent.Text(originalLog.substring(lastEnded), jsonDetections.toList()))
+            logContents.add(LogContent.Text(originalLog.substring(lastEnded)))
         }
         return logContents
     }
@@ -48,9 +58,9 @@ object LogAnnotation {
     fun annotate(log: Log, logContents: List<LogContent>, detectors: List<Detector<*>>): List<LogContentView> {
         val result = logContents.map { logContent ->
             when (logContent) {
-                is LogContent.ExpandedJson -> {
+                is LogContent.Json, is LogContent.DataClass -> {
                     val initial = AnnotatedString.Builder(logContent.text)
-                    val newDetections = detectors.filter { it !is JsonDetector }.flatMap { detection ->
+                    val newDetections = detectors.filter { !it.shownAsBlock }.flatMap { detection ->
                         detection.detect(logContent.text, log.index)
                     }
 
@@ -64,29 +74,26 @@ object LogAnnotation {
                         }
                     }
                     val lineCount = logContent.text.lines().size
-                    LogContentView.Json(
+                    LogContentView.Block(
+                        if(logContent is LogContent.Json) "JSON" else "Kotlin Data Class",
                         builder.toAnnotatedString(),
                         JsonDetection.detectedStyle.background,
-                        logContent.jsonDetection,
                         lineCount
                     )
                 }
                 is LogContent.Text -> {
                     val initial = AnnotatedString.Builder(logContent.text)
-                    val newDetections = detectors.filter { it !is JsonDetector }.flatMap { detection ->
+                    val newDetections = detectors.filter { !it.shownAsBlock }.flatMap { detection ->
                         detection.detect(logContent.text, log.index)
                     }
 
-                    val builder = (newDetections + logContent.jsonDetections).fold(initial) { acc, next ->
+                    val builder = newDetections.fold(initial) { acc, next ->
                         acc.apply {
                             addStyle(
                                 next.style,
                                 next.range.first,
                                 next.range.last
                             )
-                            if (next is JsonDetection) {
-                                addStringAnnotation("Json", next.id, next.range.first, next.range.last + 1)
-                            }
                         }
                     }
                     LogContentView.Simple(builder.toAnnotatedString())
@@ -97,3 +104,23 @@ object LogAnnotation {
         return result
     }
 }
+
+private fun prettifyDataClass(parsedData: Map<String, Any?>, indent: String = ""): String {
+    val builder = StringBuilder()
+
+    builder.append("${parsedData["class"]}(\n")
+    for ((key, value) in parsedData.filterKeys { it != "class" }) {
+        builder.append("$indent    $key=")
+        if (value is Map<*, *>) {
+            @Suppress("UNCHECKED_CAST")
+            builder.append(prettifyDataClass(value as Map<String, Any?>, "$indent    "))
+        } else {
+            builder.append(value)
+        }
+        builder.append("\n")
+    }
+    builder.append("$indent)")
+
+    return builder.toString()
+}
+
