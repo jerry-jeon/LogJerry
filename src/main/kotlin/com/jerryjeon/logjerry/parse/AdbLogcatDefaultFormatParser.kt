@@ -105,7 +105,7 @@ data class AdbLogcatDefaultFormatParser(
     }
 
     override fun toString(): String {
-        return "StudioLogcatAboveDolphinParser(includeDate=$includeDate, includeTime=$includeTime, includePid=$includePid, includeTid=$includeTid, includeTag=$includeTag, includePackageName=$includePackageName, number=$number)"
+        return "AdbLogcatDefaultFormatParser(includeDate=$includeDate, includeTime=$includeTime, includePid=$includePid, includeTid=$includeTid, includeTag=$includeTag, includePackageName=$includePackageName, number=$number)"
     }
 
     companion object : ParserFactory {

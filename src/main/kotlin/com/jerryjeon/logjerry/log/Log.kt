@@ -31,7 +31,6 @@ data class Log(
                 null
             }
         } catch (e: Exception) {
-            e.printStackTrace()
             null
         }
 

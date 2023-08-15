@@ -175,8 +175,6 @@ class PreferencesViewModel {
             windowSizeWhenOpened = windowSizeWhenOpened
         )
 
-        println("HMMMM? ${preferencesFlow.value}")
-
         Preferences.file.outputStream().use {
             json.encodeToStream(preferencesFlow.value, it)
         }
