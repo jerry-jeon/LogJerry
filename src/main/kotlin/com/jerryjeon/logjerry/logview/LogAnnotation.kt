@@ -57,6 +57,8 @@ object LogAnnotation {
     private fun removeOverlappingDetections(detections: List<Detection>): List<Detection> {
         // Sort the detections by start range
         val sortedDetections = detections.sortedBy { it.range.first }
+            .filter { it is JsonDetection || it is DataClassDetection } // Only consider Json and DataClass detections
+        // TODO Refactor to use shownAsBlock field in detector
 
         val result = mutableListOf<Detection>()
         var lastEnd = -1
