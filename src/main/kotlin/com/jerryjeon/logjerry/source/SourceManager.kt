@@ -52,6 +52,7 @@ class SourceManager(
     private fun chooseParser(lines: List<String>): LogParser {
         return lines.firstNotNullOfOrNull {
             CustomParser.create(it)
+                ?: FirebaseTestLabLogcatFormatParser.create(it)
                 ?: StudioLogcatBelowChipmunkParser.create(it)
                 ?: StudioLogcatAboveDolphinParser.create(it)
                 ?: AdbLogcatDefaultFormatParser.create(it)

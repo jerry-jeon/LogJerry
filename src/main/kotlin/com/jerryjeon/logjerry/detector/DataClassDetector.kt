@@ -100,13 +100,13 @@ fun parseToStringRepresentation(input: String): Map<String, Any?>? {
     val className = matchResult.groupValues[1]
     val propertiesString = matchResult.groupValues[2]
 
+    resultMap.putAll(parseProperties(propertiesString))
     // If the data class representation has no arguments, return null
-    if (propertiesString.isBlank()) {
+    if (resultMap.isEmpty()) {
         return null
     }
 
     resultMap["class"] = className
-    resultMap.putAll(parseProperties(propertiesString))
 
     return resultMap
 }

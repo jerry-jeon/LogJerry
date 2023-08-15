@@ -17,12 +17,12 @@ object LogAnnotation {
 
     fun separateAnnotationStrings(log: Log, detectionResults: List<Detection>): List<LogContent> {
         val sortedDetections = detectionResults.sortedBy { it.range.first }
+        val overlapRemovedDetections = removeOverlappingDetections(sortedDetections)
         val originalLog = log.log
 
         var lastEnded = 0
         val logContents = mutableListOf<LogContent>()
-        val jsonDetections = mutableListOf<JsonDetection>()
-        sortedDetections.forEach {
+        overlapRemovedDetections.forEach {
             val newStart = it.range.first
             val newEnd = it.range.last
             // Assume that there are no overlapping areas.
@@ -36,7 +36,6 @@ object LogAnnotation {
                             json.encodeToString(JsonObject.serializer(), it.json)
                         )
                     )
-                    jsonDetections.clear()
                     lastEnded = newEnd + 1
                 }
 
@@ -53,6 +52,31 @@ object LogAnnotation {
             logContents.add(LogContent.Text(originalLog.substring(lastEnded)))
         }
         return logContents
+    }
+
+    private fun removeOverlappingDetections(detections: List<Detection>): List<Detection> {
+        // Sort the detections by start range
+        val sortedDetections = detections.sortedBy { it.range.first }
+            .filter { it is JsonDetection || it is DataClassDetection } // Only consider Json and DataClass detections
+        // TODO Refactor to use shownAsBlock field in detector
+
+        val result = mutableListOf<Detection>()
+        var lastEnd = -1
+
+        for (detection in sortedDetections) {
+            // If this detection doesn't overlap with the previous one, add it to the result
+            if (detection.range.first > lastEnd) {
+                result.add(detection)
+                lastEnd = detection.range.last
+            } else if (detection is JsonDetection && result.last() is DataClassDetection) {
+                // If current detection is of type JsonDetection and the last added is of type DataClassDetection, replace the last one
+                result.removeAt(result.size - 1)
+                result.add(detection)
+                lastEnd = detection.range.last
+            }
+        }
+
+        return result
     }
 
     fun annotate(log: Log, logContents: List<LogContent>, detectors: List<Detector<*>>): List<LogContentView> {
